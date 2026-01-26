@@ -1,5 +1,7 @@
 #pragma once
-#include <qrgb.h>
+#include "glm/mat3x3.hpp"
+#include "glm/mat4x4.hpp"
+#include "types/types.h"
 
 namespace detail {
 namespace geometry {
@@ -9,7 +11,7 @@ struct Point {
   int32_t y;
   double z;
 
-  QRgb color;
+  Color color;
 
   friend bool operator==(const Point &left, const Point &right) {
     return left.x == right.x && left.y == right.y && left.z == right.z &&
@@ -32,6 +34,10 @@ struct Triangle {
   int32_t MinimumHeight() const;
   int32_t MaximumHeight() const;
 };
+
+M4 GetFrustumMatrix(HorizontalFOV horizontal_fov, AspectRatio aspect_ratio,
+                    RenderDistance render_distance, RightEdgeX r, LeftEdgeX l,
+                    TopEdgeY t, BottomEdgeY b);
 
 } // namespace geometry
 

@@ -13,5 +13,7 @@ void Screen::Update(const QImage &image) {
   screen->setPixmap(QPixmap::fromImage(image));
 }
 
+double Screen::GetAspectRatio() const { return double(height) / double(width); }
+
 } // namespace screen
 } // namespace detail

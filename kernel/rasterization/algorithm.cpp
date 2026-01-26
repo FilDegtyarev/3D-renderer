@@ -146,7 +146,7 @@ std::vector<geometry::Point> Scanline(const geometry::Triangle &triangle,
     point.x = x;
     point.y = height;
 
-    point.color = qRgb(255, 51, 153);
+    point.color = Color{.red = 255, .green = 51, .blue = 153};
     segment.push_back(point);
   }
 

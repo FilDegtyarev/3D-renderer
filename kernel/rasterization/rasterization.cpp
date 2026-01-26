@@ -3,6 +3,7 @@
 #include "screen/screen.h"
 #include <iostream>
 #include <qpoint.h>
+#include <qrgb.h>
 namespace detail {
 
 namespace rasterization {
@@ -73,7 +74,9 @@ QImage GenerateRandomTrinagleFilled() {
         rasterization::Scanline(triangle, height);
 
     for (const auto &pixel : scanline) {
-      image.setPixel(QPoint(pixel.x, pixel.y), pixel.color);
+      Color color = pixel.color;
+      image.setPixel(QPoint(pixel.x, pixel.y),
+                     qRgb(color.red, color.green, color.blue));
     }
   }
   return image;

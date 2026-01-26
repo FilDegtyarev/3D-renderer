@@ -15,6 +15,7 @@ geometry::Triangle RandomTriangle();
 QImage GenerateRandomTriangleCarcass();
 
 QImage GenerateRandomTrinagleFilled();
+
 } // namespace rasterization
 
 } // namespace detail

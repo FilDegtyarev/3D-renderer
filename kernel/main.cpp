@@ -9,7 +9,6 @@
 #include <QWidget>
 #include <cstdlib>
 
-#include <iostream>
 int main(int argc, char *argv[]) {
   srand(1329);
   QApplication app(argc, argv);

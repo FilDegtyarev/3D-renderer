@@ -16,6 +16,8 @@ public:
   void Connect(QVBoxLayout *layout);
   void Update(const QImage &image);
 
+  double GetAspectRatio() const;
+
 private:
   int32_t height;
   int32_t width;
