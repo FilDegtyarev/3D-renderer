@@ -1,14 +1,20 @@
 #pragma once
 #include "geometry/geometry.h"
-#include <vector>
+
+#include <QImage>
+#include <QPixmap>
 
 namespace detail {
 namespace rasterization {
-std::vector<geometry::Point> SimpleFloat(const geometry::Point &start,
-                                         const geometry::Point &finish);
+QImage TestFigure();
+QImage DrawLine(const detail::geometry::Point &from,
+                const detail::geometry::Point &to);
 
-std::vector<geometry::Point> Bresenham(const geometry::Point &first,
-                                       const geometry::Point &second);
+geometry::Triangle RandomTriangle();
+
+QImage GenerateRandomTriangleCarcass();
+
+QImage GenerateRandomTrinagleFilled();
 } // namespace rasterization
 
 } // namespace detail

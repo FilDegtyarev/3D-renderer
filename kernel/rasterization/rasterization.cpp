@@ -1,67 +1,82 @@
-#include "rasterization.h"
+#include "geometry/geometry.h"
+#include "rasterization/algorithm.h"
+#include "screen/screen.h"
+#include <iostream>
+#include <qpoint.h>
 namespace detail {
 
 namespace rasterization {
+const int32_t SIZE = 500;
+void DrawLine(const detail::geometry::Point &from,
+              const detail::geometry::Point &to, QImage &image) {
+  std::vector<detail::geometry::Point> line =
+      detail::rasterization::Bresenham(from, to);
 
-std::vector<geometry::Point> SimpleFloat(const geometry::Point &start,
-                                         const geometry::Point &finish) {
-  return {};
+  QRgb color = qRgb(255, 51, 153);
+
+  for (const auto &pixel : line) {
+    image.setPixel(QPoint(pixel.x, pixel.y), color);
+  }
 }
 
-std::vector<geometry::Point> Bresenham(const geometry::Point &start,
-                                       const geometry::Point &finish) {
-  if (start.x > finish.x) {
-    return Bresenham(finish, start);
-  }
+geometry::Point RandomPoint() {
+  geometry::Point point;
+  point.x = rand() % SIZE;
+  point.y = rand() % SIZE;
+  point.z = rand() % SIZE;
+  return point;
+}
+geometry::Triangle RandomTriangle() {
 
-  assert(start.x <= finish.x);
+  // return geometry::Triangle{geometry::Point{.x = 73, .y = 401},
+  //                           geometry::Point{.x = 397, .y = 258},
+  //                           geometry::Point{.x = 77, .y = 259}};
 
-  int32_t dx = std::abs(start.x - finish.x);
-  int32_t dy = std::abs(start.y - finish.y);
+  return geometry::Triangle{RandomPoint(), RandomPoint(), RandomPoint()};
+};
 
-  int32_t sgn_y = (start.y <= finish.y ? 1 : -1);
+QImage GenerateRandomTriangleCarcass() {
+  //
+  QImage image(SIZE, SIZE, QImage::Format_RGB16);
+  image.fill(Qt::black);
+  geometry::Triangle triangle = RandomTriangle();
 
-  int32_t right_shift = 2 * dy;
-  int32_t diagonal_shift = 2 * (dy - dx);
-  int32_t d = 2 * dy - dx;
+  DrawLine(triangle.a, triangle.b, image);
+  DrawLine(triangle.b, triangle.c, image);
+  DrawLine(triangle.a, triangle.c, image);
 
-  geometry::Point current = start;
-  std::vector<geometry::Point> rasterized_segment;
+  return image;
+}
 
-  if (dx >= dy) {
-    for (size_t i = 0; i < dx; ++i) {
-      rasterized_segment.push_back(current);
-      if (d > 0) {
-        current.y += sgn_y;
-        d += diagonal_shift;
-      } else {
-        d += right_shift;
-      }
+namespace {
+geometry::Triangle debug(int32_t x1, int32_t y1, int32_t x2, int32_t y2,
+                         int32_t x3, int32_t y3) {
+  return geometry::Triangle{geometry::Point{.x = x1, .y = y1},
+                            geometry::Point{.x = x2, .y = y2},
+                            geometry::Point{.x = x3, .y = y3}};
+}
+} // namespace
+QImage GenerateRandomTrinagleFilled() {
+  QImage image(SIZE, SIZE, QImage::Format_RGB16);
+  image.fill(Qt::black);
+  geometry::Triangle triangle = RandomTriangle();
 
-      current.x++;
+  //   triangle = debug(0, 112, 328, 172, 100, 151);
+  //   std::cout << triangle.a.x << " " << triangle.a.y << " " << triangle.b.x
+  //   << " "
+  //             << triangle.b.y << " " << triangle.c.x << " " << triangle.c.y
+  //             << std::endl;
+
+  for (size_t height = triangle.MinimumHeight();
+       height <= triangle.MaximumHeight(); ++height) {
+    std::vector<geometry::Point> scanline =
+        rasterization::Scanline(triangle, height);
+
+    for (const auto &pixel : scanline) {
+      image.setPixel(QPoint(pixel.x, pixel.y), pixel.color);
     }
-
-  } else {
-    // Прямая более горизонтальна
-    d = 2 * dx - dy;
-    right_shift = 2 * dx;
-    diagonal_shift = 2 * (dx - dy);
-
-    for (size_t i = 0; i < dy; ++i) {
-      rasterized_segment.push_back(current);
-      if (d > 0) {
-        d += diagonal_shift;
-        current.x++;
-      } else {
-        d += right_shift;
-      }
-
-      current.y += sgn_y;
-    }
   }
-
-  rasterized_segment.push_back(finish);
-  return rasterized_segment;
+  return image;
 }
 
 } // namespace rasterization

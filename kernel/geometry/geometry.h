@@ -3,9 +3,10 @@
 
 namespace detail {
 namespace geometry {
+
 struct Point {
-  uint16_t x;
-  uint16_t y;
+  int32_t x;
+  int32_t y;
   double z;
 
   QRgb color;
@@ -16,10 +17,20 @@ struct Point {
   }
 };
 
+enum LineStatus { Vertical, NonVertical };
+
+LineStatus GetLineStatus(const Point &first, const Point &second);
+
+double GetTangentCoefficent(const Point &first, const Point &second);
+
 struct Triangle {
   Point a;
   Point b;
   Point c;
+
+  Triangle SortedVertex() const;
+  int32_t MinimumHeight() const;
+  int32_t MaximumHeight() const;
 };
 
 } // namespace geometry

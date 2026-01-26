@@ -7,9 +7,11 @@ find_package(Qt6 REQUIRED)
 find_package(glm REQUIRED)
 
 add_executable(${PROJECT_NAME}  kernel/main.cpp
-                                kernel/screen.cpp
+                                kernel/rasterization/algorithm.cpp
                                 kernel/rasterization/rasterization.cpp
                                 kernel/geometry/geometry.cpp
+                                kernel/screen/screen.cpp
+
                                 )
 
 
