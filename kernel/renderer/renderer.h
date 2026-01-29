@@ -1,3 +1,4 @@
+#include "camera/camera.h"
 #include "geometry/geometry.h"
 #include "world/world.h"
 #include <functional>
@@ -5,27 +6,21 @@
 
 namespace detail {
 namespace renderer {
-
-namespace {
-using Points = std::vector<geometry::Point>;
-using ZBuffer = std::vector<std::vector<geometry::Point>>;
 using Rasterizer = std::function<void(geometry::Triangle, ZBuffer &)>;
-
-void DefaultRasterizer(geometry::Triangle triangle, ZBuffer &zbuffer);
-
-Rasterizer CreateDefault();
-} // namespace
 
 class Renderer {
 public:
   Renderer();
 
-  std::vector<std::vector<Color>> Render(const world::World &world);
+  std::vector<std::vector<Color>> Render(const world::World &world,
+                                         const camera::Camera &camera);
 
 private:
+  void RenderGlobalObject(const world::GlobalObject &object, const M4 &frustum);
+  void RenderTriangle(const geometry::Triangle &triangle, const M4 &frustum);
   ZBuffer zbuffer;
   // Triangle -> rasterize to zbuffer
-  std::function<void(geometry::Triangle, ZBuffer &)> rasterizer;
+  Rasterizer rasterizer;
 };
 
 } // namespace renderer

@@ -9,6 +9,8 @@ public:
   LocalObject(const std::vector<geometry::Triangle> &triangles);
   LocalObject(std::vector<geometry::Triangle> &&triangles);
 
+  const std::vector<geometry::Triangle> &GetTriangles() const;
+
 private:
   std::vector<geometry::Triangle> triangles;
 };

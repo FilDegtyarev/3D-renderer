@@ -13,10 +13,7 @@ struct Point {
 
   Color color;
 
-  friend bool operator==(const Point &left, const Point &right) {
-    return left.x == right.x && left.y == right.y && left.z == right.z &&
-           left.color == right.color;
-  }
+  inline bool operator==(const Point &left) const = default;
 };
 
 enum LineStatus { Vertical, NonVertical };

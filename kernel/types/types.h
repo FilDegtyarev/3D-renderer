@@ -1,11 +1,12 @@
 #pragma once
 #include "glm/mat3x3.hpp"
 #include "glm/mat4x4.hpp"
+#include <cfloat>
+#include <vector>
 
 template <class T, class Tag>
 struct Type {
   explicit Type(const T &value) : value(value) {};
-
   T operator()() const { return value; }
 
 private:
@@ -32,3 +33,10 @@ struct Color {
 
   inline bool operator==(const Color &other) const = default;
 };
+
+struct ZColor {
+  Color color;
+  double z = DBL_MAX;
+};
+
+using ZBuffer = std::vector<std::vector<ZColor>>;

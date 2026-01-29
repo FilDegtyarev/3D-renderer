@@ -1,3 +1,4 @@
+#include "geometry/geometry.h"
 #include "object.h"
 #include "types/types.h"
 #include <glm/ext/matrix_float3x3.hpp>
@@ -13,6 +14,8 @@ class GlobalObject {
 public:
   GlobalObject(const LocalObject &local_object, const glm::vec3 &shift,
                const glm::mat3x3 &transform);
+
+  const std::vector<geometry::Triangle> &GetTriangles() const;
 
 private:
   LocalObject local_object;
