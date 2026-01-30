@@ -1,4 +1,5 @@
 #pragma once
+#include "types/types.h"
 #include <QImage>
 #include <QVBoxLayout>
 #include <cstdlib>
@@ -14,7 +15,7 @@ public:
   Screen(Height h, Width w);
 
   void Connect(QVBoxLayout *layout);
-  void Update(const QImage &image);
+  void Update(const std::vector<std::vector<Color>> &image);
 
   double GetAspectRatio() const;
 

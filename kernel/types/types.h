@@ -2,6 +2,7 @@
 #include "glm/mat3x3.hpp"
 #include "glm/mat4x4.hpp"
 #include <cfloat>
+#include <iostream>
 #include <vector>
 
 template <class T, class Tag>
@@ -13,18 +14,22 @@ private:
   T value;
 };
 
-using HorizontalFOV = Type<double, class horizontal_fov>;
-using RenderDistance = Type<double, class render_distance>;
-using AspectRatio = Type<double, class aspect_ratio>;
+using ScreenHeight = Type<size_t, class screen_height_proxy>;
+using ScreenWidth = Type<size_t, class screen_width_proxy>;
 
-using RightEdgeX = Type<double, class right_edge_x>;
-using LeftEdgeX = Type<double, class left_edge_x>;
+using HorizontalFOV = Type<double, class horizontal_fov_proxy>;
+using RenderDistance = Type<double, class render_distance_proxy>;
+using AspectRatio = Type<double, class aspect_ratio_proxy>;
 
-using TopEdgeY = Type<double, class top_edge_y>;
-using BottomEdgeY = Type<double, class bottom_edge_y>;
+using RightEdgeX = Type<double, class right_edge_x_proxy>;
+using LeftEdgeX = Type<double, class left_edge_x_proxy>;
+
+using TopEdgeY = Type<double, class top_edge_y_proxy>;
+using BottomEdgeY = Type<double, class bottom_edge_y_proxy>;
 
 using M3 = glm::mat3x3;
 using M4 = glm::mat4x4;
+using V4 = glm::vec4;
 
 struct Color {
   uint8_t red;

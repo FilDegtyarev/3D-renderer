@@ -1,5 +1,6 @@
 #pragma once
 #include "geometry/geometry.h"
+#include "types/types.h"
 
 #include <QImage>
 #include <QPixmap>
@@ -7,12 +8,11 @@
 namespace detail {
 namespace rasterization {
 QImage TestFigure();
-QImage DrawLine(const detail::geometry::Point &from,
-                const detail::geometry::Point &to);
+void DrawLine(const geometry::ScreenSegment &segment, ZBuffer &zbuffer);
 
-geometry::Triangle RandomTriangle();
+geometry::ScreenTriangle RandomTriangle();
 
-QImage GenerateRandomTriangleCarcass();
+// QImage GenerateRandomTriangleCarcass();
 
 QImage GenerateRandomTrinagleFilled();
 

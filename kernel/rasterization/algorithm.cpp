@@ -6,8 +6,9 @@ namespace detail {
 
 namespace rasterization {
 
-std::vector<geometry::Point> Bresenham(const geometry::Point &start,
-                                       const geometry::Point &finish) {
+std::vector<geometry::ScreenPoint>
+Bresenham(const geometry::ScreenPoint &start,
+          const geometry::ScreenPoint &finish) {
   if (start.x > finish.x) {
     return Bresenham(finish, start);
   }
@@ -23,8 +24,8 @@ std::vector<geometry::Point> Bresenham(const geometry::Point &start,
   int32_t diagonal_shift = 2 * (dy - dx);
   int32_t d = 2 * dy - dx;
 
-  geometry::Point current = start;
-  std::vector<geometry::Point> rasterized_segment;
+  geometry::ScreenPoint current = start;
+  std::vector<geometry::ScreenPoint> rasterized_segment;
 
   if (dx >= dy) {
     for (size_t i = 0; i < dx; ++i) {
@@ -64,7 +65,8 @@ std::vector<geometry::Point> Bresenham(const geometry::Point &start,
 
 namespace {
 const double EPS = 1e-9;
-double GetXShift(const geometry::Point &first, const geometry::Point &second) {
+double GetXShift(const geometry::ScreenPoint &first,
+                 const geometry::ScreenPoint &second) {
   double x_shift = 0;
   if (geometry::GetLineStatus(first, second) ==
       geometry::LineStatus::NonVertical) {
@@ -82,10 +84,10 @@ bool InTriangle(double x) {
 
 } // namespace
 
-std::vector<geometry::Point> Scanline(const geometry::Triangle &triangle,
-                                      int32_t height) {
+std::vector<geometry::ScreenPoint>
+Scanline(const geometry::ScreenTriangle &triangle, int32_t height) {
   // Shirley, 166
-  geometry::Triangle sorted_triangle = triangle.SortedVertex();
+  geometry::ScreenTriangle sorted_triangle = triangle.SortedVertex();
   assert(sorted_triangle.a.y >= height && sorted_triangle.c.y <= height);
   // a >= b >= c
 
@@ -138,11 +140,11 @@ std::vector<geometry::Point> Scanline(const geometry::Triangle &triangle,
     finish = int32_t(x_right);
   }
 
-  std::vector<geometry::Point> segment;
+  std::vector<geometry::ScreenPoint> segment;
   // std::cout << "Height: " << height << " start: " << start
   //           << " finish: " << finish << std::endl;
   for (size_t x = start; x <= finish; ++x) {
-    geometry::Point point;
+    geometry::ScreenPoint point;
     point.x = x;
     point.y = height;
 

@@ -4,7 +4,7 @@ project(Hello)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 
-find_package(Qt6 REQUIRED)
+find_package(Qt6 REQUIRED COMPONENTS Widget)
 find_package(glm REQUIRED)
 
 add_executable(${PROJECT_NAME}  kernel/main.cpp

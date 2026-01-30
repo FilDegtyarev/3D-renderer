@@ -1,12 +1,17 @@
-.PHONY: render
+.PHONY: render debug run clean
 
 render:
-	cd build && \
-	cmake .. \
-	-DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake \
-	-DCMAKE_BUILD_TYPE=Release && \
-	cmake --build . && \
-	cd ..
+	conan install . -s build_type=Release --build=missing
+	cmake --preset conan-release
+	cmake --build --preset conan-release
+
+debug:
+	conan install . -s build_type=Debug --build=missing
+	cmake --preset conan-debug
+	cmake --build --preset conan-debug
 
 run:
-	source build/conanrun.sh && ./build/Hello
+	./build/Release/Hello
+
+run-debug:
+	./build/Debug/Hello

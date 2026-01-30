@@ -1,3 +1,4 @@
+#pragma once
 #include "geometry/geometry.h"
 #include "object.h"
 #include "types/types.h"
@@ -16,6 +17,7 @@ public:
                const glm::mat3x3 &transform);
 
   const std::vector<geometry::Triangle> &GetTriangles() const;
+  const std::vector<geometry::Segment> &GetSegments() const;
 
 private:
   LocalObject local_object;
@@ -27,6 +29,8 @@ class World {
 public:
   World(const std::vector<GlobalObject> &objects);
   World(std::vector<GlobalObject> &&objects);
+
+  const std::vector<GlobalObject> &GetObjects() const;
 
 private:
   std::vector<GlobalObject> objects;

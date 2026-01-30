@@ -5,32 +5,62 @@
 
 namespace detail {
 namespace geometry {
-
 struct Point {
+  double x;
+  double y;
+  double z;
+
+  Color color;
+};
+
+struct Triangle {
+  Point a;
+  Point b;
+  Point c;
+};
+
+struct Segment {
+  Point a;
+  Point b;
+};
+
+V4 SwitchToProjective(const Point &point);
+
+struct ScreenPoint {
   int32_t x;
   int32_t y;
   double z;
 
   Color color;
 
-  inline bool operator==(const Point &left) const = default;
+  inline bool operator==(const ScreenPoint &left) const = default;
+};
+
+struct ScreenSegment {
+  ScreenPoint a;
+  ScreenPoint b;
 };
 
 enum LineStatus { Vertical, NonVertical };
 
-LineStatus GetLineStatus(const Point &first, const Point &second);
+LineStatus GetLineStatus(const ScreenPoint &first, const ScreenPoint &second);
 
-double GetTangentCoefficent(const Point &first, const Point &second);
+double GetTangentCoefficent(const ScreenPoint &first,
+                            const ScreenPoint &second);
 
-struct Triangle {
-  Point a;
-  Point b;
-  Point c;
+struct ScreenTriangle {
+  ScreenPoint a;
+  ScreenPoint b;
+  ScreenPoint c;
 
-  Triangle SortedVertex() const;
+  ScreenTriangle SortedVertex() const;
   int32_t MinimumHeight() const;
   int32_t MaximumHeight() const;
 };
+
+ScreenSegment DiscretizeSegment(const Segment &segment);
+
+ScreenTriangle DiscretizeTriangle(const Triangle &triangle);
 
 M4 GetFrustumMatrix(HorizontalFOV horizontal_fov, AspectRatio aspect_ratio,
                     RenderDistance render_distance, RightEdgeX r, LeftEdgeX l,
