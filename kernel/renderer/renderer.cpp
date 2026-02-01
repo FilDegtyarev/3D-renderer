@@ -20,9 +20,14 @@ void DefaultRasterizer(const geometry::Triangle &triangle, ZBuffer &zbuffer) {
         rasterization::Scanline(screen_triangle, height);
 
     for (const auto &pixel : scanline) {
-      if (pixel.z < zbuffer[pixel.x][pixel.y].z) {
-        zbuffer[pixel.x][pixel.y].z = pixel.z;
-        zbuffer[pixel.x][pixel.y].color = pixel.color;
+      if (pixel.y >= zbuffer.size() || pixel.y < 0 ||
+          pixel.x >= zbuffer[0].size() || pixel.x < 0) {
+        continue;
+      }
+      if (pixel.z < zbuffer.at(pixel.y).at(pixel.x).z) {
+        zbuffer[pixel.y][pixel.x].z = pixel.z;
+        // zbuffer[pixel.x][pixel.y].color = pixel.color;
+        zbuffer[pixel.y][pixel.x].color = {255, 255, 255};
       }
     }
   }
@@ -51,7 +56,7 @@ Renderer::Renderer(ScreenHeight _screen_height, ScreenWidth _screen_width) {
   zbuffer = ZBuffer(screen_height, std::vector<ZColor>(screen_width));
 
   segment_rasterizer = EdgeRasterizer;
-  triangle_rasterizer = nullptr;
+  triangle_rasterizer = DefaultRasterizer;
 }
 
 std::vector<std::vector<Color>> Renderer::Render(const world::World &world,
@@ -76,7 +81,14 @@ std::vector<std::vector<Color>> Renderer::Render(const world::World &world,
 
 void Renderer::RenderGlobalObject(const world::GlobalObject &object,
                                   const M4 &frustum) {
+  int i = 0;
   for (const geometry::Triangle &triangle : object.GetTriangles()) {
+    // std::cout << "rendering " << i << '\n';
+    // i++;
+
+    // if (i == 8) {
+    //   std::cout << "???\n";
+    // }
     RenderTriangle(triangle, frustum);
   }
 
@@ -133,8 +145,8 @@ void Renderer::RenderTriangle(const geometry::Triangle &triangle,
       geometry::Triangle{.a = a_proj, .b = b_proj, .c = c_proj};
 
   ViewTriangleTransform(projective_triangle);
-
-  // EdgeRasterizer(projective_triangle, zbuffer);
+  triangle_rasterizer(projective_triangle, zbuffer);
+  //  EdgeRasterizer(projective_triangle, zbuffer);
 }
 
 } // namespace renderer

@@ -16,6 +16,7 @@ add_executable(${PROJECT_NAME}  kernel/main.cpp
                                 kernel/world/world.cpp
                                 kernel/camera/camera.cpp
                                 kernel/renderer/renderer.cpp
+                                kernel/parser/parser.cpp
                                 )
 
 

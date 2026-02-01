@@ -30,6 +30,7 @@ using BottomEdgeY = Type<double, class bottom_edge_y_proxy>;
 using M3 = glm::mat3x3;
 using M4 = glm::mat4x4;
 using V4 = glm::vec4;
+using V3 = glm::vec3;
 
 struct Color {
   uint8_t red;

@@ -12,11 +12,13 @@ const int32_t SIZE = 500;
 void DrawLine(const geometry::ScreenSegment &segment, ZBuffer &zbuffer) {
   geometry::ScreenPoint from = segment.a;
   geometry::ScreenPoint to = segment.b;
+  // std::cout << from.x << "  " << to.x << std::endl;
 
   std::vector<detail::geometry::ScreenPoint> line =
       detail::rasterization::Bresenham(from, to);
 
   for (const auto &pixel : line) {
+    // std::cout << pixel.y << " " << pixel.x << std::endl;
     if (zbuffer.at(pixel.y).at(pixel.x).z > pixel.z) {
       zbuffer[pixel.y][pixel.x].z = pixel.z;
 
@@ -24,6 +26,7 @@ void DrawLine(const geometry::ScreenSegment &segment, ZBuffer &zbuffer) {
       zbuffer[pixel.y][pixel.x].color =
           Color{.red = 50, .blue = 100, .green = 150};
     }
+    // std::cout << "done" << std::endl;
   }
 }
 

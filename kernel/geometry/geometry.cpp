@@ -2,6 +2,7 @@
 #include "types/types.h"
 #include <algorithm>
 #include <cmath>
+#include <glm/ext/vector_float3.hpp>
 #include <vector>
 
 namespace detail {
@@ -24,6 +25,25 @@ struct HeightComparator {
 };
 
 } // namespace
+
+Point Point::operator+(const V3 &vector) const {
+  return Point{x + vector.x, y + vector.y, z + vector.z, color};
+}
+
+Point Point::operator+=(const V3 &vector) {
+  *this = *this + vector;
+  return *this;
+}
+
+Point Point::operator*(const M3 &matrix) const {
+  V3 result = matrix * glm::vec3(x, y, z);
+  return {result.x, result.y, result.z, color};
+}
+
+Point Point::operator*=(const M3 &matrix) {
+  *this = *this * matrix;
+  return *this;
+}
 
 V4 SwitchToProjective(const Point &point) {
   V4 vector;

@@ -11,6 +11,14 @@ struct Point {
   double z;
 
   Color color;
+
+  Point &operator=(const Point &point) = default;
+
+  Point operator+(const V3 &vector) const;
+  Point operator+=(const V3 &vector);
+
+  Point operator*(const M3 &matrix) const;
+  Point operator*=(const M3 &matrix);
 };
 
 struct Triangle {

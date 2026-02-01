@@ -19,6 +19,12 @@ public:
   const std::vector<geometry::Triangle> &GetTriangles() const;
   const std::vector<geometry::Segment> &GetSegments() const;
 
+  GlobalObject &operator+(const V3 &vector) const;
+  GlobalObject &operator*(const M3 &matrix) const;
+
+  GlobalObject &operator+=(const V3 &vector);
+  GlobalObject &operator*=(const M3 &matrix);
+
 private:
   LocalObject local_object;
   glm::vec3 shift;
