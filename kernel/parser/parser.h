@@ -6,6 +6,6 @@
 namespace detail {
 namespace parser {
 
-world::LocalObject Parse(const std::string &filename);
+std::unique_ptr<world::LocalObject> Parse(const std::string &filename);
 } // namespace parser
 } // namespace detail

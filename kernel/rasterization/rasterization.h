@@ -7,14 +7,8 @@
 
 namespace detail {
 namespace rasterization {
-QImage TestFigure();
-void DrawLine(const geometry::ScreenSegment &segment, ZBuffer &zbuffer);
-
-geometry::ScreenTriangle RandomTriangle();
-
-// QImage GenerateRandomTriangleCarcass();
-
-QImage GenerateRandomTrinagleFilled();
+void DrawSegment(const geometry::Segment &segment, ZBuffer &zbuffer);
+void DrawTriangle(const geometry::Triangle &triangle, ZBuffer &zbuffer);
 
 } // namespace rasterization
 

@@ -13,27 +13,26 @@ namespace world {
 
 class GlobalObject {
 public:
-  GlobalObject(const LocalObject &local_object, const glm::vec3 &shift,
-               const glm::mat3x3 &transform);
+  GlobalObject(std::unique_ptr<LocalObject> &&local_object_,
+               const glm::vec3 &shift, const glm::mat3x3 &transform);
 
-  const std::vector<geometry::Triangle> &GetTriangles() const;
-  const std::vector<geometry::Segment> &GetSegments() const;
+  std::vector<geometry::Triangle> GetTriangles() const;
+  std::vector<geometry::Segment> GetSegments() const;
 
-  GlobalObject &operator+(const V3 &vector) const;
-  GlobalObject &operator*(const M3 &matrix) const;
+  // GlobalObject operator+(const V3 &vector) const;
+  // GlobalObject operator*(const M3 &matrix) const;
 
   GlobalObject &operator+=(const V3 &vector);
   GlobalObject &operator*=(const M3 &matrix);
 
 private:
-  LocalObject local_object;
+  std::unique_ptr<LocalObject> local_object;
   glm::vec3 shift;
   glm::mat3x3 transform;
 };
 
 class World {
 public:
-  World(const std::vector<GlobalObject> &objects);
   World(std::vector<GlobalObject> &&objects);
 
   const std::vector<GlobalObject> &GetObjects() const;

@@ -37,6 +37,18 @@ std::vector<geometry::Segment> generateCubeSegments(double distance) {
   // {v0, v4}, {v1, v5}, {v2, v6}, {v3, v7}};
 }
 
+M3 Eye() {
+  M3 matrix;
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      matrix[i][j] = 0;
+    }
+  }
+  matrix[0][0] = 1;
+  matrix[1][1] = 1;
+  matrix[2][2] = 1;
+  return matrix;
+}
 } // namespace detail
 
 int main(int argc, char *argv[]) {
@@ -54,29 +66,28 @@ int main(int argc, char *argv[]) {
                                 detail::screen::Width(800));
   screen.Connect(layout);
   // detail::world::LocalObject local({}, detail::generateCubeSegments(1));
-  detail::world::LocalObject local =
-      detail::parser::Parse("/Users/filipp/Documents/Models/paral.obj");
+  std::unique_ptr<detail::world::LocalObject> local =
+      detail::parser::Parse("/Users/filipp/Documents/Models/cat.obj");
 
-  detail::world::GlobalObject cube(local, glm::vec3(), M3());
+  local->Normalize(1);
+  std::cout << local->GetSegments().size() << " "
+            << local->GetTriangles().size() << " " << std::endl;
 
-  detail::world::World world(std::vector<detail::world::GlobalObject>{cube});
+  detail::world::GlobalObject cube(std::move(local), glm::vec3{0, 0, 0},
+                                   detail::Eye());
+  cube += glm::vec3{0, 0, -10};
+
+  std::vector<detail::world::GlobalObject> objects;
+  objects.emplace_back(std::move(cube));
+  std::cout << "last " << objects.back().GetSegments().size() << std::endl;
+  detail::world::World world(std::move(objects));
 
   detail::camera::Camera camera(HorizontalFOV{90.0}, AspectRatio{600.0 / 800.0},
-                                RenderDistance{1000.0});
+                                NearPlaneDistance{0.1}, RenderDistance{100.0});
 
   detail::renderer::Renderer renderer(ScreenHeight{600}, ScreenWidth{800});
 
   screen.Update(renderer.Render(world, camera));
-  //  auto *button = new QPushButton("еще треугольники");
-
-  // layout->addWidget(button);
-
-  // QObject::connect(button, &QPushButton::clicked, [&]() {
-  //   QImage img = detail::rasterization::GenerateRandomTrinagleFilled();
-  //   // imageLabel->setPixmap(QPixmap::fromImage(img));
-  //   // screen.Update(image);
-  //   screen.Update(renderer.Render(world, camera));
-  // });
 
   window.show();
 

@@ -1,23 +1,62 @@
 #pragma once
 #include "geometry/geometry.h"
+#include "world/object.h"
 #include <vector>
 
 namespace detail {
 namespace world {
+
+struct TriangleKeeper {
+  int32_t first_index;
+  int32_t second_index;
+  int32_t third_index;
+};
+
+struct SegmentKeeper {
+  int32_t first_index;
+  int32_t second_index;
+};
+
+class LocalObjectBuilder;
+
 class LocalObject {
+  friend class LocalObjectBuilder;
 
 public:
-  LocalObject(const std::vector<geometry::Triangle> &triangles,
-              const std::vector<geometry::Segment> &segments);
+  LocalObject(LocalObject &&) = default;
 
-  LocalObject(std::vector<geometry::Triangle> &&triangles);
+  using Vertexes = std::vector<geometry::Point>;
+  using Triangles = std::vector<TriangleKeeper>;
+  using Segments = std::vector<SegmentKeeper>;
 
-  const std::vector<geometry::Triangle> &GetTriangles() const;
-  const std::vector<geometry::Segment> &GetSegments() const;
+  void Normalize(double scale = 1.0);
+
+  geometry::Triangle GetTriangle(const TriangleKeeper &trianlge) const;
+  geometry::Segment GetSegment(const SegmentKeeper &segment) const;
+
+  const Vertexes &GetVertexes() const;
+  const Triangles &GetTriangles() const;
+  const Segments &GetSegments() const;
 
 private:
-  std::vector<geometry::Triangle> triangles;
-  std::vector<geometry::Segment> segments;
+  LocalObject() = default;
+  LocalObject(const LocalObject &local) = default;
+  std::vector<geometry::Point> vertexes;
+  std::vector<TriangleKeeper> triangles;
+  std::vector<SegmentKeeper> segments;
+};
+
+class LocalObjectBuilder {
+public:
+  LocalObjectBuilder();
+  void AddVertex(const geometry::Point &point);
+  void AddTriangle(const TriangleKeeper &triangle);
+  void AddSegment(const SegmentKeeper &segment);
+
+  std::unique_ptr<LocalObject> &&Extract();
+
+private:
+  std::unique_ptr<LocalObject> local_object;
 };
 
 } // namespace world

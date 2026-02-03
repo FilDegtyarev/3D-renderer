@@ -44,12 +44,10 @@ M3 RotateMatrix() {
 void Rotate(geometry::Point &point) { point = point * RotateMatrix(); }
 
 } // namespace
-world::LocalObject Parse(const std::string &filename) {
+std::unique_ptr<world::LocalObject> Parse(const std::string &filename) {
   std::ifstream fin(filename);
 
-  std::vector<geometry::Point> vertex;
-  std::vector<geometry::Segment> segments;
-  std::vector<geometry::Triangle> triangles;
+  world::LocalObjectBuilder builder;
 
   while (!fin.eof()) {
     std::string string;
@@ -61,39 +59,27 @@ world::LocalObject Parse(const std::string &filename) {
       point.x = std::stod(result[0]);
       point.y = -std::stod(result[2]);
       point.z = -std::stod(result[1]);
-
       point.color = {255, 255, 255};
-      //   for (auto x : result) {
-      //     std::cout << x << " ";
-      //   }
-      //   std::cout << std::endl;
-      //   std::cout << "source: " << result[2] << " Before: " << point.z
-      //             << " After: " << (point.z / 100) - 10 << std::endl;
-      Compress(point, 1);
-      Shift(point, 1);
-      // Rotate(point);
-      vertex.push_back(point);
-
-      // std::cout << point.x << " " << point.y << " " << point.z << std::endl;
+      builder.AddVertex(point);
     } else if (string[0] == 'f') {
       std::vector<std::string> result = Split(string);
       result.erase(result.begin());
       if (result.size() == 2) {
         exit(666);
       } else {
-        geometry::Point a = vertex[std::stoi(result[0]) - 1];
-        geometry::Point b = vertex[std::stoi(result[1]) - 1];
-        geometry::Point c = vertex[std::stoi(result[2]) - 1];
+        int32_t a = std::stoi(result[0]) - 1;
+        int32_t b = std::stoi(result[1]) - 1;
+        int32_t c = std::stoi(result[2]) - 1;
 
-        segments.push_back({a, b});
-        segments.push_back({b, c});
-        segments.push_back({a, c});
-        // triangles.push_back(triangle);
+        builder.AddSegment({a, b});
+        builder.AddSegment({a, c});
+        builder.AddSegment({b, c});
       }
     }
   }
+
   fin.close();
-  return world::LocalObject(triangles, segments);
+  return builder.Extract();
 }
 } // namespace parser
 } // namespace detail

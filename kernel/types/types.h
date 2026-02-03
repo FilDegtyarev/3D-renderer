@@ -19,6 +19,7 @@ using ScreenWidth = Type<size_t, class screen_width_proxy>;
 
 using HorizontalFOV = Type<double, class horizontal_fov_proxy>;
 using RenderDistance = Type<double, class render_distance_proxy>;
+using NearPlaneDistance = Type<double, class near_plane_distance_proxy>;
 using AspectRatio = Type<double, class aspect_ratio_proxy>;
 
 using RightEdgeX = Type<double, class right_edge_x_proxy>;

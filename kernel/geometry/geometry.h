@@ -71,6 +71,7 @@ ScreenSegment DiscretizeSegment(const Segment &segment);
 ScreenTriangle DiscretizeTriangle(const Triangle &triangle);
 
 M4 GetFrustumMatrix(HorizontalFOV horizontal_fov, AspectRatio aspect_ratio,
+                    NearPlaneDistance near_plane_distance,
                     RenderDistance render_distance, RightEdgeX r, LeftEdgeX l,
                     TopEdgeY t, BottomEdgeY b);
 
