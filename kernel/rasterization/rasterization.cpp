@@ -44,7 +44,6 @@ void DrawSegment(const geometry::Segment &segment_, ZBuffer &zbuffer) {
       zbuffer[pixel.y][pixel.x].color =
           Color{.red = 50, .blue = 100, .green = 150};
     }
-    // std::cout << "done" << std::endl;
   }
 }
 

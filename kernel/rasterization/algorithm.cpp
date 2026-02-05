@@ -89,15 +89,12 @@ Scanline(const geometry::ScreenTriangle &triangle, int32_t height) {
   // Shirley, 166
   geometry::ScreenTriangle sorted_triangle = triangle.SortedVertex();
   assert(sorted_triangle.a.y >= height && sorted_triangle.c.y <= height);
-  // a >= b >= c
 
   double long_edge_x_shift = GetXShift(sorted_triangle.a, sorted_triangle.c);
   double x_left = 0;
   double x_right = 0;
 
   if (height >= sorted_triangle.b.y) {
-    // Верхний случай
-
     double short_edge_x_shift = GetXShift(sorted_triangle.a, sorted_triangle.b);
     double dy = sorted_triangle.a.y - height;
 
@@ -109,8 +106,6 @@ Scanline(const geometry::ScreenTriangle &triangle, int32_t height) {
     }
 
   } else {
-    // нижний случай
-
     double short_edge_x_shift = GetXShift(sorted_triangle.b, sorted_triangle.c);
     double dy = sorted_triangle.b.y - height;
     x_left = double(sorted_triangle.a.x) -
@@ -141,8 +136,6 @@ Scanline(const geometry::ScreenTriangle &triangle, int32_t height) {
   }
 
   std::vector<geometry::ScreenPoint> segment;
-  // std::cout << "Height: " << height << " start: " << start
-  //           << " finish: " << finish << std::endl;
   for (size_t x = start; x <= finish; ++x) {
     geometry::ScreenPoint point;
     point.x = x;

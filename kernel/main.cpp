@@ -53,8 +53,6 @@ M3 Eye() {
 } // namespace detail
 
 int main(int argc, char *argv[]) {
-  // detail::parser::Parse("/Users/filipp/Documents/Models/cat.obj");
-  // return 0;
   srand(1329);
 
   QApplication app(argc, argv);
@@ -67,7 +65,6 @@ int main(int argc, char *argv[]) {
   detail::screen::Screen screen(detail::screen::Height(600),
                                 detail::screen::Width(800));
   screen.Connect(layout);
-  // detail::world::LocalObject local({}, detail::generateCubeSegments(1));
   std::unique_ptr<detail::world::LocalObject> local =
       detail::parser::Parse("/Users/filipp/Documents/Models/cat.obj");
 
@@ -77,8 +74,9 @@ int main(int argc, char *argv[]) {
 
   detail::world::GlobalObject cube(std::move(local), glm::vec3{0, 0, 0},
                                    detail::Eye());
-  double swag3000 = std::stod(argv[1]);
-  cube += glm::vec3{0, 0, -swag3000};
+
+  double shift = std::stod(argv[1]);
+  cube += glm::vec3{0, 0, -shift};
 
   detail::world::WorldBuilder world_builder;
   world_builder.AddObject(std::move(cube));

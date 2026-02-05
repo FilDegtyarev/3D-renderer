@@ -115,7 +115,7 @@ M4 GetFrustumMatrix(HorizontalFOV horizontal_fov, AspectRatio aspect_ratio,
 
   matrix[0][0] = 2.0 * near_plane_distance() / (r() - l());
   matrix[0][1] = 0;
-  matrix[0][2] = (r() + l()) / (r() - l()); // r + l == 0 ?
+  matrix[0][2] = (r() + l()) / (r() - l());
   matrix[0][3] = 0;
 
   matrix[1][0] = 0;
