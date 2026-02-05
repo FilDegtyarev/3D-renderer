@@ -14,8 +14,9 @@ class Renderer {
 public:
   Renderer(ScreenHeight screen_height, ScreenWidth screen_width);
 
-  std::vector<std::vector<Color>> Render(const world::World &world,
-                                         const camera::Camera &camera);
+  std::vector<std::vector<Color>>
+  Render(const std::unique_ptr<world::World> &world,
+         const camera::Camera &camera);
 
 private:
   void RenderGlobalObject(const world::GlobalObject &object, const M4 &frustum);

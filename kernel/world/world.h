@@ -31,13 +31,27 @@ private:
   glm::mat3x3 transform;
 };
 
-class World {
-public:
-  World(std::vector<GlobalObject> &&objects);
+class World;
 
+class WorldBuilder {
+public:
+  WorldBuilder();
+
+  void AddObject(GlobalObject &&object);
+  std::unique_ptr<World> Extract();
+
+private:
+  std::unique_ptr<World> world;
+};
+
+class World {
+  friend WorldBuilder;
+
+public:
   const std::vector<GlobalObject> &GetObjects() const;
 
 private:
+  World() = default;
   std::vector<GlobalObject> objects;
 };
 

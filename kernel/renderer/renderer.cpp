@@ -18,11 +18,12 @@ Renderer::Renderer(ScreenHeight _screen_height, ScreenWidth _screen_width) {
   triangle_rasterizer = rasterization::DrawTriangle;
 }
 
-std::vector<std::vector<Color>> Renderer::Render(const world::World &world,
-                                                 const camera::Camera &camera) {
+std::vector<std::vector<Color>>
+Renderer::Render(const std::unique_ptr<world::World> &world,
+                 const camera::Camera &camera) {
   M4 frsutum = camera.GetFrustumMatrix();
 
-  for (const world::GlobalObject &object : world.GetObjects()) {
+  for (const world::GlobalObject &object : world->GetObjects()) {
     RenderGlobalObject(object, frsutum);
   }
 

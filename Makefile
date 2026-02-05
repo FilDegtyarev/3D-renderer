@@ -11,7 +11,7 @@ debug:
 	cmake --build --preset conan-debug
 
 run:
-	./build/Release/Hello
+	./build/Release/Hello $(ARGS)
 
 run-debug:
 	./build/Debug/Hello

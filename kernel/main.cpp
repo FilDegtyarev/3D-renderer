@@ -15,6 +15,7 @@
 #include <cstdlib>
 #include <glm/ext/vector_float3.hpp>
 #include <iostream>
+#include <string>
 
 namespace detail {
 std::vector<geometry::Segment> generateCubeSegments(double distance) {
@@ -55,6 +56,7 @@ int main(int argc, char *argv[]) {
   // detail::parser::Parse("/Users/filipp/Documents/Models/cat.obj");
   // return 0;
   srand(1329);
+
   QApplication app(argc, argv);
 
   QWidget window;
@@ -75,12 +77,13 @@ int main(int argc, char *argv[]) {
 
   detail::world::GlobalObject cube(std::move(local), glm::vec3{0, 0, 0},
                                    detail::Eye());
-  cube += glm::vec3{0, 0, -10};
+  double swag3000 = std::stod(argv[1]);
+  cube += glm::vec3{0, 0, -swag3000};
 
-  std::vector<detail::world::GlobalObject> objects;
-  objects.emplace_back(std::move(cube));
-  std::cout << "last " << objects.back().GetSegments().size() << std::endl;
-  detail::world::World world(std::move(objects));
+  detail::world::WorldBuilder world_builder;
+  world_builder.AddObject(std::move(cube));
+
+  std::unique_ptr<detail::world::World> world = world_builder.Extract();
 
   detail::camera::Camera camera(HorizontalFOV{90.0}, AspectRatio{600.0 / 800.0},
                                 NearPlaneDistance{0.1}, RenderDistance{100.0});

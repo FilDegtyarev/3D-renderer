@@ -76,8 +76,13 @@ GlobalObject &GlobalObject::operator*=(const M3 &matrix) {
   return *this;
 }
 
-World::World(std::vector<GlobalObject> &&objects)
-    : objects(std::move(objects)) {};
+WorldBuilder::WorldBuilder() : world(new World()) {};
+
+void WorldBuilder::AddObject(GlobalObject &&object) {
+  world->objects.emplace_back(std::move(object));
+}
+
+std::unique_ptr<World> WorldBuilder::Extract() { return std::move(world); }
 
 const std::vector<GlobalObject> &World::GetObjects() const { return objects; }
 
