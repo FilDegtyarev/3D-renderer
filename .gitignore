@@ -3,3 +3,6 @@ build/
 conanfile.txt
 .DS_Store
 .clangd
+Makefile
+CMakeUserPresets.json
+CMakeLists.txt
