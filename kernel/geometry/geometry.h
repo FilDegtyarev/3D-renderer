@@ -9,7 +9,7 @@ struct Point {
   double x;
   double y;
   double z;
-
+  double w = 1.0;
   Color color;
 
   Point &operator=(const Point &point) = default;
@@ -17,20 +17,37 @@ struct Point {
   Point operator+(const V3 &vector) const;
   Point operator+=(const V3 &vector);
 
-  Point operator*(const M3 &matrix) const;
-  Point operator*=(const M3 &matrix);
+  void Scale(const double &coef);
+  Point operator*(const M4 &matrix) const;
 };
 
 struct Triangle {
   Point a;
   Point b;
   Point c;
+
+  Triangle operator*(const M4 &matrix) const;
 };
 
 struct Segment {
   Point a;
   Point b;
+
+  Segment operator*(const M4 &matrix) const;
 };
+
+struct Plane {
+  V3 N;
+  double D;
+
+  double operator()(const Point &point) const;
+};
+
+std::vector<Triangle> IntersectTriangleWithPlane(const Triangle &triangle,
+                                                 const Plane &plane);
+
+// Какой отрезок получится, если пересечь с плоскостью?
+Segment IntersectSegmentWithPlane(const Segment &segment, const Plane &plane);
 
 V4 SwitchToProjective(const Point &point);
 

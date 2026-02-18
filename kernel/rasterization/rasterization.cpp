@@ -13,8 +13,8 @@ const int32_t SIZE = 500;
 
 namespace {
 bool InBuffer(const geometry::ScreenPoint &point, const ZBuffer &zbuffer) {
-  if (point.x < 0 || point.x >= zbuffer[0].size() || point.y < 0 ||
-      point.y >= zbuffer.size()) {
+  if (point.x < 0 || point.x >= zbuffer[0].size() || point.y < 0 || point.y >= zbuffer.size()) {
+    assert(false);
     return false;
   }
   return true;
@@ -28,8 +28,7 @@ void DrawSegment(const geometry::Segment &segment_, ZBuffer &zbuffer) {
   geometry::ScreenPoint to = segment.b;
   // std::cout << from.x << "  " << to.x << std::endl;
 
-  std::vector<detail::geometry::ScreenPoint> line =
-      detail::rasterization::Bresenham(from, to);
+  std::vector<detail::geometry::ScreenPoint> line = detail::rasterization::Bresenham(from, to);
 
   for (const auto &pixel : line) {
     // std::cout << pixel.y << " " << pixel.x << std::endl;
@@ -41,20 +40,16 @@ void DrawSegment(const geometry::Segment &segment_, ZBuffer &zbuffer) {
       zbuffer[pixel.y][pixel.x].z = pixel.z;
 
       zbuffer[pixel.y][pixel.x].color = pixel.color;
-      zbuffer[pixel.y][pixel.x].color =
-          Color{.red = 50, .blue = 100, .green = 150};
+      zbuffer[pixel.y][pixel.x].color = Color{.red = 50, .blue = 100, .green = 150};
     }
   }
 }
 
 void DrawTriangle(const geometry::Triangle &triangle, ZBuffer &zbuffer) {
-  geometry::ScreenTriangle screen_triangle =
-      geometry::DiscretizeTriangle(triangle);
+  geometry::ScreenTriangle screen_triangle = geometry::DiscretizeTriangle(triangle);
 
-  for (size_t height = screen_triangle.MinimumHeight();
-       height <= screen_triangle.MaximumHeight(); ++height) {
-    std::vector<geometry::ScreenPoint> scanline =
-        rasterization::Scanline(screen_triangle, height);
+  for (size_t height = screen_triangle.MinimumHeight(); height <= screen_triangle.MaximumHeight(); ++height) {
+    std::vector<geometry::ScreenPoint> scanline = rasterization::Scanline(screen_triangle, height);
 
     for (const auto &pixel : scanline) {
       if (!InBuffer(pixel, zbuffer)) {

@@ -19,16 +19,11 @@ public:
   std::vector<geometry::Triangle> GetTriangles() const;
   std::vector<geometry::Segment> GetSegments() const;
 
-  // GlobalObject operator+(const V3 &vector) const;
-  // GlobalObject operator*(const M3 &matrix) const;
-
-  GlobalObject &operator+=(const V3 &vector);
-  GlobalObject &operator*=(const M3 &matrix);
+  // GlobalObject &operator*=(const M4 &matrix);
 
 private:
   std::unique_ptr<LocalObject> local_object;
-  glm::vec3 shift;
-  glm::mat3x3 transform;
+  M4 transform;
 };
 
 class World;
@@ -50,9 +45,12 @@ class World {
 public:
   const std::vector<GlobalObject> &GetObjects() const;
 
+  // void AddTransformation(const M4 &matrix);
+
 private:
   World() = default;
   std::vector<GlobalObject> objects;
+  M4 current_transformation;
 };
 
 } // namespace world

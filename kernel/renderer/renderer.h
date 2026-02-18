@@ -14,14 +14,13 @@ class Renderer {
 public:
   Renderer(ScreenHeight screen_height, ScreenWidth screen_width);
 
-  std::vector<std::vector<Color>>
-  Render(const std::unique_ptr<world::World> &world,
-         const camera::Camera &camera);
+  std::vector<std::vector<Color>> Render(const std::unique_ptr<world::World> &world, const std::unique_ptr<camera::Camera> &camera);
 
 private:
-  void RenderGlobalObject(const world::GlobalObject &object, const M4 &frustum);
-  void RenderTriangle(const geometry::Triangle &triangle, const M4 &frustum);
-  void RenderSegment(const geometry::Segment &segment, const M4 &frustum);
+  void ClearZBuffer();
+  void RenderGlobalObject(const world::GlobalObject &object, const M4 &frustum_matrix, const M4 &camera_matrix, const std::unique_ptr<camera::Camera> &camera);
+  void RenderTriangle(const geometry::Triangle &triangle, const M4 &frustum_matrix, const M4 &camera_matrix);
+  void RenderSegment(const geometry::Segment &segment, const M4 &frustum_matrix, const M4 &camera_matrix, const std::unique_ptr<camera::Camera> &camera);
 
   inline void ViewTransform(geometry::Point &point) {
     point.x = (point.x + 1) / 2.0 * screen_width;

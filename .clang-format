@@ -1,3 +1,4 @@
 BreakTemplateDeclarations: Yes
 InsertNewlineAtEOF: true
 KeepEmptyLinesAtEOF: true
+ColumnLimit: 200

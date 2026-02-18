@@ -13,7 +13,7 @@ void LocalObject::Normalize(double scale) {
   max /= scale;
 
   for (geometry::Point &point : vertexes) {
-    point *= (1.0 / max);
+    point.Scale(1.0 / max);
   }
 }
 
