@@ -47,7 +47,9 @@ void Renderer::ClearZBuffer() {
 void Renderer::RenderGlobalObject(const world::GlobalObject &object, const M4 &frustum_matrix, const M4 &camera_matrix, const std::unique_ptr<camera::Camera> &camera) {
   int i = 0;
   for (const geometry::Triangle &triangle : object.GetTriangles()) {
-    RenderTriangle(triangle, frustum_matrix, camera_matrix);
+    i++;
+
+    RenderTriangle(triangle, frustum_matrix, camera_matrix, camera);
   }
 
   for (const geometry::Segment &segment : object.GetSegments()) {
@@ -74,19 +76,20 @@ void Renderer::RenderSegment(const geometry::Segment &segment_, const M4 &frustu
   }
 }
 
-void Renderer::RenderTriangle(const geometry::Triangle &triangle_, const M4 &frustum_matrix, const M4 &camera_matrix) {
-  geometry::Triangle triangle = triangle_ * camera_matrix;
-  assert(false);
-  geometry::Point a_proj = FromV4(frustum_matrix * geometry::SwitchToProjective(triangle.a), triangle.a.color);
+void Renderer::RenderTriangle(const geometry::Triangle &triangle_, const M4 &frustum_matrix, const M4 &camera_matrix, const std::unique_ptr<camera::Camera> &camera) {
+  const geometry::Triangle triangle = triangle_ * camera_matrix;
+  for (const geometry::Triangle &clipped_triangle : camera->ClipTriangle(triangle)) {
 
-  geometry::Point b_proj = FromV4(frustum_matrix * geometry::SwitchToProjective(triangle.b), triangle.b.color);
+    geometry::Point a_proj = FromV4(frustum_matrix * geometry::SwitchToProjective(clipped_triangle.a), clipped_triangle.a.color);
 
-  geometry::Point c_proj = FromV4(frustum_matrix * geometry::SwitchToProjective(triangle.c), triangle.c.color);
+    geometry::Point b_proj = FromV4(frustum_matrix * geometry::SwitchToProjective(clipped_triangle.b), clipped_triangle.b.color);
 
-  geometry::Triangle projective_triangle = geometry::Triangle{.a = a_proj, .b = b_proj, .c = c_proj};
+    geometry::Point c_proj = FromV4(frustum_matrix * geometry::SwitchToProjective(clipped_triangle.c), clipped_triangle.c.color);
 
-  ViewTriangleTransform(projective_triangle);
-  triangle_rasterizer(projective_triangle, zbuffer);
+    geometry::Triangle projective_triangle = geometry::Triangle{.a = a_proj, .b = b_proj, .c = c_proj};
+    ViewTriangleTransform(projective_triangle);
+    triangle_rasterizer(projective_triangle, zbuffer);
+  }
 }
 
 } // namespace renderer

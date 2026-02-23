@@ -39,8 +39,7 @@ void Point::Scale(const double &coef) {
 
 Point Point::operator*(const M4 &matrix) const {
   V4 vector = {x, y, z, w};
-  //
-  // vector = glm::transpose(matrix) * vector;
+
   vector = matrix * vector;
   return Point{vector.x, vector.y, vector.z, vector.w, color};
 }
@@ -49,7 +48,6 @@ Triangle Triangle::operator*(const M4 &matrix) const { return Triangle{a * matri
 
 Segment Segment::operator*(const M4 &matrix) const { return Segment{a * matrix, b * matrix}; }
 
-// переделать
 double Plane::operator()(const Point &point) const {
   V3 product = V3{point.x, point.y, point.z} * N;
   return product.x + product.y + product.z + D;
@@ -58,7 +56,7 @@ double Plane::operator()(const Point &point) const {
 std::vector<Triangle> IntersectTriangleWithPlane(const Triangle &triangle, const Plane &plane) {
   std::vector<Point> inside_view_candidates;
   std::vector<Point> outside_view;
-  double eps = 0;
+  double eps = 1e-6;
   if (plane(triangle.a) >= eps) {
     inside_view_candidates.push_back(triangle.a);
   } else {
@@ -84,50 +82,38 @@ std::vector<Triangle> IntersectTriangleWithPlane(const Triangle &triangle, const
   if (inside_view_candidates.size() == 3) {
     return {triangle};
   }
+  // return {};
 
   if (inside_view_candidates.size() == 1) {
-    // inside[0] -> outside[0];
-    // inside[0] -> outside[1];
+
     Point intersect1 = IntersectSegmentWithPlane({inside_view_candidates[0], outside_view[0]}, plane).b;
     Point intersect2 = IntersectSegmentWithPlane({inside_view_candidates[0], outside_view[1]}, plane).b;
 
     return {Triangle{inside_view_candidates[0], intersect1, intersect2}};
   } else if (inside_view_candidates.size() == 2) {
-    // inside[0] -> outside[0];
-    // inside[1] -> outside[0];
+
     Point intersect1 = IntersectSegmentWithPlane({inside_view_candidates[0], outside_view[0]}, plane).b;
     Point intersect2 = IntersectSegmentWithPlane({inside_view_candidates[1], outside_view[0]}, plane).b;
 
-    // [inside[0] -> intersect1]
-    // [inside[0] -> intersect2]
-
-    // [inside[0] -> inside[1]]
-    // [intersect1 -> intersect2]
-
-    // {p1, f1,}
     Triangle first = {inside_view_candidates[0], intersect1, intersect2};
     Triangle second = {inside_view_candidates[0], inside_view_candidates[1], intersect2};
 
     return {first, second};
   }
-  // assert(false);
   return {};
 }
 
-/// @brief Возвращает отрезок пересечения. Первая точка отрезка - изначальная segment, вторая - лежит на пересечении
 Segment IntersectSegmentWithPlane(const Segment &segment, const Plane &plane) {
   Point first = segment.a;
   Point second = segment.b;
-  double eps = 0;
+  double eps = 1e-6;
   if (plane(first) >= eps && plane(second) >= eps) {
     return segment;
   }
 
-  if (plane(first) <= -eps) {
+  if (plane(first) < -eps) {
     std::swap(first, second);
   }
-  // first внутри
-  // second снаружи
 
   V3 p1 = {first.x, first.y, first.z};
   V3 p2 = {second.x, second.y, second.z};
@@ -175,7 +161,7 @@ int32_t ScreenTriangle::MinimumHeight() const { return std::min(a.y, std::min(b.
 int32_t ScreenTriangle::MaximumHeight() const { return std::max(a.y, std::max(b.y, c.y)); }
 
 namespace {
-ScreenPoint DiscretizePoint(const Point &point) { return ScreenPoint{.x = int32_t(std::floor(point.x)), .y = int32_t(std::floor(point.y)), .z = point.z, .color = point.color}; }
+ScreenPoint DiscretizePoint(const Point &point) { return ScreenPoint{.x = int32_t(std::ceil(point.x)), .y = int32_t(std::ceil(point.y)), .z = point.z, .color = point.color}; }
 
 } // namespace
 

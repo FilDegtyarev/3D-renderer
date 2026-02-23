@@ -34,13 +34,13 @@ Camera::Camera(HorizontalFOV horizontal_fov_, AspectRatio aspect_ratio_, NearPla
   planes.emplace_back(V3{0, 0, -1}, -near_plane_distance);
   planes.emplace_back(V3{0, 0, 1}, far_plane_distance);
 
-  double t1 = focal_length / sqrt(focal_length * focal_length + 1);
-  planes.emplace_back(V3{t1, 0, -t1}, 0);
-  planes.emplace_back(V3{-t1, 0, -t1}, 0);
+  double t1 = 1.0 / sqrt(focal_length * focal_length + 1);
+  planes.emplace_back(V3{focal_length * t1, 0, -t1}, 0);
+  planes.emplace_back(V3{-t1 * focal_length, 0, -t1}, 0);
 
-  double t2 = focal_length / sqrt(focal_length * focal_length + aspect_ratio * aspect_ratio);
-  planes.emplace_back(V3{0, t2, -t2}, 0);
-  planes.emplace_back(V3{0, -t2, -t2}, 0);
+  double t2 = 1.0 / sqrt(focal_length * focal_length + aspect_ratio * aspect_ratio);
+  planes.emplace_back(V3{0, t2 * focal_length, -t2 * aspect_ratio}, 0);
+  planes.emplace_back(V3{0, -t2 * focal_length, -t2 * aspect_ratio}, 0);
 }
 
 M4 Camera::GetFrustumMatrix() const {
@@ -69,28 +69,18 @@ M4 Camera::GetCameraMatrix() const {
   PutRow(2, w, first);
   first[3][3] = 1;
 
-  // КАЖЕТСЯ
   first = glm::transpose(first);
 
   M4 second = 1;
   second[0][3] = -eye_position.x;
   second[1][3] = -eye_position.y;
   second[2][3] = -eye_position.z;
-  // for (int i = 0; i < 4; ++i) {
-  //   for (int j = 0; j < 4; ++j) {
-  //     std::cout << second[i][j] << "\t";
-  //   }
-  //   std::cout << '\n';
-  // }
-  // std::cout << std::endl;
-  // КАЖЕСЯ12
   second = glm::transpose(second);
   return first * second;
 }
 
 void Camera::Move(char c) {
   if (c == 'w') {
-    // Вперед
     moving.toward = true;
   } else if (c == 's') {
     moving.backward = true;
@@ -99,24 +89,10 @@ void Camera::Move(char c) {
   } else if (c == 'd') {
     moving.right = true;
   }
-
-  // if (speed.x == 0 && direction.x != 0) {
-  //   // std::cout << "moving x" << std::endl;
-  //   speed.x = direction.x;
-  // } else if (speed.y == 0 && direction.y != 0) {
-  //   // std::cout << "moving y" << std::endl;
-  //   speed.y = direction.y;
-  // } else if (speed.z == 0 && direction.z != 0) {
-  //   // std::cout << "moving z" << std::endl;
-  //   speed.z = direction.z;
-  // }
-  // eye_position += direction;
-  // Tell(speed);
 }
 
 void Camera::StopMoving(char c) {
   if (c == 'w') {
-    // Вперед
     moving.toward = false;
   } else if (c == 's') {
     moving.backward = false;
@@ -125,18 +101,6 @@ void Camera::StopMoving(char c) {
   } else if (c == 'd') {
     moving.right = false;
   }
-
-  // if (speed.x != 0 && direction.x != 0) {
-  //   speed.x = 0;
-  //   // std::cout << "stop moving x" << std::endl;
-  // } else if (speed.y != 0 && direction.y != 0) {
-  //   // std::cout << "stop moving y" << std::endl;
-  //   speed.y = 0;
-  // } else if (speed.z != 0 && direction.z != 0) {
-  //   // std::cout << "stop moving z" << std::endl;
-  //   speed.z = 0;
-  // }
-  // Tell(speed);
 }
 
 void Camera::Rotate(char c) {
@@ -168,18 +132,14 @@ bool Camera::IsMoving() const { return moving.toward || moving.backward || movin
 bool Camera::IsRotating() const { return rotation.down || rotation.up || rotation.left || rotation.right; }
 
 namespace {
-M3 RotationMatrix(double angle) {
-  M3 result = 0;
+
+inline M2 RotationMatrix(double angle) {
+  M2 result = 0;
   double t = 3.1415926 / 180.0 * angle;
   result[0][0] = cos(t);
-  result[0][1] = 0;
-  result[0][2] = sin(t);
-  result[1][0] = 0;
-  result[1][1] = 1;
-  result[1][2] = 0;
-  result[2][0] = -sin(t);
-  result[2][1] = 0;
-  result[2][2] = cos(t);
+  result[1][1] = cos(t);
+  result[0][1] = sin(t);
+  result[1][0] = -sin(t);
   return glm::transpose(result);
 }
 
@@ -209,25 +169,68 @@ void Camera::UpdateView() {
 
     speed = speed / glm::length(speed) * float(speed_limit);
     eye_position += speed;
-    // std::cout << eye_position.x << " " << eye_position.y << " " << eye_position.z << std::endl;
   }
 
   if (IsRotating()) {
     double standart = 1;
     if (rotation.right) {
-      // Тихо
-      M3 r = RotationMatrix(-standart);
-      gaze_direction = r * gaze_direction;
+      V3 normal = glm::cross(view_up_direction, gaze_direction);
+      normal /= glm::length(normal);
+      float t = 3.1415926 / 180.0 * standart;
+      gaze_direction = cosf(t) * gaze_direction + -sinf(t) * normal;
     }
 
     if (rotation.left) {
-      M3 r = RotationMatrix(standart);
-      gaze_direction = r * gaze_direction;
+      V3 normal = glm::cross(view_up_direction, gaze_direction);
+      normal /= glm::length(normal);
+      float t = -3.1415926 / 180.0 * standart;
+      gaze_direction = cosf(t) * gaze_direction + -sinf(t) * normal;
+    }
+
+    if (rotation.up) {
+      float t = -3.1415926 / 180.0 * standart;
+      V3 view_copy = view_up_direction;
+      view_up_direction = -sinf(t) * gaze_direction + cosf(t) * view_copy;
+      gaze_direction = cosf(t) * gaze_direction + sinf(t) * view_copy;
+    }
+
+    if (rotation.down) {
+      float t = 3.1415926 / 180.0 * standart;
+      V3 view_copy = view_up_direction;
+      view_up_direction = -sinf(t) * gaze_direction + cosf(t) * view_copy;
+      gaze_direction = cosf(t) * gaze_direction + sinf(t) * view_copy;
     }
   }
 }
 
-std::vector<geometry::Triangle> Camera::ClipTriangle(const geometry::Triangle &triangle) const { return {triangle}; }
+void Camera::ResetPosition() {
+  eye_position = V3{0, 0, 0};
+  gaze_direction = V3{0, 0, -1};
+  view_up_direction = V3{0, 1, 0};
+  reset_position = true;
+}
+
+bool Camera::IsReset() const { return reset_position; }
+
+void Camera::ResetComplete() { reset_position = false; }
+
+std::vector<geometry::Triangle> Camera::ClipTriangle(const geometry::Triangle &triangle) const {
+  std::vector<geometry::Triangle> clipped = {};
+  std::vector<geometry::Triangle> buffer = {triangle};
+  for (const geometry::Plane &plane : planes) {
+    for (const geometry::Triangle &t : buffer) {
+      for (const geometry::Triangle &t_clipped : ClipTriangleWithPlane(t, plane)) {
+        clipped.push_back(t_clipped);
+      }
+    }
+    buffer = clipped;
+    clipped.clear();
+  }
+
+  return buffer;
+}
+
+std::vector<geometry::Triangle> Camera::ClipTriangleWithPlane(const geometry::Triangle &triangle, const geometry::Plane &plane) const { return geometry::IntersectTriangleWithPlane(triangle, plane); }
 
 std::vector<geometry::Segment> Camera::ClipSegment(const geometry::Segment &segment) const {
   // Пересечь со всеми плоскостями
@@ -249,6 +252,15 @@ std::vector<geometry::Segment> Camera::ClipSegmentWithPlane(const geometry::Segm
   }
 
   return {geometry::IntersectSegmentWithPlane(segment, plane)};
+}
+
+bool Camera::TestPoint(const geometry::Point &point) const {
+  double result = 0;
+  for (size_t i = 0; i < planes.size(); ++i) {
+    result = std::min(result, planes[i](point));
+  }
+
+  return true;
 }
 
 } // namespace camera

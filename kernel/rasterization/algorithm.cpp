@@ -6,9 +6,7 @@ namespace detail {
 
 namespace rasterization {
 
-std::vector<geometry::ScreenPoint>
-Bresenham(const geometry::ScreenPoint &start,
-          const geometry::ScreenPoint &finish) {
+std::vector<geometry::ScreenPoint> Bresenham(const geometry::ScreenPoint &start, const geometry::ScreenPoint &finish) {
   if (start.x > finish.x) {
     return Bresenham(finish, start);
   }
@@ -65,11 +63,9 @@ Bresenham(const geometry::ScreenPoint &start,
 
 namespace {
 const double EPS = 1e-9;
-double GetXShift(const geometry::ScreenPoint &first,
-                 const geometry::ScreenPoint &second) {
+double GetXShift(const geometry::ScreenPoint &first, const geometry::ScreenPoint &second) {
   double x_shift = 0;
-  if (geometry::GetLineStatus(first, second) ==
-      geometry::LineStatus::NonVertical) {
+  if (geometry::GetLineStatus(first, second) == geometry::LineStatus::NonVertical) {
     x_shift = geometry::GetTangentCoefficent(first, second);
   }
   return x_shift;
@@ -84,59 +80,70 @@ bool InTriangle(double x) {
 
 } // namespace
 
-std::vector<geometry::ScreenPoint>
-Scanline(const geometry::ScreenTriangle &triangle, int32_t height) {
+std::vector<geometry::ScreenPoint> Scanline(const geometry::ScreenTriangle &triangle, int32_t height) {
   // Shirley, 166
   geometry::ScreenTriangle sorted_triangle = triangle.SortedVertex();
+
   assert(sorted_triangle.a.y >= height && sorted_triangle.c.y <= height);
+
+  if (sorted_triangle.a.y == sorted_triangle.c.y) {
+    return {};
+  }
 
   double long_edge_x_shift = GetXShift(sorted_triangle.a, sorted_triangle.c);
   double x_left = 0;
   double x_right = 0;
 
   if (height >= sorted_triangle.b.y) {
-    double short_edge_x_shift = GetXShift(sorted_triangle.a, sorted_triangle.b);
-    double dy = sorted_triangle.a.y - height;
+    if (height == sorted_triangle.b.y && sorted_triangle.b.y == sorted_triangle.a.y) {
+      // Вырожденный случай
+      x_left = sorted_triangle.b.x;
+      x_right = sorted_triangle.a.x;
+    } else {
+      double short_edge_x_shift = GetXShift(sorted_triangle.a, sorted_triangle.b);
+      double dy = sorted_triangle.a.y - height;
 
-    x_left = double(sorted_triangle.a.x) - dy * long_edge_x_shift;
-    x_right = double(sorted_triangle.a.x) - dy * short_edge_x_shift;
+      x_left = double(sorted_triangle.a.x) - dy * long_edge_x_shift;
+      x_right = double(sorted_triangle.a.x) - dy * short_edge_x_shift;
+    }
+    if (x_left > x_right) {
+      std::swap(x_left, x_right);
+    }
+  } else if (height == sorted_triangle.c.y) {
+    x_left = double(sorted_triangle.c.x);
+    x_right = double(sorted_triangle.c.x);
+  } else {
+    if (height == sorted_triangle.b.y && sorted_triangle.b.y == sorted_triangle.c.y) {
+      x_left = sorted_triangle.b.x;
+      x_right = sorted_triangle.c.x;
+    } else {
+      double short_edge_x_shift = GetXShift(sorted_triangle.b, sorted_triangle.c);
+      double dy = sorted_triangle.b.y - height;
+      x_left = double(sorted_triangle.a.x) - (sorted_triangle.a.y - height) * long_edge_x_shift;
+      x_right = double(sorted_triangle.b.x) - dy * short_edge_x_shift;
+    }
 
     if (x_left > x_right) {
       std::swap(x_left, x_right);
     }
-
-  } else {
-    double short_edge_x_shift = GetXShift(sorted_triangle.b, sorted_triangle.c);
-    double dy = sorted_triangle.b.y - height;
-    x_left = double(sorted_triangle.a.x) -
-             (sorted_triangle.a.y - height) * long_edge_x_shift;
-    x_right = double(sorted_triangle.b.x) - dy * short_edge_x_shift;
-
-    if (x_left > x_right) {
-      std::swap(x_left, x_right);
-    }
   }
 
-  int32_t start;
-  int32_t finish;
-  if (!InTriangle(x_left)) {
-    if (start != INT32_MAX) {
-      start = int32_t(x_left) + 1;
-    }
-  } else {
-    start = int32_t(x_left);
-  }
+  int32_t start = int32_t(x_left);
+  int32_t finish = int32_t(x_right);
 
-  if (!InTriangle(x_right)) {
-    if (finish != 0) {
-      finish = int32_t(x_right) - 1;
-    }
-  } else {
-    finish = int32_t(x_right);
-  }
+  start = std::ceil(x_left);
+  finish = std::ceil(x_right) - 1;
 
   std::vector<geometry::ScreenPoint> segment;
-  for (size_t x = start; x <= finish; ++x) {
+  if (start > finish) {
+    std::swap(start, finish);
+  }
+
+  // Зверский костыль.
+  start = std::max(0, start);
+  finish = std::max(0, finish);
+
+  for (int32_t x = start; x <= finish; ++x) {
     geometry::ScreenPoint point;
     point.x = x;
     point.y = height;

@@ -32,10 +32,6 @@ std::vector<geometry::Segment> generateCubeSegments(double distance) {
   geometry::Point v7 = {1, 1, -distance - 1};
 
   return {{v0, v1}, {v1, v3}, {v2, v3}, {v0, v2}, {v4, v5}, {v5, v7}, {v7, v6}, {v4, v6}, {v0, v4}, {v1, v5}, {v3, v7}, {v2, v6}};
-
-  // {v4, v5}, {v5, v6}, {v6, v7}, {v7, v4},
-
-  // {v0, v4}, {v1, v5}, {v2, v6}, {v3, v7}};
 }
 
 M3 Eye() {
@@ -54,23 +50,15 @@ M3 Eye() {
 
 int main(int argc, char *argv[]) {
   srand(1329);
-
   QApplication app(argc, argv);
 
-  // QWidget window;
-  // window.setWindowTitle("Треугольники");
-
   std::unique_ptr<detail::screen::Screen> screen = std::make_unique<detail::screen::Screen>(detail::screen::Height(600), detail::screen::Width(800));
-  // screen->Connect(layout);
 
   std::unique_ptr<detail::world::LocalObject> local = detail::parser::Parse("/Users/filipp/Documents/Models/cat.obj");
 
   local->Normalize(1);
 
-  detail::world::GlobalObject cube(std::move(local), glm::vec3{0, 0, -1}, detail::Eye());
-
-  // double shift = 10; // std::stod(argv[1]);
-  // cube += glm::vec3{0, 0, -shift};
+  detail::world::GlobalObject cube(std::move(local), glm::vec3{0, 0, -10}, detail::Eye());
 
   detail::world::WorldBuilder world_builder;
   world_builder.AddObject(std::move(cube));
@@ -81,7 +69,6 @@ int main(int argc, char *argv[]) {
 
   std::unique_ptr<detail::renderer::Renderer> renderer = std::make_unique<detail::renderer::Renderer>(ScreenHeight{600}, ScreenWidth{800});
 
-  // window.show();
   Application r_app(std::move(world), std::move(camera), std::move(screen), std::move(renderer));
 
   r_app.show();

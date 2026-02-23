@@ -35,8 +35,10 @@ char DefineKey(int button) {
     c = 'l';
   } else if (button == Qt::Key_I) {
     c = 'i';
+  } else if (button == Qt::Key_Space) {
+    c = ' ';
   } else {
-    c = '0';
+    c = 0;
   }
   return c;
 }
@@ -57,6 +59,7 @@ inline bool IsMovePressed(char c) { return c == 'w' || c == 'a' || c == 's' || c
 
 inline bool IsRotationPressed(char c) { return c == 'i' || c == 'j' || c == 'k' || c == 'l'; }
 
+inline bool IsResetPressed(char c) { return c == ' '; }
 } // namespace
 
 void ApplicationImpl::ButtonPressed(int button) {
@@ -64,24 +67,19 @@ void ApplicationImpl::ButtonPressed(int button) {
   if (IsMovePressed(c)) {
     camera->Move(c);
   } else if (IsRotationPressed(c)) {
-    // std::cout << "rotation" << std::endl;
     camera->Rotate(c);
+  } else if (IsResetPressed(c)) {
+    camera->ResetPosition();
   }
-  // std::cout << "Button " << c << " pressed" << std::endl;
 }
 
 void ApplicationImpl::ButtonReleased(int button) {
   char c = DefineKey(button);
   if (IsMovePressed(c)) {
     camera->StopMoving(c);
-    // std::cout << "Stop moving " << c << std::endl;
   } else if (IsRotationPressed(c)) {
-    // std::cout << "rotation" << std::endl;
     camera->StopRotating(c);
   }
-  // std::cout << "Button " << c << " released" << std::endl;
-  //   V3 speed = 0.25f * Speed(c);
-  //   camera->Stop(speed);
 }
 
 namespace {
@@ -96,35 +94,20 @@ inline M4 GenerateShiftMatrix(const V3 &shift) {
 } // namespace
 
 void ApplicationImpl::UpdateScreen(bool force) {
-  //   bool new_frame = false;
-  //   if (camera->IsMoving() || force) {
-  //     world->AddTransformation(GenerateShiftMatrix(-camera->Speed()));
-  //     new_frame = true;
-  //     // screen->Update(renderer->Render(world, camera));
-  //   }
 
-  //   if (camera->IsRotating() || force) {
-  //     world->AddTransformation(camera->GetCameraMatrix());
-  //     // world->Transform(camera->GetCameraMatrix());
-  //     new_frame = true;
-  //   }
-
-  if (camera->IsMoving() || camera->IsRotating() || force) {
+  if (camera->IsMoving() || camera->IsRotating() || camera->IsReset() || force) {
+    if (camera->IsReset()) {
+      camera->ResetComplete();
+    }
     camera->UpdateView();
     screen->Update(renderer->Render(world, camera));
   }
-
-  //   if (new_frame || force) {
-  //     screen->Update(renderer->Render(world, camera));
-  //   }
-
-  // screen->Update(renderer->Render(world, camera));
 }
 
 void ApplicationImpl::ConnectScreen(QVBoxLayout *layout) { screen->Connect(layout); }
 } // namespace detail
 
-static double FPS = 30;
+static double FPS = 120;
 Application::Application(std::unique_ptr<detail::world::World> &&world, std::unique_ptr<detail::camera::Camera> &&camera, std::unique_ptr<detail::screen::Screen> &&screen,
                          std::unique_ptr<detail::renderer::Renderer> &&renderer)
     : QWidget(nullptr) {
@@ -152,7 +135,6 @@ void Application::keyReleaseEvent(QKeyEvent *event) {
 }
 
 void Application::SceneTimer() {
-  // qDebug() << "Scene timer\n";
   timer->start(1000.0 / FPS);
   UpdateScreen();
 }

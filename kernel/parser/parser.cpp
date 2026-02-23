@@ -70,10 +70,7 @@ std::unique_ptr<world::LocalObject> Parse(const std::string &filename) {
         int32_t a = std::stoi(result[0]) - 1;
         int32_t b = std::stoi(result[1]) - 1;
         int32_t c = std::stoi(result[2]) - 1;
-
-        builder.AddSegment({a, b});
-        builder.AddSegment({a, c});
-        builder.AddSegment({b, c});
+        builder.AddTriangle({a, b, c});
       }
     }
   }

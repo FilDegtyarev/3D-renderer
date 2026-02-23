@@ -17,7 +17,6 @@ public:
   void Move(char c);
   void StopMoving(char c);
 
-  // Костыль
   void Rotate(char c);
   void StopRotating(char c);
 
@@ -25,9 +24,14 @@ public:
   bool IsRotating() const;
 
   void UpdateView();
+  void ResetPosition();
+  bool IsReset() const;
 
+  void ResetComplete();
   std::vector<geometry::Triangle> ClipTriangle(const geometry::Triangle &triangle) const;
   std::vector<geometry::Segment> ClipSegment(const geometry::Segment &segment) const;
+
+  bool TestPoint(const geometry::Point &point) const;
 
 private:
   struct Rotation {
@@ -67,6 +71,7 @@ private:
 
   Rotation rotation;
   Moving moving;
+  bool reset_position;
   std::vector<geometry::Plane> planes;
 };
 

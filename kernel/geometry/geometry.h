@@ -19,6 +19,8 @@ struct Point {
 
   void Scale(const double &coef);
   Point operator*(const M4 &matrix) const;
+
+  bool operator==(const Point &other) const = default;
 };
 
 struct Triangle {
@@ -43,8 +45,7 @@ struct Plane {
   double operator()(const Point &point) const;
 };
 
-std::vector<Triangle> IntersectTriangleWithPlane(const Triangle &triangle,
-                                                 const Plane &plane);
+std::vector<Triangle> IntersectTriangleWithPlane(const Triangle &triangle, const Plane &plane);
 
 // Какой отрезок получится, если пересечь с плоскостью?
 Segment IntersectSegmentWithPlane(const Segment &segment, const Plane &plane);
@@ -70,8 +71,7 @@ enum LineStatus { Vertical, NonVertical };
 
 LineStatus GetLineStatus(const ScreenPoint &first, const ScreenPoint &second);
 
-double GetTangentCoefficent(const ScreenPoint &first,
-                            const ScreenPoint &second);
+double GetTangentCoefficent(const ScreenPoint &first, const ScreenPoint &second);
 
 struct ScreenTriangle {
   ScreenPoint a;
@@ -87,10 +87,8 @@ ScreenSegment DiscretizeSegment(const Segment &segment);
 
 ScreenTriangle DiscretizeTriangle(const Triangle &triangle);
 
-M4 GetFrustumMatrix(HorizontalFOV horizontal_fov, AspectRatio aspect_ratio,
-                    NearPlaneDistance near_plane_distance,
-                    RenderDistance render_distance, RightEdgeX r, LeftEdgeX l,
-                    TopEdgeY t, BottomEdgeY b);
+M4 GetFrustumMatrix(HorizontalFOV horizontal_fov, AspectRatio aspect_ratio, NearPlaneDistance near_plane_distance, RenderDistance render_distance, RightEdgeX r, LeftEdgeX l, TopEdgeY t,
+                    BottomEdgeY b);
 
 } // namespace geometry
 

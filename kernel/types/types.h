@@ -28,6 +28,7 @@ using LeftEdgeX = Type<double, class left_edge_x_proxy>;
 using TopEdgeY = Type<double, class top_edge_y_proxy>;
 using BottomEdgeY = Type<double, class bottom_edge_y_proxy>;
 
+using M2 = glm::mat2x2;
 using M3 = glm::mat3x3;
 using M4 = glm::mat4x4;
 using V4 = glm::vec4;

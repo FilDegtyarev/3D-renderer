@@ -14,7 +14,6 @@ const int32_t SIZE = 500;
 namespace {
 bool InBuffer(const geometry::ScreenPoint &point, const ZBuffer &zbuffer) {
   if (point.x < 0 || point.x >= zbuffer[0].size() || point.y < 0 || point.y >= zbuffer.size()) {
-    assert(false);
     return false;
   }
   return true;
@@ -26,12 +25,10 @@ void DrawSegment(const geometry::Segment &segment_, ZBuffer &zbuffer) {
   geometry::ScreenSegment segment = geometry::DiscretizeSegment(segment_);
   geometry::ScreenPoint from = segment.a;
   geometry::ScreenPoint to = segment.b;
-  // std::cout << from.x << "  " << to.x << std::endl;
 
   std::vector<detail::geometry::ScreenPoint> line = detail::rasterization::Bresenham(from, to);
 
   for (const auto &pixel : line) {
-    // std::cout << pixel.y << " " << pixel.x << std::endl;
     if (!InBuffer(pixel, zbuffer)) {
       continue;
     }
@@ -55,10 +52,9 @@ void DrawTriangle(const geometry::Triangle &triangle, ZBuffer &zbuffer) {
       if (!InBuffer(pixel, zbuffer)) {
         continue;
       }
-
-      if (pixel.z < zbuffer.at(pixel.y).at(pixel.x).z) {
+      if (pixel.z < zbuffer[pixel.y][pixel.x].z) {
         zbuffer[pixel.y][pixel.x].z = pixel.z;
-        zbuffer[pixel.y][pixel.x].color = {255, 255, 255};
+        zbuffer[pixel.y][pixel.x].color = {uint8_t(rand() % 256), uint8_t(rand() % 256), uint8_t(rand() % 256)};
       }
     }
   }

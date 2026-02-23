@@ -19,7 +19,7 @@ public:
 private:
   void ClearZBuffer();
   void RenderGlobalObject(const world::GlobalObject &object, const M4 &frustum_matrix, const M4 &camera_matrix, const std::unique_ptr<camera::Camera> &camera);
-  void RenderTriangle(const geometry::Triangle &triangle, const M4 &frustum_matrix, const M4 &camera_matrix);
+  void RenderTriangle(const geometry::Triangle &triangle, const M4 &frustum_matrix, const M4 &camera_matrix, const std::unique_ptr<camera::Camera> &camera);
   void RenderSegment(const geometry::Segment &segment, const M4 &frustum_matrix, const M4 &camera_matrix, const std::unique_ptr<camera::Camera> &camera);
 
   inline void ViewTransform(geometry::Point &point) {
