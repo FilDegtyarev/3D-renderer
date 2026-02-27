@@ -45,6 +45,16 @@ struct Plane {
   double operator()(const Point &point) const;
 };
 
+struct TriangleIntersected {
+  TriangleIntersected();
+
+  void Append(const Triangle &triangle);
+  void Clear();
+
+  Triangle triangles[64];
+  int32_t size;
+};
+
 std::vector<Triangle> IntersectTriangleWithPlane(const Triangle &triangle, const Plane &plane);
 
 // Какой отрезок получится, если пересечь с плоскостью?
@@ -87,8 +97,9 @@ ScreenSegment DiscretizeSegment(const Segment &segment);
 
 ScreenTriangle DiscretizeTriangle(const Triangle &triangle);
 
-M4 GetFrustumMatrix(HorizontalFOV horizontal_fov, AspectRatio aspect_ratio, NearPlaneDistance near_plane_distance, RenderDistance render_distance, RightEdgeX r, LeftEdgeX l, TopEdgeY t,
-                    BottomEdgeY b);
+M4 GetFrustumMatrix(HorizontalFOV horizontal_fov, AspectRatio aspect_ratio,
+                    NearPlaneDistance near_plane_distance, RenderDistance render_distance,
+                    RightEdgeX r, LeftEdgeX l, TopEdgeY t, BottomEdgeY b);
 
 } // namespace geometry
 

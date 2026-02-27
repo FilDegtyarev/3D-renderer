@@ -14,15 +14,24 @@ class Screen {
 public:
   Screen(Height h, Width w);
 
+  int32_t GetScanlineCapacity() const;
+
+  int32_t GetHeight() const;
+  int32_t GetWidth() const;
+
   void Connect(QVBoxLayout *layout);
-  void Update(const std::vector<std::vector<Color>> &image);
+  void Update();
 
   double GetAspectRatio() const;
+
+  std::vector<QRgb> &GetFlatScreen();
 
 private:
   int32_t height;
   int32_t width;
   std::unique_ptr<QLabel> screen;
+  std::vector<QRgb> flat_screen;
 };
+
 } // namespace screen
 } // namespace detail

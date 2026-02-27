@@ -13,28 +13,17 @@ namespace world {
 
 class GlobalObject {
 public:
-  GlobalObject(std::unique_ptr<LocalObject> &&local_object_, const glm::vec3 &shift, const glm::mat3x3 &transform);
+  GlobalObject(LocalObject &&local_object_, const glm::vec3 &shift, const glm::mat3x3 &transform);
 
   std::vector<geometry::Triangle> GetTriangles() const;
   std::vector<geometry::Segment> GetSegments() const;
 
 private:
-  std::unique_ptr<LocalObject> local_object;
+  LocalObject local_object;
   M4 transform;
 };
 
-class World;
-
-class WorldBuilder {
-public:
-  WorldBuilder();
-
-  void AddObject(GlobalObject &&object);
-  std::unique_ptr<World> Extract();
-
-private:
-  std::unique_ptr<World> world;
-};
+class WorldBuilder;
 
 class World {
   friend WorldBuilder;
@@ -42,10 +31,24 @@ class World {
 public:
   const std::vector<GlobalObject> &GetObjects() const;
 
+  int32_t GetTrianglesCapacity() const;
+  int32_t GetSegmentCapacity() const;
+
 private:
   World() = default;
   std::vector<GlobalObject> objects;
   M4 current_transformation;
+};
+
+class WorldBuilder {
+public:
+  WorldBuilder();
+
+  void AddObject(GlobalObject &&object);
+  World Extract();
+
+private:
+  World world;
 };
 
 } // namespace world

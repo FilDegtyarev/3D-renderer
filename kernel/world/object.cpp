@@ -17,49 +17,27 @@ void LocalObject::Normalize(double scale) {
   }
 }
 
-geometry::Triangle
-LocalObject::GetTriangle(const TriangleKeeper &triangle) const {
-  return geometry::Triangle{vertexes[triangle.first_index],
-                            vertexes[triangle.second_index],
-                            vertexes[triangle.third_index]};
+geometry::Triangle LocalObject::GetTriangle(const TriangleKeeper &triangle) const {
+  return geometry::Triangle{vertexes[triangle.first_index], vertexes[triangle.second_index], vertexes[triangle.third_index]};
 }
 
-geometry::Segment LocalObject::GetSegment(const SegmentKeeper &keeper) const {
-  return geometry::Segment{vertexes[keeper.first_index],
-                           vertexes[keeper.second_index]};
-}
+geometry::Segment LocalObject::GetSegment(const SegmentKeeper &keeper) const { return geometry::Segment{vertexes[keeper.first_index], vertexes[keeper.second_index]}; }
 
-const LocalObject::Vertexes &LocalObject::GetVertexes() const {
-  return vertexes;
-}
+const LocalObject::Vertexes &LocalObject::GetVertexes() const { return vertexes; }
 
-const LocalObject::Triangles &LocalObject::GetTriangles() const {
-  return triangles;
-}
+const LocalObject::Triangles &LocalObject::GetTriangles() const { return triangles; }
 
-const LocalObject::Segments &LocalObject::GetSegments() const {
-  return segments;
-}
+const LocalObject::Segments &LocalObject::GetSegments() const { return segments; }
 
-LocalObjectBuilder::LocalObjectBuilder() {
-  local_object = std::make_unique<LocalObject>(LocalObject());
-};
+LocalObjectBuilder::LocalObjectBuilder() : local_object() {};
 
-void LocalObjectBuilder::AddVertex(const geometry::Point &point) {
-  local_object->vertexes.push_back(point);
-}
+void LocalObjectBuilder::AddVertex(const geometry::Point &point) { local_object.vertexes.push_back(point); }
 
-void LocalObjectBuilder::AddTriangle(const TriangleKeeper &triangle) {
-  local_object->triangles.push_back(triangle);
-}
+void LocalObjectBuilder::AddTriangle(const TriangleKeeper &triangle) { local_object.triangles.push_back(triangle); }
 
-void LocalObjectBuilder::AddSegment(const SegmentKeeper &segment) {
-  local_object->segments.push_back(segment);
-}
+void LocalObjectBuilder::AddSegment(const SegmentKeeper &segment) { local_object.segments.push_back(segment); }
 
-std::unique_ptr<LocalObject> &&LocalObjectBuilder::Extract() {
-  return std::move(local_object);
-}
+LocalObject LocalObjectBuilder::Extract() { return std::move(local_object); }
 
 } // namespace world
 } // namespace detail

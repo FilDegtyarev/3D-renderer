@@ -1,4 +1,4 @@
-#include "geometry.h"
+#include "geometry/geometry.h"
 #include "types/types.h"
 #include <algorithm>
 #include <cmath>
@@ -19,12 +19,16 @@ inline bool IsHigher(const ScreenPoint &left, const ScreenPoint &right) {
 }
 
 struct HeightComparator {
-  bool operator()(const ScreenPoint &left, const ScreenPoint &right) { return IsHigher(left, right); }
+  bool operator()(const ScreenPoint &left, const ScreenPoint &right) {
+    return IsHigher(left, right);
+  }
 };
 
 } // namespace
 
-Point Point::operator+(const V3 &vector) const { return Point{x + vector.x, y + vector.y, z + vector.z, w, color}; }
+Point Point::operator+(const V3 &vector) const {
+  return Point{x + vector.x, y + vector.y, z + vector.z, w, color};
+}
 
 Point Point::operator+=(const V3 &vector) {
   *this = *this + vector;
@@ -44,7 +48,9 @@ Point Point::operator*(const M4 &matrix) const {
   return Point{vector.x, vector.y, vector.z, vector.w, color};
 }
 
-Triangle Triangle::operator*(const M4 &matrix) const { return Triangle{a * matrix, b * matrix, c * matrix}; }
+Triangle Triangle::operator*(const M4 &matrix) const {
+  return Triangle{a * matrix, b * matrix, c * matrix};
+}
 
 Segment Segment::operator*(const M4 &matrix) const { return Segment{a * matrix, b * matrix}; }
 
@@ -53,26 +59,46 @@ double Plane::operator()(const Point &point) const {
   return product.x + product.y + product.z + D;
 }
 
+TriangleIntersected::TriangleIntersected() : size(0) {};
+void TriangleIntersected::Append(const Triangle &triangle) { triangles[size++] = triangle; }
+void TriangleIntersected::Clear() { size = 0; }
+
 std::vector<Triangle> IntersectTriangleWithPlane(const Triangle &triangle, const Plane &plane) {
   std::vector<Point> inside_view_candidates;
   std::vector<Point> outside_view;
+  std::vector<Point> qu;
+
   double eps = 1e-6;
+  qu.push_back(triangle.a);
   if (plane(triangle.a) >= eps) {
+    qu.push_back(triangle.a);
+    qu.push_back(triangle.b);
     inside_view_candidates.push_back(triangle.a);
   } else {
+    qu.push_back(triangle.a);
+    qu.push_back(triangle.b);
     outside_view.push_back(triangle.a);
   }
 
   if (plane(triangle.b) >= eps) {
+    qu.push_back(triangle.a);
+    qu.push_back(triangle.b);
     inside_view_candidates.push_back(triangle.b);
   } else {
+
     outside_view.push_back(triangle.b);
   }
 
   if (plane(triangle.c) >= eps) {
+    qu.push_back(triangle.a);
+    qu.push_back(triangle.b);
     inside_view_candidates.push_back(triangle.c);
   } else {
     outside_view.push_back(triangle.c);
+  }
+
+  if (qu.size() == 50) {
+    exit(666);
   }
 
   if (inside_view_candidates.empty()) {
@@ -86,14 +112,18 @@ std::vector<Triangle> IntersectTriangleWithPlane(const Triangle &triangle, const
 
   if (inside_view_candidates.size() == 1) {
 
-    Point intersect1 = IntersectSegmentWithPlane({inside_view_candidates[0], outside_view[0]}, plane).b;
-    Point intersect2 = IntersectSegmentWithPlane({inside_view_candidates[0], outside_view[1]}, plane).b;
+    Point intersect1 =
+        IntersectSegmentWithPlane({inside_view_candidates[0], outside_view[0]}, plane).b;
+    Point intersect2 =
+        IntersectSegmentWithPlane({inside_view_candidates[0], outside_view[1]}, plane).b;
 
     return {Triangle{inside_view_candidates[0], intersect1, intersect2}};
   } else if (inside_view_candidates.size() == 2) {
 
-    Point intersect1 = IntersectSegmentWithPlane({inside_view_candidates[0], outside_view[0]}, plane).b;
-    Point intersect2 = IntersectSegmentWithPlane({inside_view_candidates[1], outside_view[0]}, plane).b;
+    Point intersect1 =
+        IntersectSegmentWithPlane({inside_view_candidates[0], outside_view[0]}, plane).b;
+    Point intersect2 =
+        IntersectSegmentWithPlane({inside_view_candidates[1], outside_view[0]}, plane).b;
 
     Triangle first = {inside_view_candidates[0], intersect1, intersect2};
     Triangle second = {inside_view_candidates[0], inside_view_candidates[1], intersect2};
@@ -120,8 +150,8 @@ Segment IntersectSegmentWithPlane(const Segment &segment, const Plane &plane) {
   auto penis = (glm::dot(plane.N, p1) + plane.D) * -1.0f / glm::dot(plane.N, p2 - p1);
   V3 intersection = p1 + (p2 - p1) * float(penis);
 
-  // ТУТ ПОМОГИТЕ КТО НИБУДЬ НУЖНО ЦВЕТ ДРУГОЙ ААААААА
-  return {first, Point{intersection.x, intersection.y, intersection.z, .w = second.w, .color = second.color}};
+  return {first, Point{intersection.x, intersection.y, intersection.z, .w = second.w,
+                       .color = second.color}};
 }
 
 V4 SwitchToProjective(const Point &point) {
@@ -161,16 +191,28 @@ int32_t ScreenTriangle::MinimumHeight() const { return std::min(a.y, std::min(b.
 int32_t ScreenTriangle::MaximumHeight() const { return std::max(a.y, std::max(b.y, c.y)); }
 
 namespace {
-ScreenPoint DiscretizePoint(const Point &point) { return ScreenPoint{.x = int32_t(std::ceil(point.x)), .y = int32_t(std::ceil(point.y)), .z = point.z, .color = point.color}; }
+ScreenPoint DiscretizePoint(const Point &point) {
+  return ScreenPoint{.x = int32_t(std::ceil(point.x)),
+                     .y = int32_t(std::ceil(point.y)),
+                     .z = point.z,
+                     .color = point.color};
+}
 
 } // namespace
 
-ScreenSegment DiscretizeSegment(const Segment &segment) { return ScreenSegment{.a = DiscretizePoint(segment.a), .b = DiscretizePoint(segment.b)}; }
+ScreenSegment DiscretizeSegment(const Segment &segment) {
+  return ScreenSegment{.a = DiscretizePoint(segment.a), .b = DiscretizePoint(segment.b)};
+}
 
-ScreenTriangle DiscretizeTriangle(const Triangle &triangle) { return ScreenTriangle{.a = DiscretizePoint(triangle.a), .b = DiscretizePoint(triangle.b), .c = DiscretizePoint(triangle.c)}; }
+ScreenTriangle DiscretizeTriangle(const Triangle &triangle) {
+  return ScreenTriangle{.a = DiscretizePoint(triangle.a),
+                        .b = DiscretizePoint(triangle.b),
+                        .c = DiscretizePoint(triangle.c)};
+}
 
-M4 GetFrustumMatrix(HorizontalFOV horizontal_fov, AspectRatio aspect_ratio, NearPlaneDistance near_plane_distance, RenderDistance render_distance, RightEdgeX r, LeftEdgeX l, TopEdgeY t,
-                    BottomEdgeY b) {
+M4 GetFrustumMatrix(HorizontalFOV horizontal_fov, AspectRatio aspect_ratio,
+                    NearPlaneDistance near_plane_distance, RenderDistance render_distance,
+                    RightEdgeX r, LeftEdgeX l, TopEdgeY t, BottomEdgeY b) {
   M4 matrix;
 
   matrix[0][0] = 2.0 * near_plane_distance() / (r() - l());
@@ -185,8 +227,10 @@ M4 GetFrustumMatrix(HorizontalFOV horizontal_fov, AspectRatio aspect_ratio, Near
 
   matrix[2][0] = 0;
   matrix[2][1] = 0;
-  matrix[2][2] = -(render_distance() + near_plane_distance()) / (render_distance() - near_plane_distance());
-  matrix[2][3] = -2.0 * near_plane_distance() * render_distance() / (render_distance() - near_plane_distance());
+  matrix[2][2] =
+      -(render_distance() + near_plane_distance()) / (render_distance() - near_plane_distance());
+  matrix[2][3] = -2.0 * near_plane_distance() * render_distance() /
+                 (render_distance() - near_plane_distance());
 
   matrix[3][0] = 0;
   matrix[3][1] = 0;

@@ -4,7 +4,8 @@
 namespace detail {
 namespace camera {
 
-Camera::Camera(HorizontalFOV horizontal_fov_, AspectRatio aspect_ratio_, NearPlaneDistance near_plane_distance_, RenderDistance render_distance) {
+Camera::Camera(HorizontalFOV horizontal_fov_, AspectRatio aspect_ratio_,
+               NearPlaneDistance near_plane_distance_, RenderDistance render_distance) {
 
   horizontal_fov = horizontal_fov_();
   focal_length = 1.0 / tan((3.1415926 / 180.0) * horizontal_fov / 2.0);
@@ -44,8 +45,11 @@ Camera::Camera(HorizontalFOV horizontal_fov_, AspectRatio aspect_ratio_, NearPla
 }
 
 M4 Camera::GetFrustumMatrix() const {
-  return geometry::GetFrustumMatrix(HorizontalFOV(horizontal_fov), AspectRatio(aspect_ratio), NearPlaneDistance{near_plane_distance}, RenderDistance(far_plane_distance),
-                                    RightEdgeX(near_plane_x_right), LeftEdgeX(near_plane_x_left), TopEdgeY(near_plane_y_top), BottomEdgeY(near_plane_y_bottom));
+  return geometry::GetFrustumMatrix(HorizontalFOV(horizontal_fov), AspectRatio(aspect_ratio),
+                                    NearPlaneDistance{near_plane_distance},
+                                    RenderDistance(far_plane_distance),
+                                    RightEdgeX(near_plane_x_right), LeftEdgeX(near_plane_x_left),
+                                    TopEdgeY(near_plane_y_top), BottomEdgeY(near_plane_y_bottom));
 }
 
 namespace {
@@ -127,9 +131,13 @@ void Camera::StopRotating(char c) {
   }
 }
 
-bool Camera::IsMoving() const { return moving.toward || moving.backward || moving.left || moving.right; }
+bool Camera::IsMoving() const {
+  return moving.toward || moving.backward || moving.left || moving.right;
+}
 
-bool Camera::IsRotating() const { return rotation.down || rotation.up || rotation.left || rotation.right; }
+bool Camera::IsRotating() const {
+  return rotation.down || rotation.up || rotation.left || rotation.right;
+}
 
 namespace {
 
@@ -155,9 +163,11 @@ void Camera::UpdateView() {
     }
 
     if (moving.left == true) {
-      speed -= glm::cross(gaze_direction, view_up_direction) / glm::length(glm::cross(gaze_direction, view_up_direction));
+      speed -= glm::cross(gaze_direction, view_up_direction) /
+               glm::length(glm::cross(gaze_direction, view_up_direction));
     } else if (moving.right == true) {
-      speed += glm::cross(gaze_direction, view_up_direction) / glm::length(glm::cross(gaze_direction, view_up_direction));
+      speed += glm::cross(gaze_direction, view_up_direction) /
+               glm::length(glm::cross(gaze_direction, view_up_direction));
     }
     if (speed == V3{0, 0, 0}) {
       return;
@@ -230,7 +240,10 @@ std::vector<geometry::Triangle> Camera::ClipTriangle(const geometry::Triangle &t
   return buffer;
 }
 
-std::vector<geometry::Triangle> Camera::ClipTriangleWithPlane(const geometry::Triangle &triangle, const geometry::Plane &plane) const { return geometry::IntersectTriangleWithPlane(triangle, plane); }
+std::vector<geometry::Triangle> Camera::ClipTriangleWithPlane(const geometry::Triangle &triangle,
+                                                              const geometry::Plane &plane) const {
+  return geometry::IntersectTriangleWithPlane(triangle, plane);
+}
 
 std::vector<geometry::Segment> Camera::ClipSegment(const geometry::Segment &segment) const {
   // Пересечь со всеми плоскостями
@@ -245,7 +258,8 @@ std::vector<geometry::Segment> Camera::ClipSegment(const geometry::Segment &segm
   return {result};
 }
 
-std::vector<geometry::Segment> Camera::ClipSegmentWithPlane(const geometry::Segment &segment, const geometry::Plane &plane) const {
+std::vector<geometry::Segment> Camera::ClipSegmentWithPlane(const geometry::Segment &segment,
+                                                            const geometry::Plane &plane) const {
   double eps = 0;
   if (plane(segment.a) < -eps && plane(segment.b) < -eps) {
     return {};

@@ -80,14 +80,14 @@ bool InTriangle(double x) {
 
 } // namespace
 
-std::vector<geometry::ScreenPoint> Scanline(const geometry::ScreenTriangle &triangle, int32_t height) {
+void Scanline(const geometry::ScreenTriangle &triangle, int32_t height, std::vector<geometry::ScreenPoint> &scanline_buffer) {
   // Shirley, 166
   geometry::ScreenTriangle sorted_triangle = triangle.SortedVertex();
 
   assert(sorted_triangle.a.y >= height && sorted_triangle.c.y <= height);
 
   if (sorted_triangle.a.y == sorted_triangle.c.y) {
-    return {};
+    return;
   }
 
   double long_edge_x_shift = GetXShift(sorted_triangle.a, sorted_triangle.c);
@@ -134,7 +134,7 @@ std::vector<geometry::ScreenPoint> Scanline(const geometry::ScreenTriangle &tria
   start = std::ceil(x_left);
   finish = std::ceil(x_right) - 1;
 
-  std::vector<geometry::ScreenPoint> segment;
+  // std::vector<geometry::ScreenPoint> segment;
   if (start > finish) {
     std::swap(start, finish);
   }
@@ -149,10 +149,11 @@ std::vector<geometry::ScreenPoint> Scanline(const geometry::ScreenTriangle &tria
     point.y = height;
 
     point.color = Color{.red = 255, .green = 51, .blue = 153};
-    segment.push_back(point);
+    scanline_buffer.push_back(point);
+    // segment.push_back(point);
   }
 
-  return segment;
+  // return segment;
 }
 
 } // namespace rasterization

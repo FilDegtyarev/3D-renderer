@@ -2,6 +2,7 @@
 #include "rasterization/algorithm.h"
 #include "screen/screen.h"
 #include "types/types.h"
+#include <cassert>
 #include <iostream>
 #include <qpoint.h>
 #include <qrgb.h>
@@ -42,13 +43,15 @@ void DrawSegment(const geometry::Segment &segment_, ZBuffer &zbuffer) {
   }
 }
 
-void DrawTriangle(const geometry::Triangle &triangle, ZBuffer &zbuffer) {
+void DrawTriangle(const geometry::Triangle &triangle, ZBuffer &zbuffer, std::vector<geometry::ScreenPoint> &scanline_buffer) {
+  assert(scanline_buffer.empty());
   geometry::ScreenTriangle screen_triangle = geometry::DiscretizeTriangle(triangle);
 
   for (size_t height = screen_triangle.MinimumHeight(); height <= screen_triangle.MaximumHeight(); ++height) {
-    std::vector<geometry::ScreenPoint> scanline = rasterization::Scanline(screen_triangle, height);
+    // std::vector<geometry::ScreenPoint> scanline =
+    rasterization::Scanline(screen_triangle, height, scanline_buffer);
 
-    for (const auto &pixel : scanline) {
+    for (const auto &pixel : scanline_buffer) {
       if (!InBuffer(pixel, zbuffer)) {
         continue;
       }

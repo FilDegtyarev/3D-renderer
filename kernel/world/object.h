@@ -53,10 +53,10 @@ public:
   void AddTriangle(const TriangleKeeper &triangle);
   void AddSegment(const SegmentKeeper &segment);
 
-  std::unique_ptr<LocalObject> &&Extract();
+  LocalObject Extract();
 
 private:
-  std::unique_ptr<LocalObject> local_object;
+  LocalObject local_object;
 };
 
 } // namespace world

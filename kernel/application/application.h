@@ -1,6 +1,7 @@
 #pragma once
 #include "QWidget"
 #include "camera/camera.h"
+#include "concurrency/concurrency.h"
 #include "renderer/renderer.h"
 #include "screen/screen.h"
 #include "world/world.h"
@@ -13,7 +14,8 @@ namespace detail {
 
 class ApplicationImpl {
 public:
-  ApplicationImpl(std::unique_ptr<world::World> &&world_, std::unique_ptr<camera::Camera> &&camera_, std::unique_ptr<screen::Screen> &&screen_, std::unique_ptr<renderer::Renderer> &&renderer_);
+  ApplicationImpl(int32_t threads_count, world::World &&world_, camera::Camera &&camera_,
+                  screen::Screen &&screen_);
 
   void ButtonPressed(int button);
   void ButtonReleased(int button);
@@ -21,11 +23,14 @@ public:
   void UpdateScreen(bool force = false);
   void ConnectScreen(QVBoxLayout *layout);
 
+  void NextFrame();
+
 private:
-  std::unique_ptr<world::World> world;
-  std::unique_ptr<camera::Camera> camera;
-  std::unique_ptr<screen::Screen> screen;
-  std::unique_ptr<renderer::Renderer> renderer;
+  int32_t threads_count;
+  world::World world;
+  camera::Camera camera;
+  screen::Screen screen;
+  renderer::Renderer renderer;
 };
 
 } // namespace detail
@@ -33,8 +38,8 @@ private:
 class Application : public QWidget {
   Q_OBJECT
 public:
-  Application(std::unique_ptr<detail::world::World> &&world, std::unique_ptr<detail::camera::Camera> &&camera, std::unique_ptr<detail::screen::Screen> &&screen,
-              std::unique_ptr<detail::renderer::Renderer> &&renderer);
+  Application(int32_t threads_count, detail::world::World &&world, detail::camera::Camera &&camera,
+              detail::screen::Screen &&screen);
 
 protected:
   void keyPressEvent(QKeyEvent *event) override;
@@ -44,8 +49,10 @@ private slots:
   void SceneTimer();
 
 private:
+  //  double MeasureFrameTime();
+
   void UpdateScreen();
-  std::unique_ptr<detail::ApplicationImpl> impl;
+  detail::ApplicationImpl impl;
   std::unique_ptr<QVBoxLayout> layout;
   std::unique_ptr<QTimer> timer;
 };

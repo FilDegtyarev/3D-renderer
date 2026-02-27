@@ -3,6 +3,7 @@
 #include "glm/mat4x4.hpp"
 #include <cfloat>
 #include <iostream>
+#include <memory>
 #include <vector>
 
 template <class T, class Tag>
@@ -43,8 +44,9 @@ struct Color {
 };
 
 struct ZColor {
-  Color color;
+  Color color = {0, 0, 0};
   double z = DBL_MAX;
 };
 
 using ZBuffer = std::vector<std::vector<ZColor>>;
+

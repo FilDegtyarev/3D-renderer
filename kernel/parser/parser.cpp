@@ -44,7 +44,7 @@ M3 RotateMatrix() {
 void Rotate(geometry::Point &point) { point = point * RotateMatrix(); }
 
 } // namespace
-std::unique_ptr<world::LocalObject> Parse(const std::string &filename) {
+world::LocalObject Parse(const std::string &filename) {
   std::ifstream fin(filename);
 
   world::LocalObjectBuilder builder;
