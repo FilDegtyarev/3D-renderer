@@ -35,7 +35,7 @@ Point Point::operator+=(const V3 &vector) {
   return *this;
 }
 
-void Point::Scale(const double &coef) {
+void Point::Scale(const float &coef) {
   x *= coef;
   y *= coef;
   z *= coef;
@@ -54,71 +54,78 @@ Triangle Triangle::operator*(const M4 &matrix) const {
 
 Segment Segment::operator*(const M4 &matrix) const { return Segment{a * matrix, b * matrix}; }
 
-double Plane::operator()(const Point &point) const {
-  V3 product = V3{point.x, point.y, point.z} * N;
-  return product.x + product.y + product.z + D;
+float Plane::operator()(const Point &point) const {
+  return glm::dot(V3{point.x, point.y, point.z}, N) + D;
 }
 
-TriangleIntersected::TriangleIntersected() : size(0) {};
-void TriangleIntersected::Append(const Triangle &triangle) { triangles[size++] = triangle; }
+inline void TriangleIntersectedSingle::Append(const Triangle &triangle) {
+  triangles[size++] = triangle;
+}
+
+void TriangleIntersected::Merge(const TriangleIntersectedSingle &single) {
+  // std::cout << "123" << std::endl;
+  for (int32_t i = 0; i < single.size; ++i) {
+    triangles[size++] = single.triangles[i];
+  }
+}
+
 void TriangleIntersected::Clear() { size = 0; }
 
-std::vector<Triangle> IntersectTriangleWithPlane(const Triangle &triangle, const Plane &plane) {
-  std::vector<Point> inside_view_candidates;
-  std::vector<Point> outside_view;
-  std::vector<Point> qu;
+const Triangle &TriangleIntersected::operator[](size_t i) { return triangles[i]; }
 
-  double eps = 1e-6;
-  qu.push_back(triangle.a);
+namespace {
+struct PointContainer {
+  void Append(const Point &point) { points[size++] = point; }
+  bool IsEmpty() const { return size == 0; }
+
+  inline const Point &operator[](size_t i) { return points[i]; }
+
+  Point points[3];
+  int32_t size = 0;
+};
+}; // namespace
+
+TriangleIntersectedSingle IntersectTriangleWithPlane(const Triangle &triangle, const Plane &plane) {
+  PointContainer inside_view_candidates;
+  PointContainer outside_view;
+
+  float eps = 1e-6;
   if (plane(triangle.a) >= eps) {
-    qu.push_back(triangle.a);
-    qu.push_back(triangle.b);
-    inside_view_candidates.push_back(triangle.a);
+    inside_view_candidates.Append(triangle.a);
   } else {
-    qu.push_back(triangle.a);
-    qu.push_back(triangle.b);
-    outside_view.push_back(triangle.a);
+    outside_view.Append(triangle.a);
   }
 
   if (plane(triangle.b) >= eps) {
-    qu.push_back(triangle.a);
-    qu.push_back(triangle.b);
-    inside_view_candidates.push_back(triangle.b);
+    inside_view_candidates.Append(triangle.b);
   } else {
-
-    outside_view.push_back(triangle.b);
+    outside_view.Append(triangle.b);
   }
 
   if (plane(triangle.c) >= eps) {
-    qu.push_back(triangle.a);
-    qu.push_back(triangle.b);
-    inside_view_candidates.push_back(triangle.c);
+    inside_view_candidates.Append(triangle.c);
   } else {
-    outside_view.push_back(triangle.c);
+    outside_view.Append(triangle.c);
   }
 
-  if (qu.size() == 50) {
-    exit(666);
-  }
-
-  if (inside_view_candidates.empty()) {
+  if (inside_view_candidates.IsEmpty()) {
     return {};
   }
 
-  if (inside_view_candidates.size() == 3) {
-    return {triangle};
+  if (inside_view_candidates.size == 3) {
+    return {{triangle}, .size = 1};
   }
   // return {};
 
-  if (inside_view_candidates.size() == 1) {
+  if (inside_view_candidates.size == 1) {
 
     Point intersect1 =
         IntersectSegmentWithPlane({inside_view_candidates[0], outside_view[0]}, plane).b;
     Point intersect2 =
         IntersectSegmentWithPlane({inside_view_candidates[0], outside_view[1]}, plane).b;
 
-    return {Triangle{inside_view_candidates[0], intersect1, intersect2}};
-  } else if (inside_view_candidates.size() == 2) {
+    return {Triangle{inside_view_candidates[0], intersect1, intersect2}, .size = 1};
+  } else if (inside_view_candidates.size == 2) {
 
     Point intersect1 =
         IntersectSegmentWithPlane({inside_view_candidates[0], outside_view[0]}, plane).b;
@@ -128,15 +135,16 @@ std::vector<Triangle> IntersectTriangleWithPlane(const Triangle &triangle, const
     Triangle first = {inside_view_candidates[0], intersect1, intersect2};
     Triangle second = {inside_view_candidates[0], inside_view_candidates[1], intersect2};
 
-    return {first, second};
+    return {first, second, .size = 2};
   }
+  exit(666);
   return {};
 }
 
 Segment IntersectSegmentWithPlane(const Segment &segment, const Plane &plane) {
   Point first = segment.a;
   Point second = segment.b;
-  double eps = 1e-6;
+  float eps = 1e-6;
   if (plane(first) >= eps && plane(second) >= eps) {
     return segment;
   }
@@ -147,8 +155,8 @@ Segment IntersectSegmentWithPlane(const Segment &segment, const Plane &plane) {
 
   V3 p1 = {first.x, first.y, first.z};
   V3 p2 = {second.x, second.y, second.z};
-  auto penis = (glm::dot(plane.N, p1) + plane.D) * -1.0f / glm::dot(plane.N, p2 - p1);
-  V3 intersection = p1 + (p2 - p1) * float(penis);
+  float coef = (glm::dot(plane.N, p1) + plane.D) * -1.0f / glm::dot(plane.N, p2 - p1);
+  V3 intersection = p1 + (p2 - p1) * coef;
 
   return {first, Point{intersection.x, intersection.y, intersection.z, .w = second.w,
                        .color = second.color}};
@@ -170,20 +178,33 @@ LineStatus GetLineStatus(const ScreenPoint &first, const ScreenPoint &second) {
   return LineStatus::NonVertical;
 }
 
-double GetTangentCoefficent(const ScreenPoint &first, const ScreenPoint &second) {
+float GetTangentCoefficent(const ScreenPoint &first, const ScreenPoint &second) {
   assert(GetLineStatus(first, second) == LineStatus::NonVertical);
 
   assert(first.y != second.y);
 
-  return double(first.x - second.x) / double(first.y - second.y);
+  return float(first.x - second.x) / float(first.y - second.y);
 }
 
 /// Мне очень стыдно
 ScreenTriangle ScreenTriangle::SortedVertex() const {
-  std::vector<ScreenPoint> vertex = {a, b, c};
-  std::sort(vertex.begin(), vertex.end(), HeightComparator());
+  ScreenPoint a0 = a;
+  ScreenPoint b0 = b;
+  ScreenPoint c0 = c;
 
-  return ScreenTriangle{vertex[0], vertex[1], vertex[2]};
+  if (!IsHigher(a0, b0)) {
+    std::swap(a0, b0);
+  }
+  if (!IsHigher(a0, c0)) {
+    std::swap(a0, c0);
+  }
+
+  if (!IsHigher(b0, c0)) {
+    std::swap(b0, c0);
+  }
+  return {a0, b0, c0};
+
+  // return ScreenTriangle{vertex[0], vertex[1], vertex[2]};
 }
 
 int32_t ScreenTriangle::MinimumHeight() const { return std::min(a.y, std::min(b.y, c.y)); }

@@ -18,14 +18,14 @@ std::vector<std::string> Split(const std::string &str) {
   return result;
 }
 
-void Compress(geometry::Point &point, double compress) {
+void Compress(geometry::Point &point, float compress) {
 
   point.x /= compress;
   point.y /= compress;
   point.z /= compress;
 }
 
-void Shift(geometry::Point &point, double shift) { point.z -= shift; }
+void Shift(geometry::Point &point, float shift) { point.z -= shift; }
 
 M3 RotateMatrix() {
   M3 matrix;

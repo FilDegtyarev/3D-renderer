@@ -6,7 +6,8 @@
 namespace detail {
 namespace rasterization {
 void DrawSegment(const geometry::Segment &segment, ZBuffer &zbuffer);
-void DrawTriangle(const geometry::Triangle &triangle, ZBuffer &zbuffer, std::vector<geometry::ScreenPoint> &scanline_buffer);
+void DrawTriangle(const geometry::Triangle &triangle, ZBuffer &zbuffer,
+                  std::vector<geometry::ScreenPoint> &scanline_buffer);
 
 } // namespace rasterization
 

@@ -19,7 +19,7 @@
 #include <iostream>
 #include <string>
 namespace detail {
-std::vector<geometry::Segment> generateCubeSegments(double distance) {
+std::vector<geometry::Segment> generateCubeSegments(float distance) {
 
   geometry::Point v0 = {-1, 0, -distance};
   geometry::Point v1 = {1, 0, -distance};
@@ -60,7 +60,8 @@ int main(int argc, char *argv[]) {
       detail::parser::Parse("/Users/filipp/Documents/Models/cat.obj");
 
   local.Normalize(1);
-
+  std::cout << "Model info:" << std::endl;
+  std::cout << "Total Triangles: " << local.GetTriangles().size() << std::endl;
   detail::world::GlobalObject cube(std::move(local), glm::vec3{0, 0, -10}, detail::Eye());
 
   detail::world::WorldBuilder world_builder;
@@ -72,7 +73,7 @@ int main(int argc, char *argv[]) {
       detail::camera::Camera(HorizontalFOV{90.0}, AspectRatio{600.0 / 800.0},
                              NearPlaneDistance{0.1}, RenderDistance{100.0});
 
-  Application r_app(4, std::move(world), std::move(camera), std::move(screen));
+  Application r_app(8, std::move(world), std::move(camera), std::move(screen));
 
   r_app.show();
   // r_app.Run();

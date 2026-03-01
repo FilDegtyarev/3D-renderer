@@ -9,7 +9,8 @@ namespace camera {
 
 class Camera {
 public:
-  Camera(HorizontalFOV horizontal_fov, AspectRatio aspect_ratio, NearPlaneDistance near_plane_distance, RenderDistance render_distance);
+  Camera(HorizontalFOV horizontal_fov, AspectRatio aspect_ratio,
+         NearPlaneDistance near_plane_distance, RenderDistance render_distance);
 
   M4 GetFrustumMatrix() const;
   M4 GetCameraMatrix() const;
@@ -28,7 +29,7 @@ public:
   bool IsReset() const;
 
   void ResetComplete();
-  std::vector<geometry::Triangle> ClipTriangle(const geometry::Triangle &triangle) const;
+  geometry::TriangleIntersected ClipTriangle(const geometry::Triangle &triangle) const;
   std::vector<geometry::Segment> ClipSegment(const geometry::Segment &segment) const;
 
   bool TestPoint(const geometry::Point &point) const;
@@ -48,22 +49,24 @@ private:
     bool left = false;
   };
 
-  std::vector<geometry::Triangle> ClipTriangleWithPlane(const geometry::Triangle &triangle, const geometry::Plane &plane) const;
-  std::vector<geometry::Segment> ClipSegmentWithPlane(const geometry::Segment &segment, const geometry::Plane &plane) const;
+  geometry::TriangleIntersectedSingle ClipTriangleWithPlane(const geometry::Triangle &triangle,
+                                                            const geometry::Plane &plane) const;
+  std::vector<geometry::Segment> ClipSegmentWithPlane(const geometry::Segment &segment,
+                                                      const geometry::Plane &plane) const;
 
-  double horizontal_fov;
-  double aspect_ratio;
-  double far_plane_distance;
-  double focal_length;
-  double near_plane_distance;
+  float horizontal_fov;
+  float aspect_ratio;
+  float far_plane_distance;
+  float focal_length;
+  float near_plane_distance;
 
-  double near_plane_y_top;
-  double near_plane_y_bottom;
-  double near_plane_x_right;
-  double near_plane_x_left;
+  float near_plane_y_top;
+  float near_plane_y_bottom;
+  float near_plane_x_right;
+  float near_plane_x_left;
 
   M4 frusum_matrix;
-  double speed_limit = 0.1;
+  float speed_limit = 0.1;
 
   V3 eye_position;
   V3 gaze_direction;

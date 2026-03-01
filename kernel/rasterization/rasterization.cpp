@@ -14,7 +14,8 @@ const int32_t SIZE = 500;
 
 namespace {
 bool InBuffer(const geometry::ScreenPoint &point, const ZBuffer &zbuffer) {
-  if (point.x < 0 || point.x >= zbuffer[0].size() || point.y < 0 || point.y >= zbuffer.size()) {
+  if (point.x < 0 || point.x >= zbuffer.GetWidth() || point.y < 0 ||
+      point.y >= zbuffer.GetHeight()) {
     return false;
   }
   return true;
@@ -34,20 +35,22 @@ void DrawSegment(const geometry::Segment &segment_, ZBuffer &zbuffer) {
       continue;
     }
 
-    if (zbuffer.at(pixel.y).at(pixel.x).z > pixel.z) {
-      zbuffer[pixel.y][pixel.x].z = pixel.z;
+    if (zbuffer.At(pixel.y, pixel.x).z > pixel.z) {
+      zbuffer.At(pixel.y, pixel.x).z = pixel.z;
 
-      zbuffer[pixel.y][pixel.x].color = pixel.color;
-      zbuffer[pixel.y][pixel.x].color = Color{.red = 50, .blue = 100, .green = 150};
+      zbuffer.At(pixel.y, pixel.x).color = pixel.color;
+      zbuffer.At(pixel.y, pixel.x).color = Color{.red = 50, .blue = 100, .green = 150};
     }
   }
 }
 
-void DrawTriangle(const geometry::Triangle &triangle, ZBuffer &zbuffer, std::vector<geometry::ScreenPoint> &scanline_buffer) {
-  assert(scanline_buffer.empty());
+void DrawTriangle(const geometry::Triangle &triangle, ZBuffer &zbuffer,
+                  std::vector<geometry::ScreenPoint> &scanline_buffer) {
   geometry::ScreenTriangle screen_triangle = geometry::DiscretizeTriangle(triangle);
 
-  for (size_t height = screen_triangle.MinimumHeight(); height <= screen_triangle.MaximumHeight(); ++height) {
+  for (size_t height = screen_triangle.MinimumHeight(); height <= screen_triangle.MaximumHeight();
+       ++height) {
+    scanline_buffer.clear();
     // std::vector<geometry::ScreenPoint> scanline =
     rasterization::Scanline(screen_triangle, height, scanline_buffer);
 
@@ -55,9 +58,10 @@ void DrawTriangle(const geometry::Triangle &triangle, ZBuffer &zbuffer, std::vec
       if (!InBuffer(pixel, zbuffer)) {
         continue;
       }
-      if (pixel.z < zbuffer[pixel.y][pixel.x].z) {
-        zbuffer[pixel.y][pixel.x].z = pixel.z;
-        zbuffer[pixel.y][pixel.x].color = {uint8_t(rand() % 256), uint8_t(rand() % 256), uint8_t(rand() % 256)};
+      if (pixel.z < zbuffer.At(pixel.y, pixel.x).z) {
+        zbuffer.At(pixel.y, pixel.x).z = pixel.z;
+        zbuffer.At(pixel.y, pixel.x).color = {uint8_t(rand() % 256), uint8_t(rand() % 256),
+                                              uint8_t(rand() % 256)};
       }
     }
   }

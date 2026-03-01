@@ -49,7 +49,7 @@ private slots:
   void SceneTimer();
 
 private:
-  //  double MeasureFrameTime();
+  //  float MeasureFrameTime();
 
   void UpdateScreen();
   detail::ApplicationImpl impl;

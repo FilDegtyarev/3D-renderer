@@ -1,10 +1,11 @@
 #include "screen.h"
+#include "QPainter"
+#include "qpaintdevice.h"
 #include "types/types.h"
 #include <qboxlayout.h>
 #include <qimage.h>
 #include <qpixmap.h>
 #include <qpoint.h>
-
 namespace detail {
 namespace screen {
 Screen::Screen(Height h, Width w) {
@@ -20,13 +21,15 @@ int32_t Screen::GetWidth() const { return width; }
 
 void Screen::Connect(QVBoxLayout *layout) { layout->addWidget(screen.get()); }
 
+// void Screen::Update() {
+
 void Screen::Update() {
-  QImage qimage(reinterpret_cast<uchar *>(flat_screen.data()), width, height,
+  QImage qimage(reinterpret_cast<uint8_t *>(flat_screen.data()), width, height,
                 width * sizeof(uint32_t), QImage::Format_ARGB32);
   screen->setPixmap(QPixmap::fromImage(qimage));
 }
 
-double Screen::GetAspectRatio() const { return double(height) / double(width); }
+float Screen::GetAspectRatio() const { return float(height) / float(width); }
 
 std::vector<QRgb> &Screen::GetFlatScreen() { return flat_screen; }
 

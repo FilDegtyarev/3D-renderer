@@ -29,7 +29,7 @@ public:
   using Triangles = std::vector<TriangleKeeper>;
   using Segments = std::vector<SegmentKeeper>;
 
-  void Normalize(double scale = 1.0);
+  void Normalize(float scale = 1.0);
 
   geometry::Triangle GetTriangle(const TriangleKeeper &trianlge) const;
   geometry::Segment GetSegment(const SegmentKeeper &segment) const;

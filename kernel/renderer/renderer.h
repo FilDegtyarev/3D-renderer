@@ -57,9 +57,7 @@ private:
   size_t screen_height;
   size_t screen_width;
   ZBuffer zbuffer;
-  // ScreenTriangle -> rasterize to zbuffer
-  TriangleRasterizer triangle_rasterizer;
-  SegmentRasterizer segment_rasterizer;
+
   concurrency::WorkerKeeper worker_keeper;
 };
 

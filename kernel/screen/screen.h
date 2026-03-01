@@ -1,5 +1,6 @@
 #pragma once
 #include "types/types.h"
+#include <QElapsedTimer>
 #include <QImage>
 #include <QVBoxLayout>
 #include <cstdlib>
@@ -22,7 +23,7 @@ public:
   void Connect(QVBoxLayout *layout);
   void Update();
 
-  double GetAspectRatio() const;
+  float GetAspectRatio() const;
 
   std::vector<QRgb> &GetFlatScreen();
 

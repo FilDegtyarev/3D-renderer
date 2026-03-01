@@ -6,7 +6,8 @@ namespace detail {
 
 namespace rasterization {
 
-std::vector<geometry::ScreenPoint> Bresenham(const geometry::ScreenPoint &start, const geometry::ScreenPoint &finish) {
+std::vector<geometry::ScreenPoint> Bresenham(const geometry::ScreenPoint &start,
+                                             const geometry::ScreenPoint &finish) {
   if (start.x > finish.x) {
     return Bresenham(finish, start);
   }
@@ -62,16 +63,16 @@ std::vector<geometry::ScreenPoint> Bresenham(const geometry::ScreenPoint &start,
 }
 
 namespace {
-const double EPS = 1e-9;
-double GetXShift(const geometry::ScreenPoint &first, const geometry::ScreenPoint &second) {
-  double x_shift = 0;
+const float EPS = 1e-9;
+float GetXShift(const geometry::ScreenPoint &first, const geometry::ScreenPoint &second) {
+  float x_shift = 0;
   if (geometry::GetLineStatus(first, second) == geometry::LineStatus::NonVertical) {
     x_shift = geometry::GetTangentCoefficent(first, second);
   }
   return x_shift;
 }
 
-bool InTriangle(double x) {
+bool InTriangle(float x) {
   if (x - ((int32_t)(x)) - 0.5 < -EPS) {
     return false;
   }
@@ -80,7 +81,8 @@ bool InTriangle(double x) {
 
 } // namespace
 
-void Scanline(const geometry::ScreenTriangle &triangle, int32_t height, std::vector<geometry::ScreenPoint> &scanline_buffer) {
+void Scanline(const geometry::ScreenTriangle &triangle, int32_t height,
+              std::vector<geometry::ScreenPoint> &scanline_buffer) {
   // Shirley, 166
   geometry::ScreenTriangle sorted_triangle = triangle.SortedVertex();
 
@@ -90,9 +92,9 @@ void Scanline(const geometry::ScreenTriangle &triangle, int32_t height, std::vec
     return;
   }
 
-  double long_edge_x_shift = GetXShift(sorted_triangle.a, sorted_triangle.c);
-  double x_left = 0;
-  double x_right = 0;
+  float long_edge_x_shift = GetXShift(sorted_triangle.a, sorted_triangle.c);
+  float x_left = 0;
+  float x_right = 0;
 
   if (height >= sorted_triangle.b.y) {
     if (height == sorted_triangle.b.y && sorted_triangle.b.y == sorted_triangle.a.y) {
@@ -100,27 +102,27 @@ void Scanline(const geometry::ScreenTriangle &triangle, int32_t height, std::vec
       x_left = sorted_triangle.b.x;
       x_right = sorted_triangle.a.x;
     } else {
-      double short_edge_x_shift = GetXShift(sorted_triangle.a, sorted_triangle.b);
-      double dy = sorted_triangle.a.y - height;
+      float short_edge_x_shift = GetXShift(sorted_triangle.a, sorted_triangle.b);
+      float dy = sorted_triangle.a.y - height;
 
-      x_left = double(sorted_triangle.a.x) - dy * long_edge_x_shift;
-      x_right = double(sorted_triangle.a.x) - dy * short_edge_x_shift;
+      x_left = float(sorted_triangle.a.x) - dy * long_edge_x_shift;
+      x_right = float(sorted_triangle.a.x) - dy * short_edge_x_shift;
     }
     if (x_left > x_right) {
       std::swap(x_left, x_right);
     }
   } else if (height == sorted_triangle.c.y) {
-    x_left = double(sorted_triangle.c.x);
-    x_right = double(sorted_triangle.c.x);
+    x_left = float(sorted_triangle.c.x);
+    x_right = float(sorted_triangle.c.x);
   } else {
     if (height == sorted_triangle.b.y && sorted_triangle.b.y == sorted_triangle.c.y) {
       x_left = sorted_triangle.b.x;
       x_right = sorted_triangle.c.x;
     } else {
-      double short_edge_x_shift = GetXShift(sorted_triangle.b, sorted_triangle.c);
-      double dy = sorted_triangle.b.y - height;
-      x_left = double(sorted_triangle.a.x) - (sorted_triangle.a.y - height) * long_edge_x_shift;
-      x_right = double(sorted_triangle.b.x) - dy * short_edge_x_shift;
+      float short_edge_x_shift = GetXShift(sorted_triangle.b, sorted_triangle.c);
+      float dy = sorted_triangle.b.y - height;
+      x_left = float(sorted_triangle.a.x) - (sorted_triangle.a.y - height) * long_edge_x_shift;
+      x_right = float(sorted_triangle.b.x) - dy * short_edge_x_shift;
     }
 
     if (x_left > x_right) {
@@ -147,7 +149,6 @@ void Scanline(const geometry::ScreenTriangle &triangle, int32_t height, std::vec
     geometry::ScreenPoint point;
     point.x = x;
     point.y = height;
-
     point.color = Color{.red = 255, .green = 51, .blue = 153};
     scanline_buffer.push_back(point);
     // segment.push_back(point);

@@ -22,7 +22,10 @@ ApplicationImpl::ApplicationImpl(int32_t threads_count, world::World &&world_,
         // std::cout << "[application impl]: constructed\n" << std::endl;
       };
 
-void ApplicationImpl::NextFrame() { renderer.FrameSucceed(); }
+void ApplicationImpl::NextFrame() {
+  QCoreApplication::processEvents();
+  renderer.FrameSucceed();
+}
 
 namespace {
 
@@ -121,7 +124,7 @@ void ApplicationImpl::UpdateScreen(bool force) {
 void ApplicationImpl::ConnectScreen(QVBoxLayout *layout) { screen.Connect(layout); }
 } // namespace detail
 
-static double FPS = 60;
+static float FPS = 60;
 Application::Application(int32_t threads_count, detail::world::World &&world,
                          detail::camera::Camera &&camera, detail::screen::Screen &&screen)
     : QWidget(nullptr),
@@ -170,9 +173,7 @@ void Application::keyReleaseEvent(QKeyEvent *event) {
 
 void Application::SceneTimer() {
   UpdateScreen();
-  QCoreApplication::processEvents();
   timer->start(0);
-  // std::cout << "че блять?" << std::endl;
 };
 
 void Application::UpdateScreen() { impl.UpdateScreen(); }

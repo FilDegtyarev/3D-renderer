@@ -16,7 +16,10 @@ public:
   GlobalObject(LocalObject &&local_object_, const glm::vec3 &shift, const glm::mat3x3 &transform);
 
   std::vector<geometry::Triangle> GetTriangles() const;
+  std::vector<geometry::Triangle> GetTrianglesForWorker(int32_t begin, int32_t end) const;
   std::vector<geometry::Segment> GetSegments() const;
+
+  int32_t TrianglesCount() const;
 
 private:
   LocalObject local_object;

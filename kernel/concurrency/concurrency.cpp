@@ -11,15 +11,6 @@
 
 namespace detail {
 namespace concurrency {
-/*
-std::vector<geometry::Triangle> rendering_triangles;
-std::vector<geometry::Segment> rendering_segments;
-
-std::vector<geometry::Triangle> clipped_triangles;
-std::vector<geometry::Segment> clipped_segments;
-
-std::vector<geometry::ScreenPoint> scnaline_container;
-ZBuffer local_zbuffer;*/
 int32_t GetMaxThreads() { return int32_t(std::thread::hardware_concurrency()); }
 
 inline void WorkerStorage::Clear() {
@@ -29,15 +20,15 @@ inline void WorkerStorage::Clear() {
   clipped_segments.clear();
   scnaline_container.clear();
 
-  for (int i = 0; i < local_zbuffer.size(); ++i) {
-    for (int j = 0; j < local_zbuffer[i].size(); ++j) {
-      local_zbuffer[i][j].color = {0, 0, 0};
-      local_zbuffer[i][j].z = DBL_MAX;
+  for (int i = 0; i < local_zbuffer.GetHeight(); ++i) {
+    for (int j = 0; j < local_zbuffer.GetWidth(); ++j) {
+      local_zbuffer.At(i, j).color = {0, 0, 0};
+      local_zbuffer.At(i, j).z = FLT_MAX;
     }
   }
   //   std::fill(local_zbuffer.begin(), local_zbuffer.end(),
   //             std::vector<ZColor>(local_zbuffer[0].size(), ZColor{.color = {0, 0, 0}, .z =
-  //             DBL_MAX}));
+  //             FLT_MAX}));
 }
 
 inline void WorkerStorage::ClearScanline() { scnaline_container.clear(); }
@@ -62,14 +53,18 @@ void Worker::ClipFigures() {
   // стадия клиппинга
   M4 camera_matrix = camera.GetCameraMatrix();
   for (const world::GlobalObject &object : world.GetObjects()) {
-    for (int32_t i = id; i < object.GetTriangles().size(); i += total_workers) {
-      const geometry::Triangle triangle = object.GetTriangles()[i] * camera_matrix;
-      // self_storage.clipped_triangles.push_back(triangle);
-      //  self_storage.clipped_triangles.push_back(object.GetTriangles()[i]);
-      // continue;
-      std::vector<geometry::Triangle> clipped_triangles = camera.ClipTriangle(triangle);
-      self_storage.clipped_triangles.insert(self_storage.clipped_triangles.end(),
-                                            clipped_triangles.begin(), clipped_triangles.end());
+    int32_t block = object.TrianglesCount() / total_workers + 1;
+    int32_t begin = id * block;
+    int32_t end = std::min(int32_t(object.TrianglesCount()), begin + block);
+
+    std::vector<geometry::Triangle> triangles = object.GetTrianglesForWorker(begin, end);
+
+    for (const geometry::Triangle &triangle : triangles) {
+      geometry::TriangleIntersected clipped_triangles =
+          camera.ClipTriangle(triangle * camera_matrix);
+      for (int32_t i = 0; i < clipped_triangles.size; ++i) {
+        self_storage.clipped_triangles.push_back(clipped_triangles[i]);
+      }
     }
   }
 }
@@ -99,12 +94,12 @@ inline void ViewTriangleTransform(geometry::Triangle &triangle, int32_t sw, int3
 void Worker::DrawFigures() {
   M4 frustum_matrix = camera.GetFrustumMatrix();
   for (int32_t worker_id = 0; worker_id < total_workers; ++worker_id) {
+    int32_t block = workers_storgage[worker_id].clipped_triangles.size() / total_workers + 1;
+    int32_t begin = id * block;
+    int32_t end =
+        std::min(int32_t(workers_storgage[worker_id].clipped_triangles.size()), begin + block);
 
-    // std::cout << "[worker]: drawing " << workers_storgage[worker_id].clipped_triangles.size()
-    //           << std::endl;
-    for (int32_t triangle_index = id;
-         triangle_index < workers_storgage[worker_id].clipped_triangles.size();
-         triangle_index += total_workers) {
+    for (int32_t triangle_index = begin; triangle_index < end; triangle_index++) {
       const geometry::Triangle clipped_triangle =
           workers_storgage[worker_id].clipped_triangles[triangle_index];
       geometry::Point a_proj =
@@ -132,25 +127,28 @@ void Worker::DrawFigures() {
 
 void Worker::SynchronizeZBuffers() {
   // Только синхронизируем zbuffer
+  int32_t block = self_storage.local_zbuffer.GetHeight() / total_workers + 1;
+  int32_t begin = id * block;
+  int32_t end = std::min(int32_t(self_storage.local_zbuffer.GetHeight()), begin + block);
+
   for (int32_t worker_id = 0; worker_id < total_workers; ++worker_id) {
-    for (int32_t row_index = id; row_index < self_storage.local_zbuffer.size();
-         row_index += total_workers) {
-      // выбрали строку. Теперь выбираем что туда сувать
-      for (int32_t element_index = 0; element_index < self_storage.local_zbuffer[0].size();
+    for (int32_t row_index = begin; row_index < end; row_index++) {
+      for (int32_t element_index = 0; element_index < self_storage.local_zbuffer.GetWidth();
            ++element_index) {
-        if (zbuffer[row_index][element_index].z >
-            workers_storgage[worker_id].local_zbuffer[row_index][element_index].z) {
-          zbuffer[row_index][element_index] =
-              workers_storgage[worker_id].local_zbuffer[row_index][element_index];
+        if (zbuffer.At(row_index, element_index).z >
+            workers_storgage[worker_id].local_zbuffer.At(row_index, element_index).z) {
+          zbuffer.At(row_index, element_index) =
+              workers_storgage[worker_id].local_zbuffer.At(row_index, element_index);
         }
       }
     }
   }
-  for (int32_t row_index = id; row_index < screen_height; row_index += total_workers) {
+
+  for (int32_t row_index = begin; row_index < end; row_index++) {
     for (int32_t element_index = 0; element_index < screen_width; ++element_index) {
-      Color c = zbuffer[row_index][element_index].color;
+      Color c = zbuffer.At(row_index, element_index).color;
       flat_screen[row_index * screen_width + element_index] = qRgb(c.red, c.green, c.blue);
-      zbuffer[row_index][element_index] = {{0, 0, 0}, DBL_MAX};
+      zbuffer.At(row_index, element_index) = {{0, 0, 0}, FLT_MAX};
     }
   }
 }
@@ -174,7 +172,8 @@ WorkerKeeper::WorkerKeeper(int32_t threads_, int32_t triangles_capacity, int32_t
     storage.clipped_segments.reserve(segments_capacity);
 
     storage.scnaline_container.reserve(scanline_capacity);
-    storage.local_zbuffer.resize(screen_height, std::vector<ZColor>(screen_width));
+    storage.local_zbuffer = ZBuffer(screen_height, screen_width);
+    // resize(screen_height, std::vector<ZColor>(screen_width));
     workers.push_back(std::move(storage));
   }
 
@@ -182,12 +181,6 @@ WorkerKeeper::WorkerKeeper(int32_t threads_, int32_t triangles_capacity, int32_t
 }
 
 void WorkerKeeper::UnleashWorkers(std::vector<QRgb> &flat_screen, ZBuffer &zbuffer) {
-  /*
-  Worker(int32_t id, int32_t total_workers_, int32_t sw, int32_t sh, WorkerStorage &self_storage_,
-  const std::vector<WorkerStorage> &workers_storgage_, const camera::Camera &camera_, const
-  world::World &world_, ZBuffer &zbuffer_);
-  */
-  // std::cout << "Unleash!!!" << std::endl;
   for (int32_t worker_id = 0; worker_id < threads_count; ++worker_id) {
     Worker worker =
         Worker(worker_id, threads_count, screen_width, screen_height, workers[worker_id], workers,
@@ -206,111 +199,30 @@ void WorkerKeeper::SpawnWorker(Worker &&worker) {
   // std::thread thread_worker(Execute, std::move(worker));
 }
 
-auto N = std::chrono::high_resolution_clock::now;
-// void Execute(Worker worker) {
-//   // std::cout << "execute: " << std::endl;
-//   while (true) {
-//     // std::cout << "[worker]: wait for clear" << std::endl;
-//     //  std::cout << "1:" << std::endl;
-//     worker.Clear();
-//     // std::cout << "[worker]: wait for clip" << std::endl;
-//     worker.WaitForOther();
-
-//     worker.ClipFigures();
-
-//     // std::cout << "[worker]: wait for draw" << std::endl;
-//     worker.WaitForOther();
-//     worker.DrawFigures();
-
-//     // std::cout << "[worker]: wait for sync" << std::endl;
-//     worker.WaitForOther();
-
-//     worker.SynchronizeZBuffers();
-
-//     // std::cout << "[worker]: wait while master drawing" << std::endl;
-//     worker.WaitForOther();
-//   }
-// }
-
 void Execute(Worker worker) {
-  using clock = std::chrono::high_resolution_clock;
-
-  // Накопители времени в микросекундах
-  uint64_t t_clear = 0, t_clip = 0, t_draw = 0, t_sync = 0;
-  uint64_t t_wait_total = 0;
-  uint32_t frame_count = 0;
-
+  // std::cout << "execute: " << std::endl;
   while (true) {
-    auto t_frame_start = clock::now();
-
-    // --- CLEAR ---
-    auto s0 = clock::now();
+    // std::cout << "[worker]: wait for clear" << std::endl;
+    //  std::cout << "1:" << std::endl;
     worker.Clear();
-    t_clear += std::chrono::duration_cast<std::chrono::microseconds>(clock::now() - s0).count();
-
-    // --- WAIT FOR CLIP ---
-    auto w0 = clock::now();
+    // std::cout << "[worker]: wait for clip" << std::endl;
     worker.WaitForOther();
-    t_wait_total +=
-        std::chrono::duration_cast<std::chrono::microseconds>(clock::now() - w0).count();
 
-    // --- CLIP ---
-    auto s1 = clock::now();
     worker.ClipFigures();
-    t_clip += std::chrono::duration_cast<std::chrono::microseconds>(clock::now() - s1).count();
 
-    // --- WAIT FOR DRAW ---
-    auto w1 = clock::now();
+    // std::cout << "[worker]: wait for draw" << std::endl;
     worker.WaitForOther();
-    t_wait_total +=
-        std::chrono::duration_cast<std::chrono::microseconds>(clock::now() - w1).count();
-
-    // --- DRAW ---
-    auto s2 = clock::now();
     worker.DrawFigures();
-    t_draw += std::chrono::duration_cast<std::chrono::microseconds>(clock::now() - s2).count();
 
-    // --- WAIT FOR SYNC ---
-    auto w2 = clock::now();
+    // std::cout << "[worker]: wait for sync" << std::endl;
     worker.WaitForOther();
-    t_wait_total +=
-        std::chrono::duration_cast<std::chrono::microseconds>(clock::now() - w2).count();
 
-    // --- SYNC ---
-    auto s3 = clock::now();
     worker.SynchronizeZBuffers();
-    t_sync += std::chrono::duration_cast<std::chrono::microseconds>(clock::now() - s3).count();
 
-    // --- WAIT WHILE MASTER DRAWING ---
-    auto w3 = clock::now();
+    // std::cout << "[worker]: wait while master drawing" << std::endl;
     worker.WaitForOther();
-    t_wait_total +=
-        std::chrono::duration_cast<std::chrono::microseconds>(clock::now() - w3).count();
-
-    frame_count++;
-
-    // Вывод статистики раз в 100 итераций
-    if (frame_count >= 10) {
-      auto avg = [](uint64_t total) { return total / 100.0 / 1000.0; }; // в миллисекунды
-
-      std::string report = "\n[Worker " + std::to_string(worker.id) + "] Avg Times (ms):\n";
-      report += "  Work:  Clear: " + std::to_string(avg(t_clear)) +
-                " | Clip: " + std::to_string(avg(t_clip)) +
-                " | Draw: " + std::to_string(avg(t_draw)) +
-                " | Sync: " + std::to_string(avg(t_sync)) + "\n";
-      report += "  Wait:  Total Idle: " + std::to_string(avg(t_wait_total)) + " ms\n";
-      report +=
-          "  Total: " + std::to_string(avg(t_clear + t_clip + t_draw + t_sync + t_wait_total)) +
-          " ms\n";
-      report += "-----------------------------------";
-
-      std::cout << report << std::endl;
-
-      // Сброс счетчиков
-      t_clear = t_clip = t_draw = t_sync = t_wait_total = 0;
-      frame_count = 0;
-    }
   }
 }
+
 } // namespace concurrency
 } // namespace detail

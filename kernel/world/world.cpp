@@ -1,4 +1,5 @@
 #include "world.h"
+#include "geometry/geometry.h"
 #include "world/object.h"
 
 namespace detail {
@@ -30,6 +31,16 @@ std::vector<geometry::Triangle> GlobalObject::GetTriangles() const {
   return triangles;
 }
 
+std::vector<geometry::Triangle> GlobalObject::GetTrianglesForWorker(int32_t begin,
+                                                                    int32_t end) const {
+  std::vector<geometry::Triangle> triangles;
+  triangles.reserve(end - begin);
+  for (int32_t i = begin; i < end; ++i) {
+    triangles.push_back(local_object.GetTriangle(local_object.GetTriangles()[i]) * transform);
+  }
+  return triangles;
+}
+
 std::vector<geometry::Segment> GlobalObject::GetSegments() const {
   std::vector<geometry::Segment> segments;
   for (const SegmentKeeper &segment_keeper : local_object.GetSegments()) {
@@ -39,6 +50,8 @@ std::vector<geometry::Segment> GlobalObject::GetSegments() const {
 
   return segments;
 }
+
+int32_t GlobalObject::TrianglesCount() const { return local_object.GetTriangles().size(); }
 
 WorldBuilder::WorldBuilder() : world() {};
 

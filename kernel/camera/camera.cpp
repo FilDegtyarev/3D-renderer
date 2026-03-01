@@ -35,11 +35,11 @@ Camera::Camera(HorizontalFOV horizontal_fov_, AspectRatio aspect_ratio_,
   planes.emplace_back(V3{0, 0, -1}, -near_plane_distance);
   planes.emplace_back(V3{0, 0, 1}, far_plane_distance);
 
-  double t1 = 1.0 / sqrt(focal_length * focal_length + 1);
+  float t1 = 1.0 / sqrt(focal_length * focal_length + 1);
   planes.emplace_back(V3{focal_length * t1, 0, -t1}, 0);
   planes.emplace_back(V3{-t1 * focal_length, 0, -t1}, 0);
 
-  double t2 = 1.0 / sqrt(focal_length * focal_length + aspect_ratio * aspect_ratio);
+  float t2 = 1.0 / sqrt(focal_length * focal_length + aspect_ratio * aspect_ratio);
   planes.emplace_back(V3{0, t2 * focal_length, -t2 * aspect_ratio}, 0);
   planes.emplace_back(V3{0, -t2 * focal_length, -t2 * aspect_ratio}, 0);
 }
@@ -141,9 +141,9 @@ bool Camera::IsRotating() const {
 
 namespace {
 
-inline M2 RotationMatrix(double angle) {
+inline M2 RotationMatrix(float angle) {
   M2 result = 0;
-  double t = 3.1415926 / 180.0 * angle;
+  float t = 3.1415926 / 180.0 * angle;
   result[0][0] = cos(t);
   result[1][1] = cos(t);
   result[0][1] = sin(t);
@@ -182,7 +182,7 @@ void Camera::UpdateView() {
   }
 
   if (IsRotating()) {
-    double standart = 1;
+    float standart = 1;
     if (rotation.right) {
       V3 normal = glm::cross(view_up_direction, gaze_direction);
       normal /= glm::length(normal);
@@ -224,24 +224,24 @@ bool Camera::IsReset() const { return reset_position; }
 
 void Camera::ResetComplete() { reset_position = false; }
 
-std::vector<geometry::Triangle> Camera::ClipTriangle(const geometry::Triangle &triangle) const {
-  std::vector<geometry::Triangle> clipped = {};
-  std::vector<geometry::Triangle> buffer = {triangle};
+geometry::TriangleIntersected Camera::ClipTriangle(const geometry::Triangle &triangle) const {
+  geometry::TriangleIntersected current = {.size = 0};
+  geometry::TriangleIntersected previous = {triangle, .size = 1};
   for (const geometry::Plane &plane : planes) {
-    for (const geometry::Triangle &t : buffer) {
-      for (const geometry::Triangle &t_clipped : ClipTriangleWithPlane(t, plane)) {
-        clipped.push_back(t_clipped);
-      }
+    for (int32_t triangle_index = 0; triangle_index < previous.size; ++triangle_index) {
+      // clipping for prev[triangle_index]
+      current.Merge(ClipTriangleWithPlane(previous[triangle_index], plane));
     }
-    buffer = clipped;
-    clipped.clear();
+    previous = current;
+    current.Clear();
   }
 
-  return buffer;
+  return previous;
 }
 
-std::vector<geometry::Triangle> Camera::ClipTriangleWithPlane(const geometry::Triangle &triangle,
-                                                              const geometry::Plane &plane) const {
+geometry::TriangleIntersectedSingle
+Camera::ClipTriangleWithPlane(const geometry::Triangle &triangle,
+                              const geometry::Plane &plane) const {
   return geometry::IntersectTriangleWithPlane(triangle, plane);
 }
 
@@ -260,7 +260,7 @@ std::vector<geometry::Segment> Camera::ClipSegment(const geometry::Segment &segm
 
 std::vector<geometry::Segment> Camera::ClipSegmentWithPlane(const geometry::Segment &segment,
                                                             const geometry::Plane &plane) const {
-  double eps = 0;
+  float eps = 0;
   if (plane(segment.a) < -eps && plane(segment.b) < -eps) {
     return {};
   }
@@ -269,7 +269,7 @@ std::vector<geometry::Segment> Camera::ClipSegmentWithPlane(const geometry::Segm
 }
 
 bool Camera::TestPoint(const geometry::Point &point) const {
-  double result = 0;
+  float result = 0;
   for (size_t i = 0; i < planes.size(); ++i) {
     result = std::min(result, planes[i](point));
   }
