@@ -19,21 +19,6 @@
 #include <iostream>
 #include <string>
 namespace detail {
-std::vector<geometry::Segment> generateCubeSegments(float distance) {
-
-  geometry::Point v0 = {-1, 0, -distance};
-  geometry::Point v1 = {1, 0, -distance};
-  geometry::Point v2 = {-1, 1, -distance};
-  geometry::Point v3 = {1, 1, -distance};
-
-  geometry::Point v4 = {-1, 0, -distance - 1};
-  geometry::Point v5 = {1, 0, -distance - 1};
-  geometry::Point v6 = {-1, 1, -distance - 1};
-  geometry::Point v7 = {1, 1, -distance - 1};
-
-  return {{v0, v1}, {v1, v3}, {v2, v3}, {v0, v2}, {v4, v5}, {v5, v7},
-          {v7, v6}, {v4, v6}, {v0, v4}, {v1, v5}, {v3, v7}, {v2, v6}};
-}
 
 M3 Eye() {
   M3 matrix;

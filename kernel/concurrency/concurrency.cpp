@@ -70,13 +70,10 @@ void Worker::ClipFigures() {
 }
 
 namespace {
-inline geometry::Point FromV4(const V4 &vector, Color color) {
-  return geometry::Point{
-      .x = vector.x / vector.w, .y = vector.y / vector.w, .z = vector.z / vector.w, .color = color};
-}
+
 inline void ViewTransform(geometry::Point &point, int32_t sw, int32_t sh) {
-  point.x = (point.x + 1) / 2.0 * sw;
-  point.y = (point.y + 1) / 2.0 * sh;
+  point.coordinates.x = (point.X() + 1) / 2.0 * sw;
+  point.coordinates.y = (point.Y() + 1) / 2.0 * sh;
 }
 
 inline void ViewSegmentTransform(geometry::Segment &segment, int32_t sw, int32_t sh) {
@@ -102,17 +99,14 @@ void Worker::DrawFigures() {
     for (int32_t triangle_index = begin; triangle_index < end; triangle_index++) {
       const geometry::Triangle clipped_triangle =
           workers_storgage[worker_id].clipped_triangles[triangle_index];
-      geometry::Point a_proj =
-          FromV4(frustum_matrix * geometry::SwitchToProjective(clipped_triangle.a),
-                 clipped_triangle.a.color);
+      geometry::Point a_proj = clipped_triangle.a * frustum_matrix;
+      a_proj.Normalize();
 
-      geometry::Point b_proj =
-          FromV4(frustum_matrix * geometry::SwitchToProjective(clipped_triangle.b),
-                 clipped_triangle.b.color);
+      geometry::Point b_proj = clipped_triangle.b * frustum_matrix;
+      b_proj.Normalize();
 
-      geometry::Point c_proj =
-          FromV4(frustum_matrix * geometry::SwitchToProjective(clipped_triangle.c),
-                 clipped_triangle.c.color);
+      geometry::Point c_proj = clipped_triangle.c * frustum_matrix;
+      c_proj.Normalize();
 
       geometry::Triangle projective_triangle =
           geometry::Triangle{.a = a_proj, .b = b_proj, .c = c_proj};

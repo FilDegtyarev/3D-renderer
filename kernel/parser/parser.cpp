@@ -19,13 +19,12 @@ std::vector<std::string> Split(const std::string &str) {
 }
 
 void Compress(geometry::Point &point, float compress) {
-
-  point.x /= compress;
-  point.y /= compress;
-  point.z /= compress;
+  float w = point.coordinates.w;
+  point.coordinates *= 1.0f / compress;
+  point.coordinates.w = w;
 }
 
-void Shift(geometry::Point &point, float shift) { point.z -= shift; }
+void Shift(geometry::Point &point, float shift) { point.coordinates.z -= shift; }
 
 M3 RotateMatrix() {
   M3 matrix;
@@ -56,9 +55,9 @@ world::LocalObject Parse(const std::string &filename) {
       std::vector<std::string> result = Split(string);
       result.erase(result.begin());
       geometry::Point point;
-      point.x = std::stod(result[0]);
-      point.y = -std::stod(result[2]);
-      point.z = -std::stod(result[1]);
+      point.coordinates.x = std::stod(result[0]);
+      point.coordinates.y = -std::stod(result[2]);
+      point.coordinates.z = -std::stod(result[1]);
       point.color = {255, 255, 255};
       builder.AddVertex(point);
     } else if (string[0] == 'f') {

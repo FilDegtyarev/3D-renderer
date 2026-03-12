@@ -6,12 +6,6 @@
 namespace detail {
 namespace geometry {
 struct Point {
-  float x;
-  float y;
-  float z;
-  float w = 1.0;
-  Color color;
-
   Point &operator=(const Point &point) = default;
 
   Point operator+(const V3 &vector) const;
@@ -21,6 +15,20 @@ struct Point {
   Point operator*(const M4 &matrix) const;
 
   bool operator==(const Point &other) const = default;
+
+  inline void Normalize() {
+    float w = coordinates.w;
+    coordinates /= w;
+    coordinates.w = w;
+  }
+
+  inline float X() const { return coordinates.x; }
+  inline float Y() const { return coordinates.y; }
+  inline float Z() const { return coordinates.z; }
+  inline float W() const { return coordinates.w; }
+
+  V4 coordinates = {0, 0, 0, 1};
+  Color color;
 };
 
 struct Triangle {

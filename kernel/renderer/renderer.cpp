@@ -45,69 +45,6 @@ void Renderer::ClearZBuffer() {
     }
   }
 }
-void Renderer::RenderGlobalObject(const world::GlobalObject &object, const M4 &frustum_matrix,
-                                  const M4 &camera_matrix, const camera::Camera &camera) {
-  int i = 0;
-  for (const geometry::Triangle &triangle : object.GetTriangles()) {
-    i++;
-    RenderTriangle(triangle, frustum_matrix, camera_matrix, camera);
-  }
-
-  for (const geometry::Segment &segment : object.GetSegments()) {
-    RenderSegment(segment, frustum_matrix, camera_matrix, camera);
-  }
-}
-
-namespace {
-inline geometry::Point FromV4(const V4 &vector, Color color) {
-  return geometry::Point{
-      .x = vector.x / vector.w, .y = vector.y / vector.w, .z = vector.z / vector.w, .color = color};
-}
-} // namespace
-
-void Renderer::RenderSegment(const geometry::Segment &segment_, const M4 &frustum_matrix,
-                             const M4 &camera_matrix, const camera::Camera &camera) {
-  geometry::Segment segment = segment_ * camera_matrix;
-  for (const geometry::Segment &clipped_segment : camera.ClipSegment(segment)) {
-    geometry::Point a_proj = FromV4(
-        frustum_matrix * geometry::SwitchToProjective(clipped_segment.a), clipped_segment.a.color);
-
-    geometry::Point b_proj = FromV4(
-        frustum_matrix * geometry::SwitchToProjective(clipped_segment.b), clipped_segment.b.color);
-
-    geometry::Segment projective_segment = geometry::Segment{a_proj, b_proj};
-
-    ViewSegmentTransform(projective_segment);
-
-    // segment_rasterizer(projective_segment, zbuffer);
-  }
-}
-
-void Renderer::RenderTriangle(const geometry::Triangle &triangle_, const M4 &frustum_matrix,
-                              const M4 &camera_matrix, const camera::Camera &camera) {
-  const geometry::Triangle triangle = triangle_ * camera_matrix;
-  // for (const geometry::Triangle &clipped_triangle : worker_keeper.camera.ClipTriangle(triangle))
-  // {
-
-  //   geometry::Point a_proj =
-  //       FromV4(frustum_matrix * geometry::SwitchToProjective(clipped_triangle.a),
-  //              clipped_triangle.a.color);
-
-  //   geometry::Point b_proj =
-  //       FromV4(frustum_matrix * geometry::SwitchToProjective(clipped_triangle.b),
-  //              clipped_triangle.b.color);
-
-  //   geometry::Point c_proj =
-  //       FromV4(frustum_matrix * geometry::SwitchToProjective(clipped_triangle.c),
-  //              clipped_triangle.c.color);
-
-  //   geometry::Triangle projective_triangle =
-  //       geometry::Triangle{.a = a_proj, .b = b_proj, .c = c_proj};
-  //   ViewTriangleTransform(projective_triangle);
-  //   auto v = std::vector<geometry::ScreenPoint>(screen_width + screen_height);
-  //   rasterization::DrawTriangle(projective_triangle, zbuffer, v);
-  // }
-}
 
 } // namespace renderer
 } // namespace detail

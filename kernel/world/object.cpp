@@ -6,9 +6,9 @@ namespace world {
 void LocalObject::Normalize(float scale) {
   float max = -1.0;
   for (const geometry::Point &point : vertexes) {
-    max = std::max(max, abs(point.x));
-    max = std::max(max, abs(point.y));
-    max = std::max(max, abs(point.z));
+    max = std::max(max, abs(point.X()));
+    max = std::max(max, abs(point.Y()));
+    max = std::max(max, abs(point.Z()));
   }
   max /= scale;
 

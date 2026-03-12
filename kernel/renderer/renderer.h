@@ -32,26 +32,6 @@ private:
   void ClearZBuffer();
   void RenderGlobalObject(const world::GlobalObject &object, const M4 &frustum_matrix,
                           const M4 &camera_matrix, const camera::Camera &camera);
-  void RenderTriangle(const geometry::Triangle &triangle, const M4 &frustum_matrix,
-                      const M4 &camera_matrix, const camera::Camera &camera);
-  void RenderSegment(const geometry::Segment &segment, const M4 &frustum_matrix,
-                     const M4 &camera_matrix, const camera::Camera &camera);
-
-  inline void ViewTransform(geometry::Point &point) {
-    point.x = (point.x + 1) / 2.0 * screen_width;
-    point.y = (point.y + 1) / 2.0 * screen_height;
-  }
-
-  inline void ViewSegmentTransform(geometry::Segment &segment) {
-    ViewTransform(segment.a);
-    ViewTransform(segment.b);
-  }
-
-  inline void ViewTriangleTransform(geometry::Triangle &triangle) {
-    ViewTransform(triangle.a);
-    ViewTransform(triangle.b);
-    ViewTransform(triangle.c);
-  }
 
   int32_t total_workers;
   size_t screen_height;

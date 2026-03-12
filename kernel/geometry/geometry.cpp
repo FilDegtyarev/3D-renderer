@@ -27,7 +27,7 @@ struct HeightComparator {
 } // namespace
 
 Point Point::operator+(const V3 &vector) const {
-  return Point{x + vector.x, y + vector.y, z + vector.z, w, color};
+  return Point{coordinates + V4{vector.x, vector.y, vector.z, 0}, color};
 }
 
 Point Point::operator+=(const V3 &vector) {
@@ -36,16 +36,14 @@ Point Point::operator+=(const V3 &vector) {
 }
 
 void Point::Scale(const float &coef) {
-  x *= coef;
-  y *= coef;
-  z *= coef;
+  float w = coordinates.w;
+  coordinates *= coef;
+  coordinates.w = w;
 }
 
 Point Point::operator*(const M4 &matrix) const {
-  V4 vector = {x, y, z, w};
-
-  vector = matrix * vector;
-  return Point{vector.x, vector.y, vector.z, vector.w, color};
+  V4 new_coordinates = matrix * coordinates;
+  return Point{new_coordinates, color};
 }
 
 Triangle Triangle::operator*(const M4 &matrix) const {
@@ -55,7 +53,7 @@ Triangle Triangle::operator*(const M4 &matrix) const {
 Segment Segment::operator*(const M4 &matrix) const { return Segment{a * matrix, b * matrix}; }
 
 float Plane::operator()(const Point &point) const {
-  return glm::dot(V3{point.x, point.y, point.z}, N) + D;
+  return glm::dot(V3{point.X(), point.Y(), point.Z()}, N) + D;
 }
 
 inline void TriangleIntersectedSingle::Append(const Triangle &triangle) {
@@ -153,22 +151,13 @@ Segment IntersectSegmentWithPlane(const Segment &segment, const Plane &plane) {
     std::swap(first, second);
   }
 
-  V3 p1 = {first.x, first.y, first.z};
-  V3 p2 = {second.x, second.y, second.z};
+  V3 p1 = {first.X(), first.Y(), first.Z()};
+  V3 p2 = {second.X(), second.Y(), second.Z()};
   float coef = (glm::dot(plane.N, p1) + plane.D) * -1.0f / glm::dot(plane.N, p2 - p1);
   V3 intersection = p1 + (p2 - p1) * coef;
 
-  return {first, Point{intersection.x, intersection.y, intersection.z, .w = second.w,
+  return {first, Point{V4{intersection.x, intersection.y, intersection.z, second.W()},
                        .color = second.color}};
-}
-
-V4 SwitchToProjective(const Point &point) {
-  V4 vector;
-  vector.x = point.x;
-  vector.y = point.y;
-  vector.z = point.z;
-  vector.w = 1.0;
-  return vector;
 }
 
 LineStatus GetLineStatus(const ScreenPoint &first, const ScreenPoint &second) {
@@ -213,9 +202,9 @@ int32_t ScreenTriangle::MaximumHeight() const { return std::max(a.y, std::max(b.
 
 namespace {
 ScreenPoint DiscretizePoint(const Point &point) {
-  return ScreenPoint{.x = int32_t(std::ceil(point.x)),
-                     .y = int32_t(std::ceil(point.y)),
-                     .z = point.z,
+  return ScreenPoint{.x = int32_t(std::ceil(point.X())),
+                     .y = int32_t(std::ceil(point.Y())),
+                     .z = point.Z(),
                      .color = point.color};
 }
 
