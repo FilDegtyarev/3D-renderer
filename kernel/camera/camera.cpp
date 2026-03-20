@@ -1,14 +1,20 @@
 #include "camera.h"
+
 #include "geometry/geometry.h"
+
 #include <cmath>
+#include <numbers>
 namespace detail {
 namespace camera {
 
-Camera::Camera(HorizontalFOV horizontal_fov_, AspectRatio aspect_ratio_,
-               NearPlaneDistance near_plane_distance_, RenderDistance render_distance) {
+static float PI = static_cast<float>(std::numbers::pi);
+Camera::Camera(
+    HorizontalFOV horizontal_fov_, AspectRatio aspect_ratio_,
+    NearPlaneDistance near_plane_distance_, RenderDistance render_distance
+) {
 
   horizontal_fov = horizontal_fov_();
-  focal_length = 1.0 / tan((3.1415926 / 180.0) * horizontal_fov / 2.0);
+  focal_length = 1.0f / tan((PI / 180.0f) * horizontal_fov / 2.0f);
   near_plane_distance = near_plane_distance_();
 
   aspect_ratio = aspect_ratio_();
@@ -20,43 +26,41 @@ Camera::Camera(HorizontalFOV horizontal_fov_, AspectRatio aspect_ratio_,
   near_plane_x_left = -(near_plane_distance / focal_length);
   near_plane_x_right = (near_plane_distance / focal_length);
 
-  eye_position = V3{0, 0, 0};
-  gaze_direction = V3{0, 0, -1};
-  view_up_direction = V3{0, 1, 0};
-  /*
-  V3 eye_position;
-  V3 gaze_direction;
-  V3 view_up_direction;
-  */
-  rotation = {false, false, false, false};
-  moving = {false, false, false, false};
+  eye_position = V3{0.f, 0.f, 0.f};
+  gaze_direction = V3{0.f, 0.f, -1.f};
+  view_up_direction = V3{0.f, 1.f, 0.f};
+
+  rotation = static_cast<Rotating>(0);
+  moving = static_cast<Moving>(0);
   planes = {};
 
   planes.emplace_back(V3{0, 0, -1}, -near_plane_distance);
   planes.emplace_back(V3{0, 0, 1}, far_plane_distance);
 
-  float t1 = 1.0 / sqrt(focal_length * focal_length + 1);
+  float t1 = 1.0f / sqrt(focal_length * focal_length + 1);
   planes.emplace_back(V3{focal_length * t1, 0, -t1}, 0);
   planes.emplace_back(V3{-t1 * focal_length, 0, -t1}, 0);
 
-  float t2 = 1.0 / sqrt(focal_length * focal_length + aspect_ratio * aspect_ratio);
+  float t2 = 1.0f / sqrt(focal_length * focal_length + aspect_ratio * aspect_ratio);
   planes.emplace_back(V3{0, t2 * focal_length, -t2 * aspect_ratio}, 0);
   planes.emplace_back(V3{0, -t2 * focal_length, -t2 * aspect_ratio}, 0);
 }
 
 M4 Camera::GetFrustumMatrix() const {
-  return geometry::GetFrustumMatrix(HorizontalFOV(horizontal_fov), AspectRatio(aspect_ratio),
-                                    NearPlaneDistance{near_plane_distance},
-                                    RenderDistance(far_plane_distance),
-                                    RightEdgeX(near_plane_x_right), LeftEdgeX(near_plane_x_left),
-                                    TopEdgeY(near_plane_y_top), BottomEdgeY(near_plane_y_bottom));
+  return geometry::GetFrustumMatrix(
+      HorizontalFOV(horizontal_fov), AspectRatio(aspect_ratio),
+      NearPlaneDistance{near_plane_distance}, RenderDistance(far_plane_distance),
+      RightEdgeX(near_plane_x_right), LeftEdgeX(near_plane_x_left), TopEdgeY(near_plane_y_top),
+      BottomEdgeY(near_plane_y_bottom)
+  );
 }
 
 namespace {
-inline void PutRow(int cid, const V3 &vector, M4 &matrix) {
+inline M4 SetRow(int cid, const V3& vector, M4 matrix) {
   for (int i = 0; i < 3; ++i) {
     matrix[cid][i] = vector[i];
   }
+  return matrix;
 }
 } // namespace
 
@@ -68,9 +72,9 @@ M4 Camera::GetCameraMatrix() const {
   V3 v = glm::cross(w, u);
 
   M4 first = 0;
-  PutRow(0, u, first);
-  PutRow(1, v, first);
-  PutRow(2, w, first);
+  first = SetRow(0, u, std::move(first));
+  first = SetRow(1, v, std::move(first));
+  first = SetRow(2, w, std::move(first));
   first[3][3] = 1;
 
   first = glm::transpose(first);
@@ -83,67 +87,35 @@ M4 Camera::GetCameraMatrix() const {
   return first * second;
 }
 
-void Camera::Move(char c) {
-  if (c == 'w') {
-    moving.toward = true;
-  } else if (c == 's') {
-    moving.backward = true;
-  } else if (c == 'a') {
-    moving.left = true;
-  } else if (c == 'd') {
-    moving.right = true;
-  }
+void Camera::Move(Moving move) {
+  moving |= move;
 }
 
-void Camera::StopMoving(char c) {
-  if (c == 'w') {
-    moving.toward = false;
-  } else if (c == 's') {
-    moving.backward = false;
-  } else if (c == 'a') {
-    moving.left = false;
-  } else if (c == 'd') {
-    moving.right = false;
-  }
+void Camera::StopMoving(Moving move) {
+  moving ^= move;
 }
 
-void Camera::Rotate(char c) {
-  if (c == 'j') {
-    rotation.left = true;
-  } else if (c == 'k') {
-    rotation.down = true;
-  } else if (c == 'l') {
-    rotation.right = true;
-  } else if (c == 'i') {
-    rotation.up = true;
-  }
+void Camera::Rotate(Rotating rotating) {
+  rotation |= rotating;
 }
 
-void Camera::StopRotating(char c) {
-  if (c == 'j') {
-    rotation.left = false;
-  } else if (c == 'k') {
-    rotation.down = false;
-  } else if (c == 'l') {
-    rotation.right = false;
-  } else if (c == 'i') {
-    rotation.up = false;
-  }
+void Camera::StopRotating(Rotating rotating) {
+  rotation ^= rotating;
 }
 
 bool Camera::IsMoving() const {
-  return moving.toward || moving.backward || moving.left || moving.right;
+  return static_cast<uint8_t>(moving);
 }
 
 bool Camera::IsRotating() const {
-  return rotation.down || rotation.up || rotation.left || rotation.right;
+  return static_cast<uint8_t>(rotation);
 }
 
 namespace {
 
 inline M2 RotationMatrix(float angle) {
   M2 result = 0;
-  float t = 3.1415926 / 180.0 * angle;
+  float t = PI / 180.0 * angle;
   result[0][0] = cos(t);
   result[1][1] = cos(t);
   result[0][1] = sin(t);
@@ -156,19 +128,20 @@ inline M2 RotationMatrix(float angle) {
 void Camera::UpdateView() {
   if (IsMoving()) {
     V3 speed = {0, 0, 0};
-    if (moving.toward == true) {
+    if ((moving & Moving::Toward) == true) {
       speed += gaze_direction / length(gaze_direction);
-    } else if (moving.backward == true) {
+    } else if (static_cast<uint8_t>((moving & Moving::Backward))) {
       speed -= gaze_direction / length(gaze_direction);
     }
 
-    if (moving.left == true) {
+    if ((moving & Moving::Left) == true) {
       speed -= glm::cross(gaze_direction, view_up_direction) /
                glm::length(glm::cross(gaze_direction, view_up_direction));
-    } else if (moving.right == true) {
+    } else if ((moving & Moving::Right) == true) {
       speed += glm::cross(gaze_direction, view_up_direction) /
                glm::length(glm::cross(gaze_direction, view_up_direction));
     }
+
     if (speed == V3{0, 0, 0}) {
       return;
     }
@@ -183,29 +156,29 @@ void Camera::UpdateView() {
 
   if (IsRotating()) {
     float standart = 1;
-    if (rotation.right) {
+    if ((rotation & Rotating::Right) == true) {
       V3 normal = glm::cross(view_up_direction, gaze_direction);
       normal /= glm::length(normal);
-      float t = 3.1415926 / 180.0 * standart;
+      float t = PI / 180.0 * standart;
       gaze_direction = cosf(t) * gaze_direction + -sinf(t) * normal;
     }
 
-    if (rotation.left) {
+    if ((rotation & Rotating::Left) == true) {
       V3 normal = glm::cross(view_up_direction, gaze_direction);
       normal /= glm::length(normal);
-      float t = -3.1415926 / 180.0 * standart;
+      float t = -PI / 180.0 * standart;
       gaze_direction = cosf(t) * gaze_direction + -sinf(t) * normal;
     }
 
-    if (rotation.up) {
-      float t = -3.1415926 / 180.0 * standart;
+    if ((rotation & Rotating::Up) == true) {
+      float t = -PI / 180.0 * standart;
       V3 view_copy = view_up_direction;
       view_up_direction = -sinf(t) * gaze_direction + cosf(t) * view_copy;
       gaze_direction = cosf(t) * gaze_direction + sinf(t) * view_copy;
     }
 
-    if (rotation.down) {
-      float t = 3.1415926 / 180.0 * standart;
+    if ((rotation & Rotating::Down) == true) {
+      float t = PI / 180.0 * standart;
       V3 view_copy = view_up_direction;
       view_up_direction = -sinf(t) * gaze_direction + cosf(t) * view_copy;
       gaze_direction = cosf(t) * gaze_direction + sinf(t) * view_copy;
@@ -220,16 +193,20 @@ void Camera::ResetPosition() {
   reset_position = true;
 }
 
-bool Camera::IsReset() const { return reset_position; }
+bool Camera::IsReset() const {
+  return reset_position;
+}
 
-void Camera::ResetComplete() { reset_position = false; }
+void Camera::ResetComplete() {
+  reset_position = false;
+}
 
-geometry::TriangleIntersected Camera::ClipTriangle(const geometry::Triangle &triangle) const {
+geometry::TriangleIntersected Camera::ClipTriangle(const geometry::Triangle& triangle) const {
   geometry::TriangleIntersected current = {.size = 0};
   geometry::TriangleIntersected previous = {triangle, .size = 1};
-  for (const geometry::Plane &plane : planes) {
+  for (const geometry::Plane& plane : planes) {
     for (int32_t triangle_index = 0; triangle_index < previous.size; ++triangle_index) {
-      // clipping for prev[triangle_index]
+
       current.Merge(ClipTriangleWithPlane(previous[triangle_index], plane));
     }
     previous = current;
@@ -239,16 +216,15 @@ geometry::TriangleIntersected Camera::ClipTriangle(const geometry::Triangle &tri
   return previous;
 }
 
-geometry::TriangleIntersectedSingle
-Camera::ClipTriangleWithPlane(const geometry::Triangle &triangle,
-                              const geometry::Plane &plane) const {
+geometry::TriangleIntersectedSingle Camera::ClipTriangleWithPlane(
+    const geometry::Triangle& triangle, const geometry::Plane& plane
+) const {
   return geometry::IntersectTriangleWithPlane(triangle, plane);
 }
 
-std::vector<geometry::Segment> Camera::ClipSegment(const geometry::Segment &segment) const {
-  // Пересечь со всеми плоскостями
+std::vector<geometry::Segment> Camera::ClipSegment(const geometry::Segment& segment) const {
   geometry::Segment result = segment;
-  for (const geometry::Plane &plane : planes) {
+  for (const geometry::Plane& plane : planes) {
     if (ClipSegmentWithPlane(result, plane).empty()) {
       return {};
     } else {
@@ -258,8 +234,8 @@ std::vector<geometry::Segment> Camera::ClipSegment(const geometry::Segment &segm
   return {result};
 }
 
-std::vector<geometry::Segment> Camera::ClipSegmentWithPlane(const geometry::Segment &segment,
-                                                            const geometry::Plane &plane) const {
+std::vector<geometry::Segment>
+Camera::ClipSegmentWithPlane(const geometry::Segment& segment, const geometry::Plane& plane) const {
   float eps = 0;
   if (plane(segment.a) < -eps && plane(segment.b) < -eps) {
     return {};
@@ -268,7 +244,7 @@ std::vector<geometry::Segment> Camera::ClipSegmentWithPlane(const geometry::Segm
   return {geometry::IntersectSegmentWithPlane(segment, plane)};
 }
 
-bool Camera::TestPoint(const geometry::Point &point) const {
+bool Camera::TestPoint(const geometry::Point& point) const {
   float result = 0;
   for (size_t i = 0; i < planes.size(); ++i) {
     result = std::min(result, planes[i](point));

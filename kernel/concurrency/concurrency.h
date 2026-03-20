@@ -4,6 +4,7 @@
 #include "qrgb.h"
 #include "types/types.h"
 #include "world/world.h"
+
 #include <barrier>
 #include <cassert>
 #include <memory>
@@ -16,6 +17,7 @@ class Renderer;
 }
 
 namespace concurrency {
+
 int32_t GetMaxThreads();
 
 struct WorkerStorage {
@@ -34,10 +36,12 @@ struct WorkerStorage {
 
 class Worker {
 public:
-  Worker(int32_t id, int32_t total_workers_, int32_t sw, int32_t sh, WorkerStorage &self_storage_,
-         const std::vector<WorkerStorage> &workers_storgage_, const camera::Camera &camera_,
-         const world::World &world_, ZBuffer &zbuffer_, std::vector<QRgb> &flat_screen,
-         std::barrier<> &barrier_);
+  Worker(
+      int32_t id, int32_t total_workers_, int32_t sw, int32_t sh, WorkerStorage& self_storage_,
+      const std::vector<WorkerStorage>& workers_storgage_, const camera::Camera& camera_,
+      const world::World& world_, ZBuffer& zbuffer_, std::vector<QRgb>& flat_screen,
+      std::barrier<>& barrier_
+  );
 
   inline void WaitForOther();
 
@@ -51,8 +55,8 @@ public:
 
   void FillScreenMatrix();
 
-  const std::vector<geometry::Triangle> &GetRenderingTriangles() const;
-  const std::vector<geometry::Segment> &GetRenderingSegments() const;
+  const std::vector<geometry::Triangle>& GetRenderingTriangles() const;
+  const std::vector<geometry::Segment>& GetRenderingSegments() const;
   int32_t id;
 
 private:
@@ -61,31 +65,33 @@ private:
   int32_t screen_width;
   int32_t screen_height;
 
-  const std::vector<WorkerStorage> &workers_storgage;
-  WorkerStorage &self_storage;
-  const camera::Camera &camera;
-  const world::World &world;
-  ZBuffer &zbuffer;
-  std::vector<QRgb> &flat_screen;
-  std::barrier<> &barrier;
+  const std::vector<WorkerStorage>& workers_storgage;
+  WorkerStorage& self_storage;
+  const camera::Camera& camera;
+  const world::World& world;
+  ZBuffer& zbuffer;
+  std::vector<QRgb>& flat_screen;
+  std::barrier<>& barrier;
 };
 
 class WorkerKeeper {
   friend class renderer::Renderer;
 
 public:
-  WorkerKeeper(int32_t threads, int32_t triangles_capacity, int32_t segments_capacity,
-               int32_t scanline_capacity, int32_t screen_width, int32_t screen_height,
-               const camera::Camera &camera_, const world::World &world_);
+  WorkerKeeper(
+      int32_t threads, int32_t triangles_capacity, int32_t segments_capacity,
+      int32_t scanline_capacity, int32_t screen_width, int32_t screen_height,
+      const camera::Camera& camera_, const world::World& world_
+  );
 
-  void UnleashWorkers(std::vector<QRgb> &flat_screen, ZBuffer &zbuffer);
+  void UnleashWorkers(std::vector<QRgb>& flat_screen, ZBuffer& zbuffer);
   void WaitForClear();
   void WaitForClip();
   void WaitForDraw();
   void WaitForSynchronize();
 
 private:
-  void SpawnWorker(Worker &&worker);
+  void SpawnWorker(Worker&& worker);
 
   int32_t threads_count;
   int32_t screen_width;
@@ -93,8 +99,8 @@ private:
 
   std::vector<WorkerStorage> workers;
 
-  const camera::Camera &camera;
-  const world::World &world;
+  const camera::Camera& camera;
+  const world::World& world;
 
   std::unique_ptr<std::barrier<>> barrier;
 

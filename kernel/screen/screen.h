@@ -1,5 +1,6 @@
 #pragma once
 #include "types/types.h"
+
 #include <QElapsedTimer>
 #include <QImage>
 #include <QVBoxLayout>
@@ -8,24 +9,23 @@
 
 namespace detail {
 namespace screen {
-enum Height : int32_t;
-enum Width : int32_t;
 
 class Screen {
 public:
-  Screen(Height h, Width w);
+  Screen(ScreenHeight h, ScreenWidth w);
 
   int32_t GetScanlineCapacity() const;
 
   int32_t GetHeight() const;
   int32_t GetWidth() const;
 
-  void Connect(QVBoxLayout *layout);
+  void Connect(QVBoxLayout* layout);
   void Update();
+  void UpdateFromZBuffer(const ZBuffer& zbuffer);
 
   float GetAspectRatio() const;
 
-  std::vector<QRgb> &GetFlatScreen();
+  std::vector<QRgb>& GetFlatScreen();
 
 private:
   int32_t height;

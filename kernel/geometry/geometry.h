@@ -4,15 +4,15 @@
 namespace detail {
 namespace geometry {
 struct Point {
-  Point &operator=(const Point &point) = default;
+  Point& operator=(const Point& point) = default;
 
-  Point operator+(const V3 &vector) const;
-  Point operator+=(const V3 &vector);
+  Point operator+(const V3& vector) const;
+  Point operator+=(const V3& vector);
 
-  void Scale(const float &coef);
-  Point operator*(const M4 &matrix) const;
+  void Scale(const float& coef);
+  Point operator*(const M4& matrix) const;
 
-  bool operator==(const Point &other) const = default;
+  bool operator==(const Point& other) const = default;
 
   inline void Normalize() {
     float w = coordinates.w;
@@ -36,47 +36,47 @@ struct Triangle {
   Point b;
   Point c;
 
-  Triangle operator*(const M4 &matrix) const;
+  Triangle operator*(const M4& matrix) const;
 };
 
 struct Segment {
   Point a;
   Point b;
 
-  Segment operator*(const M4 &matrix) const;
+  Segment operator*(const M4& matrix) const;
 };
 
 struct Plane {
   V3 N;
   float D;
 
-  float operator()(const Point &point) const;
+  float operator()(const Point& point) const;
 };
 
 struct TriangleIntersectedSingle {
-  void Append(const Triangle &triangle);
+  void Append(const Triangle& triangle);
   Triangle triangles[2];
   int32_t size;
 };
 
 struct TriangleIntersected {
-  void Merge(const TriangleIntersectedSingle &single);
+  void Merge(const TriangleIntersectedSingle& single);
   void Clear();
 
-  const Triangle &operator[](size_t i);
+  const Triangle& operator[](size_t i);
   Triangle triangles[64];
   int32_t size;
 };
 
-TriangleIntersectedSingle IntersectTriangleWithPlane(const Triangle &triangle, const Plane &plane);
+TriangleIntersectedSingle IntersectTriangleWithPlane(const Triangle& triangle, const Plane& plane);
 
 // Какой отрезок получится, если пересечь с плоскостью?
-Segment IntersectSegmentWithPlane(const Segment &segment, const Plane &plane);
+Segment IntersectSegmentWithPlane(const Segment& segment, const Plane& plane);
 
-V4 SwitchToProjective(const Point &point);
+V4 SwitchToProjective(const Point& point);
 
 struct ScreenPoint {
-  inline bool operator==(const ScreenPoint &left) const = default;
+  inline bool operator==(const ScreenPoint& left) const = default;
 
   inline V3 Float() const { return V3{x, y, z}; }
 
@@ -95,9 +95,9 @@ struct ScreenSegment {
 
 enum LineStatus { Vertical, NonVertical };
 
-LineStatus GetLineStatus(const ScreenPoint &first, const ScreenPoint &second);
+LineStatus GetLineStatus(const ScreenPoint& first, const ScreenPoint& second);
 
-float GetTangentCoefficent(const ScreenPoint &first, const ScreenPoint &second);
+float GetTangentCoefficent(const ScreenPoint& first, const ScreenPoint& second);
 
 struct ScreenTriangle {
   ScreenPoint a;
@@ -109,13 +109,14 @@ struct ScreenTriangle {
   int32_t MaximumHeight() const;
 };
 
-ScreenSegment DiscretizeSegment(const Segment &segment);
+ScreenSegment DiscretizeSegment(const Segment& segment);
 
-ScreenTriangle DiscretizeTriangle(const Triangle &triangle);
+ScreenTriangle DiscretizeTriangle(const Triangle& triangle);
 
-M4 GetFrustumMatrix(HorizontalFOV horizontal_fov, AspectRatio aspect_ratio,
-                    NearPlaneDistance near_plane_distance, RenderDistance render_distance,
-                    RightEdgeX r, LeftEdgeX l, TopEdgeY t, BottomEdgeY b);
+M4 GetFrustumMatrix(
+    HorizontalFOV horizontal_fov, AspectRatio aspect_ratio, NearPlaneDistance near_plane_distance,
+    RenderDistance render_distance, RightEdgeX r, LeftEdgeX l, TopEdgeY t, BottomEdgeY b
+);
 
 struct BarycentricCoordinates {
   float a_coef;
@@ -123,8 +124,8 @@ struct BarycentricCoordinates {
   float c_coef;
 };
 
-inline BarycentricCoordinates GetBarycentricCoordinates(const V3 &a, const V3 &b, const V3 &c,
-                                                        const Point &point) {
+inline BarycentricCoordinates
+GetBarycentricCoordinates(const V3& a, const V3& b, const V3& c, const Point& point) {
   V3 vector = {point.X(), point.Y(), point.Z()};
   float ab_coef = abs(glm::dot(vector - a, vector - b));
   float bc_coef = abs(glm::dot(vector - b, vector - c));
@@ -133,8 +134,8 @@ inline BarycentricCoordinates GetBarycentricCoordinates(const V3 &a, const V3 &b
   return {ab_coef, bc_coef, ac_coef};
 };
 
-inline BarycentricCoordinates GetBarycentricCoordinates(const V3 &a, const V3 &b, const V3 &c,
-                                                        const ScreenPoint &point) {
+inline BarycentricCoordinates
+GetBarycentricCoordinates(const V3& a, const V3& b, const V3& c, const ScreenPoint& point) {
   V3 vector = point.Float();
   float ab_coef = abs(glm::dot(vector - a, vector - b));
   float bc_coef = abs(glm::dot(vector - b, vector - c));
@@ -144,7 +145,7 @@ inline BarycentricCoordinates GetBarycentricCoordinates(const V3 &a, const V3 &b
 }
 
 // Не оптимизировано
-inline float InterpolateZ(const ScreenTriangle &screen_triangle, const ScreenPoint &screen_point) {
+inline float InterpolateZ(const ScreenTriangle& screen_triangle, const ScreenPoint& screen_point) {
   V3 a = screen_triangle.a.Float();
   V3 b = screen_triangle.b.Float();
   V3 c = screen_triangle.c.Float();
@@ -157,8 +158,9 @@ inline float InterpolateZ(const ScreenTriangle &screen_triangle, const ScreenPoi
   return 1.0f / z_inv;
 }
 
-inline TextureCoordinates InterpolateTextureCoordinates(const ScreenTriangle &screen_triangle,
-                                                        const ScreenPoint &screen_point) {
+inline TextureCoordinates InterpolateTextureCoordinates(
+    const ScreenTriangle& screen_triangle, const ScreenPoint& screen_point
+) {
   V3 a = screen_triangle.a.Float();
   V3 b = screen_triangle.b.Float();
   V3 c = screen_triangle.c.Float();

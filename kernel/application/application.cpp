@@ -1,29 +1,50 @@
 #include "application/application.h"
+
 #include "QDebug"
 #include "camera/camera.h"
 #include "concurrency/concurrency.h"
+#include "parser/parser.h"
 #include "renderer/renderer.h"
 #include "screen/screen.h"
+#include "types/types.h"
+#include "world/world.h"
+
 #include <qboxlayout.h>
 #include <qcoreevent.h>
 #include <qlogging.h>
+#include <unordered_map>
 
 namespace detail {
-ApplicationImpl::ApplicationImpl(int32_t threads_count, world::World &&world_,
-                                 camera::Camera &&camera_, screen::Screen &&screen_)
-    : threads_count(threads_count), world(std::move(world_)), camera(std::move(camera_)),
+ApplicationImpl::ApplicationImpl(
+    int32_t threads_count, world::World&& world_, camera::Camera&& camera_, screen::Screen&& screen_
+)
+    : QWidget(nullptr),
+      threads_count(threads_count),
+      world(std::move(world_)),
+      camera(std::move(camera_)),
       screen(std::move(screen_)),
-      renderer(renderer::Renderer(
-          threads_count, screen.GetFlatScreen(),
-          concurrency::WorkerKeeper(threads_count, world.GetTrianglesCapacity(),
-                                    world.GetSegmentCapacity(), screen.GetScanlineCapacity(),
-                                    screen.GetWidth(), screen.GetHeight(), camera, world))) {
-        // std::cout << "[application impl]: constructed\n" << std::endl;
-      };
+      renderer(
+          renderer::Renderer(
+              threads_count, screen.GetFlatScreen(),
+              concurrency::WorkerKeeper(
+                  threads_count, world.GetTrianglesCapacity(), world.GetSegmentCapacity(),
+                  screen.GetScanlineCapacity(), screen.GetWidth(), screen.GetHeight(), camera, world
+              )
+          )
+      ) {
+  setFocusPolicy(Qt::StrongFocus);
 
-void ApplicationImpl::NextFrame() {
-  QCoreApplication::processEvents();
-  renderer.FrameSucceed();
+  layout = new QVBoxLayout(this);
+
+  ConnectScreen(layout);
+  DrawFrame(ForceScreenUpdate{true});
+  timer = std::make_unique<QTimer>();
+  connect(timer.get(), SIGNAL(timeout()), this, SLOT(SceneTimer()));
+  timer->start(0);
+};
+
+ApplicationImpl::~ApplicationImpl() {
+  delete layout;
 }
 
 namespace {
@@ -66,19 +87,39 @@ inline V3 Speed(char c) {
   }
 }
 
-inline bool IsMovePressed(char c) { return c == 'w' || c == 'a' || c == 's' || c == 'd'; }
+inline bool IsMovePressed(char c) {
+  return c == 'w' || c == 'a' || c == 's' || c == 'd';
+}
 
-inline bool IsRotationPressed(char c) { return c == 'i' || c == 'j' || c == 'k' || c == 'l'; }
+inline bool IsRotationPressed(char c) {
+  return c == 'i' || c == 'j' || c == 'k' || c == 'l';
+}
 
-inline bool IsResetPressed(char c) { return c == ' '; }
+inline bool IsResetPressed(char c) {
+  return c == ' ';
+}
 } // namespace
+
+static std::unordered_map<char, camera::Rotating> rotating_mapping = {
+    {'i', camera::Rotating::Up},
+    {'k', camera::Rotating::Down},
+    {'j', camera::Rotating::Left},
+    {'l', camera::Rotating::Right}
+};
+
+static std::unordered_map<char, camera::Moving> moving_mapping = {
+    {'w', camera::Moving::Toward},
+    {'s', camera::Moving::Backward},
+    {'a', camera::Moving::Left},
+    {'d', camera::Moving::Right}
+};
 
 void ApplicationImpl::ButtonPressed(int button) {
   char c = DefineKey(button);
   if (IsMovePressed(c)) {
-    camera.Move(c);
+    camera.Move(moving_mapping[c]);
   } else if (IsRotationPressed(c)) {
-    camera.Rotate(c);
+    camera.Rotate(rotating_mapping[c]);
   } else if (IsResetPressed(c)) {
     camera.ResetPosition();
   }
@@ -87,14 +128,14 @@ void ApplicationImpl::ButtonPressed(int button) {
 void ApplicationImpl::ButtonReleased(int button) {
   char c = DefineKey(button);
   if (IsMovePressed(c)) {
-    camera.StopMoving(c);
+    camera.StopMoving(moving_mapping[c]);
   } else if (IsRotationPressed(c)) {
-    camera.StopRotating(c);
+    camera.StopRotating(rotating_mapping[c]);
   }
 }
 
 namespace {
-inline M4 GenerateShiftMatrix(const V3 &shift) {
+inline M4 GenerateShiftMatrix(const V3& shift) {
   M4 matrix = 1;
   matrix[0][3] = shift.x;
   matrix[1][3] = shift.y;
@@ -104,64 +145,74 @@ inline M4 GenerateShiftMatrix(const V3 &shift) {
 
 } // namespace
 
-void ApplicationImpl::UpdateScreen(bool force) {
-
-  if (camera.IsMoving() || camera.IsRotating() || camera.IsReset() || force) {
+void ApplicationImpl::DrawFrame(ForceScreenUpdate flag) {
+  if (camera.IsMoving() || camera.IsRotating() || camera.IsReset() || flag()) {
     if (camera.IsReset()) {
       camera.ResetComplete();
     }
+
     camera.UpdateView();
-    // вот тут вот начинается многопоточка
-    // std::cout << "Clearly new frame\n" << std::endl;
+
     renderer.Render();
-    NextFrame();
+
     screen.Update();
-    // QCoreApplication::processEvents();
   }
 }
 
-void ApplicationImpl::ConnectScreen(QVBoxLayout *layout) { screen.Connect(layout); }
+void detail::ApplicationImpl::ConnectScreen(QVBoxLayout* layout) {
+  screen.Connect(layout);
+}
 } // namespace detail
 
-static float FPS = 60;
-Application::Application(int32_t threads_count, detail::world::World &&world,
-                         detail::camera::Camera &&camera, detail::screen::Screen &&screen)
-    : QWidget(nullptr),
-      impl(threads_count, std::move(world), std::move(camera), std::move(screen)) {
-
-  setFocusPolicy(Qt::StrongFocus);
-  layout = std::make_unique<QVBoxLayout>(this);
-  impl.ConnectScreen(layout.get());
-  impl.UpdateScreen(true);
-  timer = std::make_unique<QTimer>();
-  std::cout << "Start" << std::endl;
-  connect(timer.get(), SIGNAL(timeout()), this, SLOT(SceneTimer()));
-  timer->start(20);
-  // timer->start(1000.0 / FPS);
-  // std::cout << "[application]: new frame is proceeding..." << std::endl;
-  // SceneTimer();
-}
-
-// void Application::Run() {
-
-// }
-
-void Application::keyPressEvent(QKeyEvent *event) {
+void detail::ApplicationImpl::keyPressEvent(QKeyEvent* event) {
   if (event->type() == QEvent::KeyPress) {
-    impl.ButtonPressed(event->key());
+    ButtonPressed(event->key());
   }
 }
 
-void Application::keyReleaseEvent(QKeyEvent *event) {
+void detail::ApplicationImpl::keyReleaseEvent(QKeyEvent* event) {
   if (event->type() == QEvent::KeyRelease) {
-    impl.ButtonReleased(event->key());
+    ButtonReleased(event->key());
   }
 }
 
-void Application::SceneTimer() {
-  UpdateScreen();
+void detail::ApplicationImpl::SceneTimer() {
+  DrawFrame(ForceScreenUpdate{false});
   timer->start(0);
 };
 
-void Application::UpdateScreen() { impl.UpdateScreen(); }
+namespace {
+detail::world::World CreateWorld(std::vector<std::string>&& models) {
+  detail::world::WorldBuilder world_builder;
+  for (auto& model : models) {
+    detail::world::LocalObject local = detail::parser::Parse(model);
+    local.Normalize(1);
+    detail::world::GlobalObject model_global(std::move(local), glm::vec3{0, 0, -10}, 1);
+    world_builder.AddObject(std::move(model_global));
+  }
 
+  detail::world::World world = world_builder.Extract();
+  return world;
+}
+} // namespace
+
+Application::Application(
+    ThreadsCount threads_count, std::vector<std::string>&& models, ScreenHeight height,
+    ScreenWidth width, HorizontalFOV hf, NearPlaneDistance npd, RenderDistance rd
+)
+    : impl(
+          threads_count(), CreateWorld(std::move(models)),
+          detail::camera::Camera(
+              hf, AspectRatio{static_cast<float>(height()) / static_cast<float>(width())}, npd, rd
+          ),
+          detail::screen::Screen(height, width)
+      ) {}
+
+void Application::UpdateScreen() {
+  std::cout << "called" << std::endl;
+  impl.DrawFrame(ForceScreenUpdate{false});
+}
+
+void Application::Show() {
+  impl.show();
+}

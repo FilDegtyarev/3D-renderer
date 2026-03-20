@@ -1,16 +1,20 @@
 #include "concurrency.h"
+
 #include "camera/camera.h"
 #include "geometry/geometry.h"
 #include "rasterization/rasterization.h"
 #include "types/types.h"
 #include "world/world.h"
+
 #include <algorithm>
 #include <cfloat>
 #include <thread>
 
 namespace detail {
 namespace concurrency {
-int32_t GetMaxThreads() { return int32_t(std::thread::hardware_concurrency()); }
+int32_t GetMaxThreads() {
+  return int32_t(std::thread::hardware_concurrency());
+}
 
 inline void WorkerStorage::Clear() {
   rendering_triangles.clear();
@@ -25,20 +29,29 @@ inline void WorkerStorage::Clear() {
       local_zbuffer.At(i, j).z = FLT_MAX;
     }
   }
-  //   std::fill(local_zbuffer.begin(), local_zbuffer.end(),
-  //             std::vector<ZColor>(local_zbuffer[0].size(), ZColor{.color = {0, 0, 0}, .z =
-  //             FLT_MAX}));
 }
 
-inline void WorkerStorage::ClearScanline() { scnaline_container.clear(); }
+inline void WorkerStorage::ClearScanline() {
+  scnaline_container.clear();
+}
 
-Worker::Worker(int32_t id_, int32_t total_workers_, int32_t sw, int32_t sh,
-               WorkerStorage &self_storage_, const std::vector<WorkerStorage> &workers_storgage_,
-               const camera::Camera &camera_, const world::World &world_, ZBuffer &zbuffer_,
-               std::vector<QRgb> &flat_screen, std::barrier<> &barrier_)
-    : id(id_), total_workers(total_workers_), screen_width(sw), screen_height(sh),
-      self_storage(self_storage_), workers_storgage(workers_storgage_), camera(camera_),
-      world(world_), zbuffer(zbuffer_), flat_screen(flat_screen), barrier(barrier_) {};
+Worker::Worker(
+    int32_t id_, int32_t total_workers_, int32_t sw, int32_t sh, WorkerStorage& self_storage_,
+    const std::vector<WorkerStorage>& workers_storgage_, const camera::Camera& camera_,
+    const world::World& world_, ZBuffer& zbuffer_, std::vector<QRgb>& flat_screen,
+    std::barrier<>& barrier_
+)
+    : id(id_),
+      total_workers(total_workers_),
+      screen_width(sw),
+      screen_height(sh),
+      self_storage(self_storage_),
+      workers_storgage(workers_storgage_),
+      camera(camera_),
+      world(world_),
+      zbuffer(zbuffer_),
+      flat_screen(flat_screen),
+      barrier(barrier_) {};
 
 inline void Worker::WaitForOther() {
   // std::cout << "wait" << std::endl;
@@ -46,22 +59,25 @@ inline void Worker::WaitForOther() {
   // std::cout << "no wait " << std::endl;
 }
 
-void Worker::Clear() { self_storage.Clear(); }
+void Worker::Clear() {
+  self_storage.Clear();
+}
 
 void Worker::ClipFigures() {
-  // стадия клиппинга
+
   M4 camera_matrix = camera.GetCameraMatrix();
-  for (const world::GlobalObject &object : world.GetObjects()) {
+  for (const world::GlobalObject& object : world.GetObjects()) {
     int32_t block = object.TrianglesCount() / total_workers + 1;
     int32_t begin = id * block;
     int32_t end = std::min(int32_t(object.TrianglesCount()), begin + block);
 
     std::vector<geometry::Triangle> triangles = object.GetTrianglesForWorker(begin, end);
 
-    for (const geometry::Triangle &triangle : triangles) {
+    for (const geometry::Triangle& triangle : triangles) {
       geometry::TriangleIntersected clipped_triangles =
           camera.ClipTriangle(triangle * camera_matrix);
       for (int32_t i = 0; i < clipped_triangles.size; ++i) {
+
         self_storage.clipped_triangles.push_back(clipped_triangles[i]);
       }
     }
@@ -70,17 +86,17 @@ void Worker::ClipFigures() {
 
 namespace {
 
-inline void ViewTransform(geometry::Point &point, int32_t sw, int32_t sh) {
+inline void ViewTransform(geometry::Point& point, int32_t sw, int32_t sh) {
   point.coordinates.x = (point.X() + 1) / 2.0 * sw;
   point.coordinates.y = (point.Y() + 1) / 2.0 * sh;
 }
 
-inline void ViewSegmentTransform(geometry::Segment &segment, int32_t sw, int32_t sh) {
+inline void ViewSegmentTransform(geometry::Segment& segment, int32_t sw, int32_t sh) {
   ViewTransform(segment.a, sw, sh);
   ViewTransform(segment.b, sw, sh);
 }
 
-inline void ViewTriangleTransform(geometry::Triangle &triangle, int32_t sw, int32_t sh) {
+inline void ViewTriangleTransform(geometry::Triangle& triangle, int32_t sw, int32_t sh) {
   ViewTransform(triangle.a, sw, sh);
   ViewTransform(triangle.b, sw, sh);
   ViewTransform(triangle.c, sw, sh);
@@ -111,15 +127,14 @@ void Worker::DrawFigures() {
           geometry::Triangle{.a = a_proj, .b = b_proj, .c = c_proj};
       ViewTriangleTransform(projective_triangle, screen_width, screen_height);
 
-      rasterization::DrawTriangle(projective_triangle, self_storage.local_zbuffer,
-                                  self_storage.scnaline_container);
-      // triangle_rasterizer(projective_triangle, local_zbuffer);
+      rasterization::DrawTriangle(
+          projective_triangle, self_storage.local_zbuffer, self_storage.scnaline_container
+      );
     }
   }
 }
 
 void Worker::SynchronizeZBuffers() {
-  // Только синхронизируем zbuffer
   int32_t block = self_storage.local_zbuffer.GetHeight() / total_workers + 1;
   int32_t begin = id * block;
   int32_t end = std::min(int32_t(self_storage.local_zbuffer.GetHeight()), begin + block);
@@ -141,17 +156,22 @@ void Worker::SynchronizeZBuffers() {
     for (int32_t element_index = 0; element_index < screen_width; ++element_index) {
       Color c = zbuffer.At(row_index, element_index).color;
       flat_screen[row_index * screen_width + element_index] = qRgb(c.red, c.green, c.blue);
-      zbuffer.At(row_index, element_index) = {{0, 0, 0}, FLT_MAX};
+      // zbuffer.At(row_index, element_index) = {{0, 0, 0}, FLT_MAX};
     }
   }
 }
 
 void Worker::FillScreenMatrix() {}
 
-WorkerKeeper::WorkerKeeper(int32_t threads_, int32_t triangles_capacity, int32_t segments_capacity,
-                           int32_t scanline_capacity, int32_t screen_width, int32_t screen_height,
-                           const camera::Camera &camera_, const world::World &world_)
-    : camera(camera_), world(world_), screen_height(screen_height), screen_width(screen_width),
+WorkerKeeper::WorkerKeeper(
+    int32_t threads_, int32_t triangles_capacity, int32_t segments_capacity,
+    int32_t scanline_capacity, int32_t screen_width, int32_t screen_height,
+    const camera::Camera& camera_, const world::World& world_
+)
+    : camera(camera_),
+      world(world_),
+      screen_height(screen_height),
+      screen_width(screen_width),
       barrier(std::make_unique<std::barrier<>>(threads_ + 1)) {
   threads_count = threads_;
   workers = std::vector<WorkerStorage>(0);
@@ -166,53 +186,53 @@ WorkerKeeper::WorkerKeeper(int32_t threads_, int32_t triangles_capacity, int32_t
 
     storage.scnaline_container.reserve(scanline_capacity);
     storage.local_zbuffer = ZBuffer(screen_height, screen_width);
-    // resize(screen_height, std::vector<ZColor>(screen_width));
     workers.push_back(std::move(storage));
   }
 
   threads.reserve(threads_count);
 }
 
-void WorkerKeeper::UnleashWorkers(std::vector<QRgb> &flat_screen, ZBuffer &zbuffer) {
+void WorkerKeeper::UnleashWorkers(std::vector<QRgb>& flat_screen, ZBuffer& zbuffer) {
   for (int32_t worker_id = 0; worker_id < threads_count; ++worker_id) {
-    Worker worker =
-        Worker(worker_id, threads_count, screen_width, screen_height, workers[worker_id], workers,
-               camera, world, zbuffer, flat_screen, *barrier.get());
+    Worker worker = Worker(
+        worker_id, threads_count, screen_width, screen_height, workers[worker_id], workers, camera,
+        world, zbuffer, flat_screen, *barrier.get()
+    );
     SpawnWorker(std::move(worker));
   }
 }
 
-void WorkerKeeper::WaitForClear() { barrier->arrive_and_wait(); }
-void WorkerKeeper::WaitForClip() { barrier->arrive_and_wait(); }
-void WorkerKeeper::WaitForDraw() { barrier->arrive_and_wait(); }
-void WorkerKeeper::WaitForSynchronize() { barrier->arrive_and_wait(); }
+void WorkerKeeper::WaitForClear() {
+  barrier->arrive_and_wait();
+}
+void WorkerKeeper::WaitForClip() {
+  barrier->arrive_and_wait();
+}
+void WorkerKeeper::WaitForDraw() {
+  barrier->arrive_and_wait();
+}
+void WorkerKeeper::WaitForSynchronize() {
+  barrier->arrive_and_wait();
+}
 
-void WorkerKeeper::SpawnWorker(Worker &&worker) {
+void WorkerKeeper::SpawnWorker(Worker&& worker) {
   threads.emplace_back(Execute, std::move(worker));
-  // std::thread thread_worker(Execute, std::move(worker));
 }
 
 void Execute(Worker worker) {
-  // std::cout << "execute: " << std::endl;
   while (true) {
-    // std::cout << "[worker]: wait for clear" << std::endl;
-    //  std::cout << "1:" << std::endl;
     worker.Clear();
-    // std::cout << "[worker]: wait for clip" << std::endl;
     worker.WaitForOther();
 
     worker.ClipFigures();
 
-    // std::cout << "[worker]: wait for draw" << std::endl;
     worker.WaitForOther();
     worker.DrawFigures();
 
-    // std::cout << "[worker]: wait for sync" << std::endl;
     worker.WaitForOther();
 
     worker.SynchronizeZBuffers();
 
-    // std::cout << "[worker]: wait while master drawing" << std::endl;
     worker.WaitForOther();
   }
 }
