@@ -175,7 +175,6 @@ float GetTangentCoefficent(const ScreenPoint &first, const ScreenPoint &second) 
   return float(first.x - second.x) / float(first.y - second.y);
 }
 
-/// Мне очень стыдно
 ScreenTriangle ScreenTriangle::SortedVertex() const {
   ScreenPoint a0 = a;
   ScreenPoint b0 = b;

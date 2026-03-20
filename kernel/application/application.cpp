@@ -7,7 +7,6 @@
 #include <qboxlayout.h>
 #include <qcoreevent.h>
 #include <qlogging.h>
-#include <unordered_map>
 
 namespace detail {
 ApplicationImpl::ApplicationImpl(int32_t threads_count, world::World &&world_,
@@ -158,18 +157,6 @@ void Application::keyReleaseEvent(QKeyEvent *event) {
     impl.ButtonReleased(event->key());
   }
 }
-
-// void Application::Run() {
-//   // std::cout << "[application]: new frame is proceeding..." << std::endl;
-//   // timer->start(1000.0 / FPS)
-//   while (true) {
-//     // auto start = std::chrono::high_resolution_clock::now();
-//     UpdateScreen();
-//     // auto end = std::chrono::high_resolution_clock::now();
-//     // std::cout << (1000.0 / (end - start).count()) << " FPS" << std::endl;
-//     QCoreApplication::processEvents();
-//   }
-// }
 
 void Application::SceneTimer() {
   UpdateScreen();

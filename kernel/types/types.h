@@ -34,18 +34,34 @@ using M3 = glm::mat3x3;
 using M4 = glm::mat4x4;
 using V4 = glm::vec4;
 using V3 = glm::vec3;
+using V2 = glm::vec2;
 
 struct Color {
+  inline bool operator==(const Color &other) const = default;
+
   uint8_t red;
   uint8_t green;
   uint8_t blue;
-
-  inline bool operator==(const Color &other) const = default;
 };
 
 struct ZColor {
   Color color = {0, 0, 0};
   float z = FLT_MAX;
+};
+
+struct TextureCoordinates {
+  float u;
+  float v;
+
+  inline TextureCoordinates operator+(const TextureCoordinates &other) const {
+    return TextureCoordinates{u + other.u, v + other.v};
+  }
+
+  inline TextureCoordinates operator*(float other) const {
+    return TextureCoordinates{u * other, v * other};
+  }
+
+  inline bool operator==(const TextureCoordinates &other) const = default;
 };
 
 // using ZBuffer = std::vector<std::vector<ZColor>>;

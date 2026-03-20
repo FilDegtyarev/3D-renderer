@@ -1,5 +1,6 @@
 #pragma once
 #include "geometry/geometry.h"
+#include "textures/textures.h"
 #include "world/object.h"
 #include <vector>
 
@@ -44,6 +45,8 @@ private:
   std::vector<geometry::Point> vertexes;
   std::vector<TriangleKeeper> triangles;
   std::vector<SegmentKeeper> segments;
+
+  textures::Texture texture;
 };
 
 class LocalObjectBuilder {
@@ -52,6 +55,7 @@ public:
   void AddVertex(const geometry::Point &point);
   void AddTriangle(const TriangleKeeper &triangle);
   void AddSegment(const SegmentKeeper &segment);
+  void AddTexture(const textures::Texture &texture);
 
   LocalObject Extract();
 

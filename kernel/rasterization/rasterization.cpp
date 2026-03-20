@@ -1,11 +1,13 @@
 #include "geometry/geometry.h"
 #include "rasterization/algorithm.h"
 #include "screen/screen.h"
+#include "textures/textures.h"
 #include "types/types.h"
 #include <cassert>
 #include <iostream>
 #include <qpoint.h>
 #include <qrgb.h>
+
 namespace detail {
 
 namespace rasterization {
@@ -62,6 +64,30 @@ void DrawTriangle(const geometry::Triangle &triangle, ZBuffer &zbuffer,
         zbuffer.At(pixel.y, pixel.x).z = pixel.z;
         zbuffer.At(pixel.y, pixel.x).color = {uint8_t(rand() % 256), uint8_t(rand() % 256),
                                               uint8_t(rand() % 256)};
+      }
+    }
+  }
+}
+
+void DrawTriangle(const geometry::Triangle &triangle, ZBuffer &zbuffer,
+                  std::vector<geometry::ScreenPoint> &scanline_buffer,
+                  const textures::Texture &texture) {
+  geometry::ScreenTriangle screen_triangle = geometry::DiscretizeTriangle(triangle);
+
+  for (size_t height = screen_triangle.MinimumHeight(); height <= screen_triangle.MaximumHeight();
+       ++height) {
+    scanline_buffer.clear();
+    // std::vector<geometry::ScreenPoint> scanline =
+    rasterization::Scanline(screen_triangle, height, scanline_buffer);
+
+    for (const auto &pixel : scanline_buffer) {
+      if (!InBuffer(pixel, zbuffer)) {
+        continue;
+      }
+      Color color = texture(pixel.texture_coordinates.u, pixel.texture_coordinates.v);
+      if (pixel.z < zbuffer.At(pixel.y, pixel.x).z) {
+        zbuffer.At(pixel.y, pixel.x).z = pixel.z;
+        zbuffer.At(pixel.y, pixel.x).color = color;
       }
     }
   }

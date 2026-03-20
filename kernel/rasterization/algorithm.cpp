@@ -154,7 +154,13 @@ void Scanline(const geometry::ScreenTriangle &triangle, int32_t height,
     // segment.push_back(point);
   }
 
-  // return segment;
+  // Интерполируем z
+  for (geometry::ScreenPoint &screen_point : scanline_buffer) {
+    screen_point.z = geometry::InterpolateZ(triangle, screen_point);
+
+    screen_point.texture_coordinates =
+        geometry::InterpolateTextureCoordinates(triangle, screen_point);
+  }
 }
 
 } // namespace rasterization

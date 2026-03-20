@@ -42,8 +42,7 @@ int main(int argc, char *argv[]) {
       detail::screen::Screen(detail::screen::Height(600), detail::screen::Width(800));
 
   detail::world::LocalObject local =
-      detail::parser::Parse("/Users/filipp/Documents/Models/cat.obj");
-
+      detail::parser::Parse("/Users/filipp/Documents/Models/penis.obj");
   local.Normalize(1);
   std::cout << "Model info:" << std::endl;
   std::cout << "Total Triangles: " << local.GetTriangles().size() << std::endl;

@@ -6,7 +6,6 @@
 #include "world/world.h"
 #include <algorithm>
 #include <cfloat>
-#include <string>
 #include <thread>
 
 namespace detail {

@@ -4,10 +4,8 @@
 #include "qrgb.h"
 #include "types/types.h"
 #include "world/world.h"
-#include <atomic>
 #include <barrier>
 #include <cassert>
-#include <functional>
 #include <memory>
 #include <thread>
 #include <vector>
