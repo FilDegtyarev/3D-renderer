@@ -2,6 +2,7 @@
 #include "geometry/geometry.h"
 #include "textures/textures.h"
 #include "world/object.h"
+
 #include <vector>
 
 namespace detail {
@@ -24,7 +25,7 @@ class LocalObject {
   friend class LocalObjectBuilder;
 
 public:
-  LocalObject(LocalObject &&) = default;
+  LocalObject(LocalObject&&) = default;
 
   using Vertexes = std::vector<geometry::Point>;
   using Triangles = std::vector<TriangleKeeper>;
@@ -32,16 +33,16 @@ public:
 
   void Normalize(float scale = 1.0);
 
-  geometry::Triangle GetTriangle(const TriangleKeeper &trianlge) const;
-  geometry::Segment GetSegment(const SegmentKeeper &segment) const;
+  geometry::Triangle GetTriangle(const TriangleKeeper& trianlge) const;
+  geometry::Segment GetSegment(const SegmentKeeper& segment) const;
 
-  const Vertexes &GetVertexes() const;
-  const Triangles &GetTriangles() const;
-  const Segments &GetSegments() const;
+  const Vertexes& GetVertexes() const;
+  const Triangles& GetTriangles() const;
+  const Segments& GetSegments() const;
 
 private:
   LocalObject() = default;
-  LocalObject(const LocalObject &local) = default;
+  LocalObject(const LocalObject& local) = default;
   std::vector<geometry::Point> vertexes;
   std::vector<TriangleKeeper> triangles;
   std::vector<SegmentKeeper> segments;
@@ -52,10 +53,10 @@ private:
 class LocalObjectBuilder {
 public:
   LocalObjectBuilder();
-  void AddVertex(const geometry::Point &point);
-  void AddTriangle(const TriangleKeeper &triangle);
-  void AddSegment(const SegmentKeeper &segment);
-  void AddTexture(const textures::Texture &texture);
+  void AddVertex(const geometry::Point& point);
+  void AddTriangle(const TriangleKeeper& triangle);
+  void AddSegment(const SegmentKeeper& segment);
+  void AddTexture(const textures::Texture& texture);
 
   LocalObject Extract();
 

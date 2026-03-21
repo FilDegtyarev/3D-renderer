@@ -3,18 +3,23 @@
 #include "QDebug"
 #include "camera/camera.h"
 #include "concurrency/concurrency.h"
+#include "geometry/geometry.h"
 #include "parser/parser.h"
 #include "renderer/renderer.h"
 #include "screen/screen.h"
 #include "types/types.h"
 #include "world/world.h"
 
+#include <algorithm>
+#include <functional>
+#include <iostream>
 #include <qboxlayout.h>
 #include <qcoreevent.h>
 #include <qlogging.h>
 #include <unordered_map>
 
 namespace detail {
+
 ApplicationImpl::ApplicationImpl(
     int32_t threads_count, world::World&& world_, camera::Camera&& camera_, screen::Screen&& screen_
 )
@@ -23,25 +28,21 @@ ApplicationImpl::ApplicationImpl(
       world(std::move(world_)),
       camera(std::move(camera_)),
       screen(std::move(screen_)),
-      renderer(
-          renderer::Renderer(
-              threads_count, screen.GetFlatScreen(),
-              concurrency::WorkerKeeper(
-                  threads_count, world.GetTrianglesCapacity(), world.GetSegmentCapacity(),
-                  screen.GetScanlineCapacity(), screen.GetWidth(), screen.GetHeight(), camera, world
-              )
-          )
-      ) {
-  setFocusPolicy(Qt::StrongFocus);
+      renderer(threads_count, screen.GetHeight(), screen.GetWidth(), MakeWorkerKeeper()) {
 
+  setFocusPolicy(Qt::StrongFocus);
   layout = new QVBoxLayout(this);
 
   ConnectScreen(layout);
-  DrawFrame(ForceScreenUpdate{true});
   timer = std::make_unique<QTimer>();
   connect(timer.get(), SIGNAL(timeout()), this, SLOT(SceneTimer()));
+}
+
+void ApplicationImpl::StartRenderer() {
+  renderer.UnleashWorkers(&camera, &world);
+  DrawFrame(ForceScreenUpdate{true});
   timer->start(0);
-};
+}
 
 ApplicationImpl::~ApplicationImpl() {
   delete layout;
@@ -75,18 +76,6 @@ char DefineKey(int button) {
   return c;
 }
 
-inline V3 Speed(char c) {
-  if (c == 'w') {
-    return {0, 0, -1};
-  } else if (c == 'd') {
-    return {1, 0, 0};
-  } else if (c == 'a') {
-    return {-1, 0, 0};
-  } else {
-    return {0, 0, 1};
-  }
-}
-
 inline bool IsMovePressed(char c) {
   return c == 'w' || c == 'a' || c == 's' || c == 'd';
 }
@@ -98,6 +87,7 @@ inline bool IsRotationPressed(char c) {
 inline bool IsResetPressed(char c) {
   return c == ' ';
 }
+
 } // namespace
 
 static std::unordered_map<char, camera::Rotating> rotating_mapping = {
@@ -134,17 +124,6 @@ void ApplicationImpl::ButtonReleased(int button) {
   }
 }
 
-namespace {
-inline M4 GenerateShiftMatrix(const V3& shift) {
-  M4 matrix = 1;
-  matrix[0][3] = shift.x;
-  matrix[1][3] = shift.y;
-  matrix[2][3] = shift.z;
-  return matrix;
-}
-
-} // namespace
-
 void ApplicationImpl::DrawFrame(ForceScreenUpdate flag) {
   if (camera.IsMoving() || camera.IsRotating() || camera.IsReset() || flag()) {
     if (camera.IsReset()) {
@@ -153,33 +132,41 @@ void ApplicationImpl::DrawFrame(ForceScreenUpdate flag) {
 
     camera.UpdateView();
 
-    renderer.Render();
+    const Frame& new_frame = renderer.MakeFrame();
 
-    screen.Update();
+    screen.DrawFrame(new_frame);
   }
 }
 
-void detail::ApplicationImpl::ConnectScreen(QVBoxLayout* layout) {
+void ApplicationImpl::ConnectScreen(QVBoxLayout* layout) {
   screen.Connect(layout);
 }
-} // namespace detail
 
-void detail::ApplicationImpl::keyPressEvent(QKeyEvent* event) {
+concurrency::WorkerKeeper ApplicationImpl::MakeWorkerKeeper() const {
+  return WorkerKeeper(
+      threads_count, world.GetTrianglesCapacity(), world.GetSegmentCapacity(),
+      screen.GetScanlineCapacity(), screen.GetWidth(), screen.GetHeight()
+  );
+}
+
+void ApplicationImpl::keyPressEvent(QKeyEvent* event) {
   if (event->type() == QEvent::KeyPress) {
     ButtonPressed(event->key());
   }
 }
 
-void detail::ApplicationImpl::keyReleaseEvent(QKeyEvent* event) {
+void ApplicationImpl::keyReleaseEvent(QKeyEvent* event) {
   if (event->type() == QEvent::KeyRelease) {
     ButtonReleased(event->key());
   }
 }
 
-void detail::ApplicationImpl::SceneTimer() {
+void ApplicationImpl::SceneTimer() {
   DrawFrame(ForceScreenUpdate{false});
   timer->start(0);
-};
+}
+
+} // namespace detail
 
 namespace {
 detail::world::World CreateWorld(std::vector<std::string>&& models) {
@@ -190,9 +177,7 @@ detail::world::World CreateWorld(std::vector<std::string>&& models) {
     detail::world::GlobalObject model_global(std::move(local), glm::vec3{0, 0, -10}, 1);
     world_builder.AddObject(std::move(model_global));
   }
-
-  detail::world::World world = world_builder.Extract();
-  return world;
+  return world_builder.Extract();
 }
 } // namespace
 
@@ -209,10 +194,10 @@ Application::Application(
       ) {}
 
 void Application::UpdateScreen() {
-  std::cout << "called" << std::endl;
   impl.DrawFrame(ForceScreenUpdate{false});
 }
 
 void Application::Show() {
+  impl.StartRenderer();
   impl.show();
 }

@@ -65,21 +65,6 @@ inline void TriangleIntersectedSingle::Append(const Triangle& triangle) {
   triangles[size++] = triangle;
 }
 
-void TriangleIntersected::Merge(const TriangleIntersectedSingle& single) {
-  // std::cout << "123" << std::endl;
-  for (int32_t i = 0; i < single.size; ++i) {
-    triangles[size++] = single.triangles[i];
-  }
-}
-
-void TriangleIntersected::Clear() {
-  size = 0;
-}
-
-const Triangle& TriangleIntersected::operator[](size_t i) {
-  return triangles[i];
-}
-
 namespace {
 struct PointContainer {
   void Append(const Point& point) { points[size++] = point; }
@@ -197,8 +182,6 @@ ScreenTriangle ScreenTriangle::SortedVertex() const {
     std::swap(b0, c0);
   }
   return {a0, b0, c0};
-
-  // return ScreenTriangle{vertex[0], vertex[1], vertex[2]};
 }
 
 int32_t ScreenTriangle::MinimumHeight() const {

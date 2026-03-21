@@ -6,6 +6,7 @@
 #include <QVBoxLayout>
 #include <cstdlib>
 #include <qlabel.h>
+#include <vector>
 
 namespace detail {
 namespace screen {
@@ -20,14 +21,13 @@ public:
   int32_t GetWidth() const;
 
   void Connect(QVBoxLayout* layout);
-  void Update();
-  void UpdateFromZBuffer(const ZBuffer& zbuffer);
+
+  void DrawFrame(const Frame& frame);
 
   float GetAspectRatio() const;
 
-  std::vector<QRgb>& GetFlatScreen();
-
 private:
+  void Update();
   int32_t height;
   int32_t width;
   std::unique_ptr<QLabel> screen;

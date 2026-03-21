@@ -1,13 +1,15 @@
 #include "algorithm.h"
+
 #include "geometry/geometry.h"
+
 #include <iostream>
 #include <qnamespace.h>
 namespace detail {
 
 namespace rasterization {
 
-std::vector<geometry::ScreenPoint> Bresenham(const geometry::ScreenPoint &start,
-                                             const geometry::ScreenPoint &finish) {
+std::vector<geometry::ScreenPoint>
+Bresenham(const geometry::ScreenPoint& start, const geometry::ScreenPoint& finish) {
   if (start.x > finish.x) {
     return Bresenham(finish, start);
   }
@@ -64,7 +66,7 @@ std::vector<geometry::ScreenPoint> Bresenham(const geometry::ScreenPoint &start,
 
 namespace {
 const float EPS = 1e-9;
-float GetXShift(const geometry::ScreenPoint &first, const geometry::ScreenPoint &second) {
+float GetXShift(const geometry::ScreenPoint& first, const geometry::ScreenPoint& second) {
   float x_shift = 0;
   if (geometry::GetLineStatus(first, second) == geometry::LineStatus::NonVertical) {
     x_shift = geometry::GetTangentCoefficent(first, second);
@@ -81,8 +83,10 @@ bool InTriangle(float x) {
 
 } // namespace
 
-void Scanline(const geometry::ScreenTriangle &triangle, int32_t height,
-              std::vector<geometry::ScreenPoint> &scanline_buffer) {
+void Scanline(
+    const geometry::ScreenTriangle& triangle, int32_t height,
+    std::vector<geometry::ScreenPoint>& scanline_buffer
+) {
   // Shirley, 166
   geometry::ScreenTriangle sorted_triangle = triangle.SortedVertex();
 
@@ -155,7 +159,7 @@ void Scanline(const geometry::ScreenTriangle &triangle, int32_t height,
   }
 
   // Интерполируем z
-  for (geometry::ScreenPoint &screen_point : scanline_buffer) {
+  for (geometry::ScreenPoint& screen_point : scanline_buffer) {
     screen_point.z = geometry::InterpolateZ(triangle, screen_point);
 
     screen_point.texture_coordinates =

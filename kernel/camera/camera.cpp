@@ -201,19 +201,26 @@ void Camera::ResetComplete() {
   reset_position = false;
 }
 
-geometry::TriangleIntersected Camera::ClipTriangle(const geometry::Triangle& triangle) const {
-  geometry::TriangleIntersected current = {.size = 0};
-  geometry::TriangleIntersected previous = {triangle, .size = 1};
-  for (const geometry::Plane& plane : planes) {
-    for (int32_t triangle_index = 0; triangle_index < previous.size; ++triangle_index) {
+geometry::TriangleIntersected* Camera::ClipTriangle(
+    const geometry::Triangle& triangle, geometry::TriangleIntersected* cur,
+    geometry::TriangleIntersected* prev
+) const {
+  cur->Clear();
+  prev->Clear();
 
-      current.Merge(ClipTriangleWithPlane(previous[triangle_index], plane));
+  (*prev)[0] = triangle;
+  prev->size = 1;
+
+  for (const geometry::Plane& plane : planes) {
+    for (int32_t triangle_index = 0; triangle_index < (*prev).size; ++triangle_index) {
+      cur->Merge(ClipTriangleWithPlane((*prev)[triangle_index], plane));
     }
-    previous = current;
-    current.Clear();
+
+    std::swap(prev, cur);
+    cur->Clear();
   }
 
-  return previous;
+  return prev;
 }
 
 geometry::TriangleIntersectedSingle Camera::ClipTriangleWithPlane(

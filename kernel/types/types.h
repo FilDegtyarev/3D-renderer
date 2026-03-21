@@ -3,6 +3,7 @@
 #include "glm/mat4x4.hpp"
 
 #include <cfloat>
+#include <functional>
 #include <vector>
 
 template <class T, class Tag>
@@ -39,6 +40,8 @@ using V4 = glm::vec4;
 using V3 = glm::vec3;
 using V2 = glm::vec2;
 
+using Task = std::function<void(void)>;
+
 struct Color {
   inline bool operator==(const Color& other) const = default;
 
@@ -46,6 +49,8 @@ struct Color {
   uint8_t green;
   uint8_t blue;
 };
+
+using Frame = std::vector<Color>;
 
 struct ZColor {
   Color color = {0, 0, 0};

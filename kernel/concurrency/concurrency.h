@@ -7,6 +7,7 @@
 
 #include <barrier>
 #include <cassert>
+#include <functional>
 #include <memory>
 #include <thread>
 #include <vector>
@@ -21,8 +22,8 @@ namespace concurrency {
 int32_t GetMaxThreads();
 
 struct WorkerStorage {
-  inline void Clear();
-  inline void ClearScanline();
+  void Clear();
+  void ClearScanline();
 
   std::vector<geometry::Triangle> rendering_triangles;
   std::vector<geometry::Segment> rendering_segments;
@@ -36,14 +37,19 @@ struct WorkerStorage {
 
 class Worker {
 public:
+  // Worker(
+  //     int32_t id, int32_t total_workers_, int32_t sw, int32_t sh, WorkerStorage& self_storage_,
+  //     const std::vector<WorkerStorage>& workers_storgage_, const camera::Camera& camera_,
+  //     const world::World& world_, ZBuffer& zbuffer_, Frame& flat_screen, std::barrier<>& barrier_
+  // );
+
   Worker(
-      int32_t id, int32_t total_workers_, int32_t sw, int32_t sh, WorkerStorage& self_storage_,
-      const std::vector<WorkerStorage>& workers_storgage_, const camera::Camera& camera_,
-      const world::World& world_, ZBuffer& zbuffer_, std::vector<QRgb>& flat_screen,
-      std::barrier<>& barrier_
+      int32_t id, std::barrier<>& barrier, std::function<void(void)> clear,
+      std::function<void(void)> clip_figures, std::function<void(void)> draw_figures,
+      std::function<void(void)> synchronize_zbuffers, std::function<void(void)> fill_screen_matrix
   );
 
-  inline void WaitForOther();
+  void WaitForOther();
 
   void Clear();
 
@@ -57,41 +63,56 @@ public:
 
   const std::vector<geometry::Triangle>& GetRenderingTriangles() const;
   const std::vector<geometry::Segment>& GetRenderingSegments() const;
-  int32_t id;
 
 private:
-  int32_t total_workers;
+  int32_t id;
+  std::function<void(void)> clear;
+  std::function<void(void)> clip_figures;
+  std::function<void(void)> draw_figures;
+  std::function<void(void)> synchronize_zbuffers;
+  std::function<void(void)> fill_screen_matrix;
 
-  int32_t screen_width;
-  int32_t screen_height;
-
-  const std::vector<WorkerStorage>& workers_storgage;
-  WorkerStorage& self_storage;
-  const camera::Camera& camera;
-  const world::World& world;
-  ZBuffer& zbuffer;
-  std::vector<QRgb>& flat_screen;
   std::barrier<>& barrier;
 };
 
 class WorkerKeeper {
-  friend class renderer::Renderer;
-
 public:
   WorkerKeeper(
       int32_t threads, int32_t triangles_capacity, int32_t segments_capacity,
-      int32_t scanline_capacity, int32_t screen_width, int32_t screen_height,
-      const camera::Camera& camera_, const world::World& world_
+      int32_t scanline_capacity, int32_t screen_width, int32_t screen_height
   );
 
-  void UnleashWorkers(std::vector<QRgb>& flat_screen, ZBuffer& zbuffer);
+  void SpawnWorker(Worker&& worker);
+  void ServeForever(Frame& flat_screen, ZBuffer& zbuffer);
+
+  void ExecuteThreads();
+
+  inline WorkerStorage& GetStorage(int32_t worker_id) { return workers[worker_id]; }
+  std::barrier<>& GetBarrier() { return *barrier.get(); }
+
+  static void Serve(Worker worker) {
+    while (true) {
+      worker.Clear();
+      worker.WaitForOther();
+
+      worker.ClipFigures();
+
+      worker.WaitForOther();
+      worker.DrawFigures();
+
+      worker.WaitForOther();
+
+      worker.SynchronizeZBuffers();
+
+      worker.WaitForOther();
+    }
+  }
+
+private:
   void WaitForClear();
   void WaitForClip();
   void WaitForDraw();
   void WaitForSynchronize();
-
-private:
-  void SpawnWorker(Worker&& worker);
 
   int32_t threads_count;
   int32_t screen_width;
@@ -99,15 +120,10 @@ private:
 
   std::vector<WorkerStorage> workers;
 
-  const camera::Camera& camera;
-  const world::World& world;
-
   std::unique_ptr<std::barrier<>> barrier;
 
   std::vector<std::thread> threads;
 };
-
-void Execute(Worker);
 
 } // namespace concurrency
 } // namespace detail

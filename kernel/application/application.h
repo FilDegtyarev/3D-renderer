@@ -15,6 +15,9 @@
 namespace detail {
 
 class ApplicationImpl : public QWidget {
+  using Camera = camera::Camera;
+  using World = world::World;
+  using WorkerKeeper = concurrency::WorkerKeeper;
   Q_OBJECT
 public:
   ApplicationImpl(
@@ -28,6 +31,8 @@ public:
   void DrawFrame(ForceScreenUpdate flag);
   void ConnectScreen(QVBoxLayout* layout);
 
+  void StartRenderer();
+
   ~ApplicationImpl();
 
 protected:
@@ -38,6 +43,10 @@ private slots:
   void SceneTimer();
 
 private:
+  using Task = std::function<void(void)>;
+
+  WorkerKeeper MakeWorkerKeeper() const;
+
   int32_t threads_count;
   world::World world;
   camera::Camera camera;
@@ -60,8 +69,6 @@ public:
   void Show();
 
 private:
-  //  float MeasureFrameTime();
-
   void UpdateScreen();
   detail::ApplicationImpl impl;
 };

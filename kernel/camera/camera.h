@@ -105,7 +105,12 @@ public:
   bool IsReset() const;
 
   void ResetComplete();
-  geometry::TriangleIntersected ClipTriangle(const geometry::Triangle& triangle) const;
+
+  geometry::TriangleIntersected* ClipTriangle(
+      const geometry::Triangle& triangle, geometry::TriangleIntersected* first,
+      geometry::TriangleIntersected* second
+  ) const;
+
   std::vector<geometry::Segment> ClipSegment(const geometry::Segment& segment) const;
 
   bool TestPoint(const geometry::Point& point) const;

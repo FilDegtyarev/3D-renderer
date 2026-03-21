@@ -60,17 +60,21 @@ struct TriangleIntersectedSingle {
 };
 
 struct TriangleIntersected {
-  void Merge(const TriangleIntersectedSingle& single);
-  void Clear();
+  inline void Merge(const TriangleIntersectedSingle& single) {
+    for (int32_t i = 0; i < single.size; ++i) {
+      triangles[size++] = single.triangles[i];
+    }
+  }
+  inline void Clear() { size = 0; }
+  inline const Triangle& operator[](size_t i) const { return triangles[i]; }
+  inline Triangle& operator[](size_t i) { return triangles[i]; }
 
-  const Triangle& operator[](size_t i);
   Triangle triangles[64];
   int32_t size;
 };
 
 TriangleIntersectedSingle IntersectTriangleWithPlane(const Triangle& triangle, const Plane& plane);
 
-// Какой отрезок получится, если пересечь с плоскостью?
 Segment IntersectSegmentWithPlane(const Segment& segment, const Plane& plane);
 
 V4 SwitchToProjective(const Point& point);

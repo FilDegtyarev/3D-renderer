@@ -14,32 +14,36 @@ namespace detail {
 namespace renderer {
 
 class Renderer {
+  using WorkerKeeper = concurrency::WorkerKeeper;
+  using Camera = camera::Camera;
+  using World = world::World;
+  using WorkerStorage = concurrency::WorkerStorage;
+  using Worker = concurrency::Worker;
+
 public:
   Renderer(
-      int32_t threads_count, std::vector<QRgb>& flat_screen,
-      concurrency::WorkerKeeper&& worker_keeper_
+      int32_t threads_total, int32_t screen_height, int32_t screen_width,
+      WorkerKeeper&& worker_keeper
   );
 
-  void Render();
+  const Frame& MakeFrame();
 
-  void FrameSucceed();
-  ZBuffer& GetZBuffer();
-
-  const ZBuffer& MakeFrame();
   void ClearZBuffer();
 
-private:
-  void RenderGlobalObject(
-      const world::GlobalObject& object, const M4& frustum_matrix, const M4& camera_matrix,
-      const camera::Camera& camera
-  );
+  void UnleashWorkers(Camera* camera, World* world);
 
-  int32_t total_workers;
+private:
+  Task MakeClearTask(int32_t thread_id);
+  Task MakeClipFiguresTask(int32_t thread_id, Camera* camera, World* world);
+  Task MakeDrawFiguresTask(int32_t thread_id, Camera* camera, World* world);
+  Task MakeSynchronizeZBuffersTask(int32_t thread_id);
+
+  int32_t threads_total;
   size_t screen_height;
   size_t screen_width;
   ZBuffer zbuffer;
-
-  concurrency::WorkerKeeper worker_keeper;
+  Frame current_frame;
+  WorkerKeeper worker_keeper;
 };
 
 } // namespace renderer
