@@ -100,7 +100,7 @@ Task Renderer::MakeClipFiguresTask(int32_t thread_id, Camera* camera, World* wor
 Task Renderer::MakeDrawFiguresTask(int32_t thread_id, camera::Camera* camera, world::World* world) {
   Task draw_figures_task = [thread_id = thread_id, camera = camera, threads_total = threads_total,
                             worker_keeper = &worker_keeper, screen_width = screen_width,
-                            screen_height = screen_height]() {
+                            screen_height = screen_height, world = world]() {
     M4 frustum_matrix = camera->GetFrustumMatrix();
     for (int32_t worker_id = 0; worker_id < threads_total; ++worker_id) {
       concurrency::WorkerStorage& worker_storage = worker_keeper->GetStorage(worker_id);
@@ -127,7 +127,8 @@ Task Renderer::MakeDrawFiguresTask(int32_t thread_id, camera::Camera* camera, wo
         ViewTriangleTransform(projective_triangle, screen_width, screen_height);
 
         rasterization::DrawTriangle(
-            projective_triangle, self_storage.local_zbuffer, self_storage.scnaline_container
+            projective_triangle, self_storage.local_zbuffer, self_storage.scnaline_container,
+            world->GetObjects()[0].GetTexture()
         );
       }
     }

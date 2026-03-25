@@ -57,6 +57,12 @@ struct ZColor {
   float z = FLT_MAX;
 };
 
+struct VertexInfo {
+  int32_t vertex_number;
+  int32_t texture_number;
+  int32_t normal_number;
+};
+
 struct TextureCoordinates {
   float u;
   float v;
@@ -70,6 +76,8 @@ struct TextureCoordinates {
   }
 
   inline bool operator==(const TextureCoordinates& other) const = default;
+
+  inline TextureCoordinates& operator=(const TextureCoordinates& other) = default;
 };
 
 class ZBuffer {

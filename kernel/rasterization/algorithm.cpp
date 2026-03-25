@@ -102,7 +102,6 @@ void Scanline(
 
   if (height >= sorted_triangle.b.y) {
     if (height == sorted_triangle.b.y && sorted_triangle.b.y == sorted_triangle.a.y) {
-      // Вырожденный случай
       x_left = sorted_triangle.b.x;
       x_right = sorted_triangle.a.x;
     } else {
@@ -136,36 +135,33 @@ void Scanline(
 
   int32_t start = int32_t(x_left);
   int32_t finish = int32_t(x_right);
-
   start = std::ceil(x_left);
   finish = std::ceil(x_right) - 1;
 
   // std::vector<geometry::ScreenPoint> segment;
-  if (start > finish) {
-    std::swap(start, finish);
-  }
+  // if (x_left > x_right) {
+  //   std::swap(x_left, x_right);
+  // }
 
-  // Зверский костыль.
-  start = std::max(0, start);
-  finish = std::max(0, finish);
+  // //
+  // int32_t start = std::ceil(x_left - 0.5f);
+  // int32_t finish = std::floor(x_right - 0.5f);
 
   for (int32_t x = start; x <= finish; ++x) {
     geometry::ScreenPoint point;
     point.x = x;
     point.y = height;
-    point.color = Color{.red = 255, .green = 51, .blue = 153};
     scanline_buffer.push_back(point);
-    // segment.push_back(point);
   }
 
-  // Интерполируем z
   for (geometry::ScreenPoint& screen_point : scanline_buffer) {
     screen_point.z = geometry::InterpolateZ(triangle, screen_point);
-
     screen_point.texture_coordinates =
         geometry::InterpolateTextureCoordinates(triangle, screen_point);
   }
 }
+//
+// std::cout << "done" << std::endl;
 
 } // namespace rasterization
 } // namespace detail

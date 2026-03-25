@@ -34,8 +34,8 @@ ApplicationImpl::ApplicationImpl(
   layout = new QVBoxLayout(this);
 
   ConnectScreen(layout);
-  timer = std::make_unique<QTimer>();
-  connect(timer.get(), SIGNAL(timeout()), this, SLOT(SceneTimer()));
+  timer = new QTimer();
+  connect(timer, SIGNAL(timeout()), this, SLOT(SceneTimer()));
 }
 
 void ApplicationImpl::StartRenderer() {
@@ -46,6 +46,7 @@ void ApplicationImpl::StartRenderer() {
 
 ApplicationImpl::~ApplicationImpl() {
   delete layout;
+  delete timer;
 }
 
 namespace {
@@ -171,12 +172,16 @@ void ApplicationImpl::SceneTimer() {
 namespace {
 detail::world::World CreateWorld(std::vector<std::string>&& models) {
   detail::world::WorldBuilder world_builder;
-  for (auto& model : models) {
-    detail::world::LocalObject local = detail::parser::Parse(model);
-    local.Normalize(1);
-    detail::world::GlobalObject model_global(std::move(local), glm::vec3{0, 0, -10}, 1);
-    world_builder.AddObject(std::move(model_global));
-  }
+  detail::world::LocalObject local = detail::parser::Parse(models[0], models[1]);
+  local.Normalize(1);
+  detail::world::GlobalObject model_global(std::move(local), glm::vec3{0, 0, -10}, 1);
+  world_builder.AddObject(std::move(model_global));
+  // for (auto& model : models) {
+  //   detail::world::LocalObject local = detail::parser::Parse(model, "");
+  //   local.Normalize(1);
+  //   detail::world::GlobalObject model_global(std::move(local), glm::vec3{0, 0, -10}, 1);
+  //   world_builder.AddObject(std::move(model_global));
+  // }
   return world_builder.Extract();
 }
 } // namespace

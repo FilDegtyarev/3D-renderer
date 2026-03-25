@@ -30,7 +30,10 @@ struct HeightComparator {
 } // namespace
 
 Point Point::operator+(const V3& vector) const {
-  return Point{coordinates + V4{vector.x, vector.y, vector.z, 0}, color};
+  return Point{
+      coordinates + V4{vector.x, vector.y, vector.z, 0}, color,
+      .texture_coordinates = texture_coordinates
+  };
 }
 
 Point Point::operator+=(const V3& vector) {
@@ -46,7 +49,7 @@ void Point::Scale(const float& coef) {
 
 Point Point::operator*(const M4& matrix) const {
   V4 new_coordinates = matrix * coordinates;
-  return Point{new_coordinates, color};
+  return Point{new_coordinates, color, .texture_coordinates = texture_coordinates};
 }
 
 Triangle Triangle::operator*(const M4& matrix) const {
@@ -126,6 +129,7 @@ TriangleIntersectedSingle IntersectTriangleWithPlane(const Triangle& triangle, c
     return {first, second, .size = 2};
   }
   assert(false);
+  return {};
 }
 
 Segment IntersectSegmentWithPlane(const Segment& segment, const Plane& plane) {
@@ -198,7 +202,8 @@ ScreenPoint DiscretizePoint(const Point& point) {
       .x = int32_t(std::ceil(point.X())),
       .y = int32_t(std::ceil(point.Y())),
       .z = point.Z(),
-      .color = point.color
+      .color = point.color,
+      .texture_coordinates = point.texture_coordinates
   };
 }
 

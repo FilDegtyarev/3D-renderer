@@ -43,7 +43,7 @@ void Screen::Update() {
       reinterpret_cast<uint8_t*>(flat_screen.data()), width, height, width * sizeof(uint32_t),
       QImage::Format_ARGB32
   );
-  //
+
   screen->setPixmap(QPixmap::fromImage(qimage));
 }
 

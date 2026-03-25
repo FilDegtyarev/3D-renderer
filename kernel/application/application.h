@@ -54,7 +54,7 @@ private:
   renderer::Renderer renderer;
 
   QVBoxLayout* layout;
-  std::unique_ptr<QTimer> timer;
+  QTimer* timer;
 };
 
 } // namespace detail

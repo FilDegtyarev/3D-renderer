@@ -1,6 +1,7 @@
 #pragma once
 #include "geometry/geometry.h"
 #include "object.h"
+#include "textures/textures.h"
 #include "types/types.h"
 
 #include <glm/ext/matrix_float3x3.hpp>
@@ -21,6 +22,7 @@ public:
   inline geometry::Triangle operator[](int32_t index) const {
     return local_object.GetTriangle(local_object.GetTriangles()[index]) * transform;
   }
+  const textures::Texture& GetTexture() const;
 
   std::vector<geometry::Segment> GetSegments() const;
 

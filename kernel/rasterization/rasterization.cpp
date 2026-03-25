@@ -4,14 +4,14 @@
 #include "types/types.h"
 
 #include <cassert>
+#include <cstddef>
+#include <iostream>
 #include <qpoint.h>
 #include <qrgb.h>
 
 namespace detail {
 
 namespace rasterization {
-
-const int32_t SIZE = 500;
 
 namespace {
 bool InBuffer(const geometry::ScreenPoint& point, const ZBuffer& zbuffer) {
@@ -47,34 +47,9 @@ void DrawSegment(const geometry::Segment& segment_, ZBuffer& zbuffer) {
 
 void DrawTriangle(
     const geometry::Triangle& triangle, ZBuffer& zbuffer,
-    std::vector<geometry::ScreenPoint>& scanline_buffer
-) {
-  geometry::ScreenTriangle screen_triangle = geometry::DiscretizeTriangle(triangle);
-
-  for (size_t height = screen_triangle.MinimumHeight(); height <= screen_triangle.MaximumHeight();
-       ++height) {
-    scanline_buffer.clear();
-    // std::vector<geometry::ScreenPoint> scanline =
-    rasterization::Scanline(screen_triangle, height, scanline_buffer);
-
-    for (const auto& pixel : scanline_buffer) {
-      if (!InBuffer(pixel, zbuffer)) {
-        continue;
-      }
-      if (pixel.z < zbuffer.At(pixel.y, pixel.x).z) {
-        zbuffer.At(pixel.y, pixel.x).z = pixel.z;
-        zbuffer.At(pixel.y, pixel.x).color = {
-            uint8_t(rand() % 256), uint8_t(rand() % 256), uint8_t(rand() % 256)
-        };
-      }
-    }
-  }
-}
-
-void DrawTriangle(
-    const geometry::Triangle& triangle, ZBuffer& zbuffer,
     std::vector<geometry::ScreenPoint>& scanline_buffer, const textures::Texture& texture
 ) {
+
   geometry::ScreenTriangle screen_triangle = geometry::DiscretizeTriangle(triangle);
 
   for (size_t height = screen_triangle.MinimumHeight(); height <= screen_triangle.MaximumHeight();
@@ -82,14 +57,18 @@ void DrawTriangle(
     scanline_buffer.clear();
     rasterization::Scanline(screen_triangle, height, scanline_buffer);
 
-    for (const auto& pixel : scanline_buffer) {
+    for (auto& pixel : scanline_buffer) {
       if (!InBuffer(pixel, zbuffer)) {
         continue;
       }
-      Color color = texture(pixel.texture_coordinates.u, pixel.texture_coordinates.v);
+
+      if (texture.IsActive()) {
+        pixel.color = texture(pixel.texture_coordinates.u, pixel.texture_coordinates.v);
+      }
+
       if (pixel.z < zbuffer.At(pixel.y, pixel.x).z) {
         zbuffer.At(pixel.y, pixel.x).z = pixel.z;
-        zbuffer.At(pixel.y, pixel.x).color = color;
+        zbuffer.At(pixel.y, pixel.x).color = pixel.color;
       }
     }
   }

@@ -1,6 +1,11 @@
 #pragma once
 #include "types/types.h"
 
+#include <algorithm>
+#include <cmath>
+#include <iostream>
+#include <thread>
+
 namespace detail {
 namespace geometry {
 struct Point {
@@ -82,7 +87,7 @@ V4 SwitchToProjective(const Point& point);
 struct ScreenPoint {
   inline bool operator==(const ScreenPoint& left) const = default;
 
-  inline V3 Float() const { return V3{x, y, z}; }
+  inline V3 Float() const { return V3{float(x), float(y), z}; }
 
   int32_t x;
   int32_t y;
@@ -130,52 +135,56 @@ struct BarycentricCoordinates {
 
 inline BarycentricCoordinates
 GetBarycentricCoordinates(const V3& a, const V3& b, const V3& c, const Point& point) {
+  assert(false);
   V3 vector = {point.X(), point.Y(), point.Z()};
-  float ab_coef = abs(glm::dot(vector - a, vector - b));
-  float bc_coef = abs(glm::dot(vector - b, vector - c));
-  float ac_coef = abs(glm::dot(vector - a, vector - c));
+  float area = glm::length(glm::cross(a - b, a - c));
+  float c_coef = glm::length(glm::cross(vector - a, vector - b)) / area;
+  float a_coef = glm::length(glm::cross(vector - b, vector - c)) / area;
+  float b_coef = glm::length(glm::cross(vector - a, vector - c)) / area;
 
-  return {ab_coef, bc_coef, ac_coef};
+  return {a_coef, b_coef, c_coef};
 };
 
-inline BarycentricCoordinates
-GetBarycentricCoordinates(const V3& a, const V3& b, const V3& c, const ScreenPoint& point) {
-  V3 vector = point.Float();
-  float ab_coef = abs(glm::dot(vector - a, vector - b));
-  float bc_coef = abs(glm::dot(vector - b, vector - c));
-  float ac_coef = abs(glm::dot(vector - a, vector - c));
+namespace {
+inline int32_t FindDoubledSquare(const ScreenPoint& a, const ScreenPoint& b, const ScreenPoint& c) {
+  return abs(a.x * b.y + b.x * c.y + c.x * a.y - a.x * c.y - b.x * a.y - c.x * b.y);
+}
+} // namespace
 
-  return {ab_coef, bc_coef, ac_coef};
+inline BarycentricCoordinates
+GetBarycentricCoordinates(const ScreenTriangle& triangle, const ScreenPoint& point) {
+  float area = FindDoubledSquare(triangle.a, triangle.b, triangle.c);
+  float a_coef = float(FindDoubledSquare(triangle.b, triangle.c, point)) / area;
+
+  float b_coef = float(FindDoubledSquare(triangle.a, triangle.c, point)) / area;
+  return {a_coef, b_coef, 1.0f - a_coef - b_coef};
 }
 
-// Не оптимизировано
 inline float InterpolateZ(const ScreenTriangle& screen_triangle, const ScreenPoint& screen_point) {
-  V3 a = screen_triangle.a.Float();
-  V3 b = screen_triangle.b.Float();
-  V3 c = screen_triangle.c.Float();
+  BarycentricCoordinates bar_coords = GetBarycentricCoordinates(screen_triangle, screen_point);
 
-  BarycentricCoordinates bar_coords = GetBarycentricCoordinates(a, b, c, screen_point);
-
-  float z_inv = 1.0f / screen_triangle.a.z * bar_coords.a_coef +
-                1.0f / screen_triangle.b.z * bar_coords.b_coef +
-                1.0f / screen_triangle.c.z * bar_coords.c_coef;
+  float z_inv = (1.0f / screen_triangle.a.z) * bar_coords.a_coef +
+                (1.0f / screen_triangle.b.z) * bar_coords.b_coef +
+                (1.0f / screen_triangle.c.z) * bar_coords.c_coef;
   return 1.0f / z_inv;
 }
 
 inline TextureCoordinates InterpolateTextureCoordinates(
     const ScreenTriangle& screen_triangle, const ScreenPoint& screen_point
 ) {
-  V3 a = screen_triangle.a.Float();
-  V3 b = screen_triangle.b.Float();
-  V3 c = screen_triangle.c.Float();
-  BarycentricCoordinates bar_coords = GetBarycentricCoordinates(a, b, c, screen_point);
+  BarycentricCoordinates bar_coords = GetBarycentricCoordinates(screen_triangle, screen_point);
 
-  //
   TextureCoordinates texture_coordinates =
       (screen_triangle.a.texture_coordinates * (1.0f / screen_triangle.a.z) * bar_coords.a_coef +
        screen_triangle.b.texture_coordinates * (1.0f / screen_triangle.b.z) * bar_coords.b_coef +
        screen_triangle.c.texture_coordinates * (1.0f / screen_triangle.c.z) * bar_coords.c_coef) *
       screen_point.z;
+
+  texture_coordinates.u = std::max(texture_coordinates.u, 0.f);
+  texture_coordinates.u = std::min(1.f, texture_coordinates.u);
+
+  texture_coordinates.v = std::max(texture_coordinates.v, 0.f);
+  texture_coordinates.v = std::min(1.f, texture_coordinates.v);
   return texture_coordinates;
 }
 
