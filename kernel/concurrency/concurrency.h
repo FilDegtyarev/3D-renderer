@@ -59,9 +59,6 @@ public:
 
   void FillScreenMatrix();
 
-  const std::vector<Triangle>& GetRenderingTriangles() const;
-  const std::vector<Segment>& GetRenderingSegments() const;
-
 private:
   int32_t id;
   Task clear;

@@ -23,8 +23,6 @@ public:
 
   const Frame& MakeFrame();
 
-  void ClearZBuffer();
-
   void UnleashWorkers(Camera* camera, World* world);
 
 private:

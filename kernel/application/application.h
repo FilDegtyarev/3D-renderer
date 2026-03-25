@@ -68,9 +68,8 @@ public:
       ScreenWidth width, HorizontalFOV hf, NearPlaneDistance npd, RenderDistance rd
   );
 
-  void Show();
+  void Run();
 
 private:
-  void UpdateScreen();
   detail::ApplicationImpl impl;
 };

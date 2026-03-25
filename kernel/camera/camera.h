@@ -80,6 +80,7 @@ inline Rotating operator&(Rotating left, Rotating right) {
 inline bool operator==(const Rotating& left, bool right) {
   return bool(static_cast<uint8_t>(left)) == right;
 }
+
 class Camera {
   using Point = geometry::Point;
   using Segment = geometry::Segment;

@@ -62,10 +62,6 @@ void Worker::SynchronizeZBuffers() {
   synchronize_zbuffers();
 }
 
-void FillScreenMatrix() {
-  return;
-}
-
 void Worker::FillScreenMatrix() {}
 
 WorkerKeeper::WorkerKeeper(
@@ -94,6 +90,10 @@ WorkerKeeper::WorkerKeeper(
   threads.reserve(threads_count);
 }
 
+void WorkerKeeper::SpawnWorker(Worker&& worker) {
+  threads.emplace_back(WorkerKeeper::Serve, std::move(worker));
+}
+
 void WorkerKeeper::ServeForever(Frame& flat_screen, ZBuffer& zbuffer) {}
 
 void WorkerKeeper::ExecuteThreads() {
@@ -114,10 +114,6 @@ void WorkerKeeper::WaitForDraw() {
 }
 void WorkerKeeper::WaitForSynchronize() {
   barrier->arrive_and_wait();
-}
-
-void WorkerKeeper::SpawnWorker(Worker&& worker) {
-  threads.emplace_back(WorkerKeeper::Serve, std::move(worker));
 }
 
 } // namespace concurrency

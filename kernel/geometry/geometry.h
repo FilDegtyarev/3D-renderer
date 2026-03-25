@@ -80,8 +80,6 @@ TriangleIntersectedSingle IntersectTriangleWithPlane(const Triangle& triangle, c
 
 Segment IntersectSegmentWithPlane(const Segment& segment, const Plane& plane);
 
-V4 SwitchToProjective(const Point& point);
-
 struct ScreenPoint {
   inline bool operator==(const ScreenPoint& left) const = default;
 

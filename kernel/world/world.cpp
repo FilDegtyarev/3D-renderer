@@ -61,16 +61,6 @@ const GlobalObject::Texture& GlobalObject::GetTexture() const {
   return local_object.GetTexture();
 }
 
-WorldBuilder::WorldBuilder() : world() {};
-
-void WorldBuilder::AddObject(GlobalObject&& object) {
-  world.objects.emplace_back(std::move(object));
-}
-
-World WorldBuilder::Extract() {
-  return std::move(world);
-}
-
 const std::vector<GlobalObject>& World::GetObjects() const {
   return objects;
 }
@@ -89,6 +79,14 @@ int32_t World::GetSegmentCapacity() const {
     result += object.GetSegments().size();
   }
   return result;
+}
+
+void WorldBuilder::AddObject(GlobalObject&& object) {
+  world.objects.emplace_back(std::move(object));
+}
+
+World WorldBuilder::Extract() {
+  return std::move(world);
 }
 
 } // namespace world

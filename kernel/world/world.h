@@ -28,11 +28,11 @@ public:
     return local_object.GetTriangle(local_object.GetTriangles()[index]) * transform;
   }
 
-  const Texture& GetTexture() const;
-
   std::vector<Segment> GetSegments() const;
 
   int32_t TrianglesCount() const;
+
+  const Texture& GetTexture() const;
 
 private:
   LocalObject local_object;
@@ -58,7 +58,7 @@ private:
 
 class WorldBuilder {
 public:
-  WorldBuilder();
+  WorldBuilder() = default;
 
   void AddObject(GlobalObject&& object);
   World Extract();

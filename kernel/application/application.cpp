@@ -34,17 +34,6 @@ ApplicationImpl::ApplicationImpl(
   connect(timer, SIGNAL(timeout()), this, SLOT(SceneTimer()));
 }
 
-void ApplicationImpl::StartRenderer() {
-  renderer.UnleashWorkers(&camera, &world);
-  DrawFrame(ForceScreenUpdate{true});
-  timer->start(0);
-}
-
-ApplicationImpl::~ApplicationImpl() {
-  delete layout;
-  delete timer;
-}
-
 namespace {
 
 char DefineKey(int button) {
@@ -135,11 +124,15 @@ void ApplicationImpl::ConnectScreen(QVBoxLayout* layout) {
   screen.Connect(layout);
 }
 
-ApplicationImpl::WorkerKeeper ApplicationImpl::MakeWorkerKeeper() const {
-  return WorkerKeeper(
-      threads_count, world.GetTrianglesCapacity(), world.GetSegmentCapacity(),
-      screen.GetScanlineCapacity(), screen.GetWidth(), screen.GetHeight()
-  );
+void ApplicationImpl::StartRenderer() {
+  renderer.UnleashWorkers(&camera, &world);
+  DrawFrame(ForceScreenUpdate{true});
+  timer->start(0);
+}
+
+ApplicationImpl::~ApplicationImpl() {
+  delete layout;
+  delete timer;
 }
 
 void ApplicationImpl::keyPressEvent(QKeyEvent* event) {
@@ -157,6 +150,13 @@ void ApplicationImpl::keyReleaseEvent(QKeyEvent* event) {
 void ApplicationImpl::SceneTimer() {
   DrawFrame(ForceScreenUpdate{false});
   timer->start(0);
+}
+
+ApplicationImpl::WorkerKeeper ApplicationImpl::MakeWorkerKeeper() const {
+  return WorkerKeeper(
+      threads_count, world.GetTrianglesCapacity(), world.GetSegmentCapacity(),
+      screen.GetScanlineCapacity(), screen.GetWidth(), screen.GetHeight()
+  );
 }
 
 } // namespace detail
@@ -187,11 +187,7 @@ Application::Application(
           Screen(height, width)
       ) {}
 
-void Application::UpdateScreen() {
-  impl.DrawFrame(ForceScreenUpdate{false});
-}
-
-void Application::Show() {
+void Application::Run() {
   impl.StartRenderer();
   impl.show();
 }

@@ -38,6 +38,10 @@ void Screen::DrawFrame(const Frame& frame) {
   Update();
 }
 
+float Screen::GetAspectRatio() const {
+  return float(height) / float(width);
+}
+
 void Screen::Update() {
   QImage qimage(
       reinterpret_cast<uint8_t*>(flat_screen.data()), width, height, width * sizeof(uint32_t),
@@ -45,10 +49,6 @@ void Screen::Update() {
   );
 
   screen->setPixmap(QPixmap::fromImage(qimage));
-}
-
-float Screen::GetAspectRatio() const {
-  return float(height) / float(width);
 }
 
 } // namespace screen

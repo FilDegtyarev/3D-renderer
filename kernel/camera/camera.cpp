@@ -201,9 +201,8 @@ void Camera::ResetComplete() {
   reset_position = false;
 }
 
-geometry::TriangleIntersected* Camera::ClipTriangle(
-    const geometry::Triangle& triangle, geometry::TriangleIntersected* cur,
-    geometry::TriangleIntersected* prev
+Camera::TriangleIntersected* Camera::ClipTriangle(
+    const Triangle& triangle, TriangleIntersected* cur, TriangleIntersected* prev
 ) const {
   cur->Clear();
   prev->Clear();
@@ -211,7 +210,7 @@ geometry::TriangleIntersected* Camera::ClipTriangle(
   (*prev)[0] = triangle;
   prev->size = 1;
 
-  for (const geometry::Plane& plane : planes) {
+  for (const Plane& plane : planes) {
     for (int32_t triangle_index = 0; triangle_index < (*prev).size; ++triangle_index) {
       cur->Merge(ClipTriangleWithPlane((*prev)[triangle_index], plane));
     }
@@ -223,15 +222,9 @@ geometry::TriangleIntersected* Camera::ClipTriangle(
   return prev;
 }
 
-geometry::TriangleIntersectedSingle Camera::ClipTriangleWithPlane(
-    const geometry::Triangle& triangle, const geometry::Plane& plane
-) const {
-  return geometry::IntersectTriangleWithPlane(triangle, plane);
-}
-
-std::vector<geometry::Segment> Camera::ClipSegment(const geometry::Segment& segment) const {
-  geometry::Segment result = segment;
-  for (const geometry::Plane& plane : planes) {
+std::vector<Camera::Segment> Camera::ClipSegment(const Segment& segment) const {
+  Segment result = segment;
+  for (const Plane& plane : planes) {
     if (ClipSegmentWithPlane(result, plane).empty()) {
       return {};
     } else {
@@ -241,16 +234,6 @@ std::vector<geometry::Segment> Camera::ClipSegment(const geometry::Segment& segm
   return {result};
 }
 
-std::vector<geometry::Segment>
-Camera::ClipSegmentWithPlane(const geometry::Segment& segment, const geometry::Plane& plane) const {
-  float eps = 0;
-  if (plane(segment.a) < -eps && plane(segment.b) < -eps) {
-    return {};
-  }
-
-  return {geometry::IntersectSegmentWithPlane(segment, plane)};
-}
-
 bool Camera::TestPoint(const geometry::Point& point) const {
   float result = 0;
   for (size_t i = 0; i < planes.size(); ++i) {
@@ -258,6 +241,21 @@ bool Camera::TestPoint(const geometry::Point& point) const {
   }
 
   return true;
+}
+
+geometry::TriangleIntersectedSingle
+Camera::ClipTriangleWithPlane(const Triangle& triangle, const Plane& plane) const {
+  return geometry::IntersectTriangleWithPlane(triangle, plane);
+}
+
+std::vector<Camera::Segment>
+Camera::ClipSegmentWithPlane(const Segment& segment, const Plane& plane) const {
+  float eps = 0;
+  if (plane(segment.a) < -eps && plane(segment.b) < -eps) {
+    return {};
+  }
+
+  return {geometry::IntersectSegmentWithPlane(segment, plane)};
 }
 
 } // namespace camera

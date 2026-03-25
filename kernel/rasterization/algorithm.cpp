@@ -151,8 +151,6 @@ void Scanline(
     screen_point.texture_coordinates = InterpolateTextureCoordinates(triangle, screen_point);
   }
 }
-//
-// std::cout << "done" << std::endl;
 
 } // namespace rasterization
 } // namespace detail
