@@ -1,11 +1,11 @@
+#include "rasterization/rasterization.h"
+
 #include "geometry/geometry.h"
 #include "rasterization/algorithm.h"
-#include "textures/textures.h"
 #include "types/types.h"
 
 #include <cassert>
 #include <cstddef>
-#include <iostream>
 #include <qpoint.h>
 #include <qrgb.h>
 
@@ -14,7 +14,7 @@ namespace detail {
 namespace rasterization {
 
 namespace {
-bool InBuffer(const geometry::ScreenPoint& point, const ZBuffer& zbuffer) {
+bool InBuffer(const ScreenPoint& point, const ZBuffer& zbuffer) {
   if (point.x < 0 || point.x >= zbuffer.GetWidth() || point.y < 0 ||
       point.y >= zbuffer.GetHeight()) {
     return false;
@@ -24,12 +24,12 @@ bool InBuffer(const geometry::ScreenPoint& point, const ZBuffer& zbuffer) {
 
 } // namespace
 
-void DrawSegment(const geometry::Segment& segment_, ZBuffer& zbuffer) {
-  geometry::ScreenSegment segment = geometry::DiscretizeSegment(segment_);
-  geometry::ScreenPoint from = segment.a;
-  geometry::ScreenPoint to = segment.b;
+void DrawSegment(const Segment& segment_, ZBuffer& zbuffer) {
+  ScreenSegment segment = geometry::DiscretizeSegment(segment_);
+  ScreenPoint from = segment.a;
+  ScreenPoint to = segment.b;
 
-  std::vector<detail::geometry::ScreenPoint> line = detail::rasterization::Bresenham(from, to);
+  std::vector<ScreenPoint> line = rasterization::Bresenham(from, to);
 
   for (const auto& pixel : line) {
     if (!InBuffer(pixel, zbuffer)) {
@@ -46,16 +46,16 @@ void DrawSegment(const geometry::Segment& segment_, ZBuffer& zbuffer) {
 }
 
 void DrawTriangle(
-    const geometry::Triangle& triangle, ZBuffer& zbuffer,
-    std::vector<geometry::ScreenPoint>& scanline_buffer, const textures::Texture& texture
+    const Triangle& triangle, ZBuffer& zbuffer, std::vector<ScreenPoint>& scanline_buffer,
+    const Texture& texture
 ) {
 
-  geometry::ScreenTriangle screen_triangle = geometry::DiscretizeTriangle(triangle);
+  ScreenTriangle screen_triangle = geometry::DiscretizeTriangle(triangle);
 
   for (size_t height = screen_triangle.MinimumHeight(); height <= screen_triangle.MaximumHeight();
        ++height) {
     scanline_buffer.clear();
-    rasterization::Scanline(screen_triangle, height, scanline_buffer);
+    Scanline(screen_triangle, height, scanline_buffer);
 
     for (auto& pixel : scanline_buffer) {
       if (!InBuffer(pixel, zbuffer)) {

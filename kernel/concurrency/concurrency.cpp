@@ -1,12 +1,7 @@
 #include "concurrency.h"
 
-#include "camera/camera.h"
-#include "geometry/geometry.h"
-#include "rasterization/rasterization.h"
 #include "types/types.h"
-#include "world/world.h"
 
-#include <algorithm>
 #include <cfloat>
 #include <thread>
 
@@ -36,9 +31,8 @@ void WorkerStorage::ClearScanline() {
 }
 
 Worker::Worker(
-    int32_t id, std::barrier<>& barrier, std::function<void(void)> clear,
-    std::function<void(void)> clip_figures, std::function<void(void)> draw_figures,
-    std::function<void(void)> synchronize_zbuffers, std::function<void(void)> fill_screen_matrix
+    int32_t id, std::barrier<>& barrier, Task clear, Task clip_figures, Task draw_figures,
+    Task synchronize_zbuffers, Task fill_screen_matrix
 )
     : id(id),
       barrier(barrier),
@@ -71,25 +65,6 @@ void Worker::SynchronizeZBuffers() {
 void FillScreenMatrix() {
   return;
 }
-
-namespace {
-
-inline void ViewTransform(geometry::Point& point, int32_t sw, int32_t sh) {
-  point.coordinates.x = (point.X() + 1) / 2.0 * sw;
-  point.coordinates.y = (point.Y() + 1) / 2.0 * sh;
-}
-
-inline void ViewSegmentTransform(geometry::Segment& segment, int32_t sw, int32_t sh) {
-  ViewTransform(segment.a, sw, sh);
-  ViewTransform(segment.b, sw, sh);
-}
-
-inline void ViewTriangleTransform(geometry::Triangle& triangle, int32_t sw, int32_t sh) {
-  ViewTransform(triangle.a, sw, sh);
-  ViewTransform(triangle.b, sw, sh);
-  ViewTransform(triangle.c, sw, sh);
-}
-} // namespace
 
 void Worker::FillScreenMatrix() {}
 

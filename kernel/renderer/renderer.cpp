@@ -3,14 +3,12 @@
 #include "camera/camera.h"
 #include "concurrency/concurrency.h"
 #include "geometry/geometry.h"
-#include "rasterization/algorithm.h"
 #include "rasterization/rasterization.h"
 #include "types/types.h"
 #include "world/world.h"
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 namespace detail {
 
 namespace renderer {

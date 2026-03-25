@@ -1,7 +1,6 @@
 #pragma once
 #include "types/types.h"
 
-#include <iostream>
 namespace detail {
 namespace textures {
 

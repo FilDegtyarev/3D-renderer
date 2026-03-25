@@ -1,7 +1,6 @@
 #include "object.h"
 
 #include "geometry/geometry.h"
-#include "textures/textures.h"
 #include "types/types.h"
 
 namespace detail {
@@ -21,7 +20,7 @@ void LocalObject::Normalize(float scale) {
   }
 }
 
-geometry::Triangle LocalObject::GetTriangle(const TriangleInfo& triangle) const {
+LocalObject::Triangle LocalObject::GetTriangle(const TriangleInfo& triangle) const {
   geometry::Point a = vertexes[triangle.first.vertex_number];
   a.texture_coordinates = texture.GetTextureCoordinates(triangle.first.texture_number);
 
@@ -33,7 +32,7 @@ geometry::Triangle LocalObject::GetTriangle(const TriangleInfo& triangle) const 
   return geometry::Triangle{a, b, c};
 }
 
-geometry::Segment LocalObject::GetSegment(const SegmentKeeper& keeper) const {
+LocalObject::Segment LocalObject::GetSegment(const SegmentKeeper& keeper) const {
   return geometry::Segment{vertexes[keeper.first_index], vertexes[keeper.second_index]};
 }
 
@@ -49,7 +48,7 @@ const LocalObject::Segments& LocalObject::GetSegments() const {
   return segments;
 }
 
-const textures::Texture& LocalObject::GetTexture() const {
+const LocalObject::Texture& LocalObject::GetTexture() const {
   return texture;
 }
 
@@ -67,7 +66,7 @@ void LocalObjectBuilder::AddSegment(const SegmentKeeper& segment) {
   local_object.segments.push_back(segment);
 }
 
-void LocalObjectBuilder::AddTexture(const textures::Texture& texture) {
+void LocalObjectBuilder::AddTexture(const LocalObject::Texture& texture) {
   local_object.texture = texture;
 }
 

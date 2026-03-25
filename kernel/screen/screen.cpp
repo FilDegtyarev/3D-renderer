@@ -1,13 +1,13 @@
 #include "screen.h"
 
 #include "QPainter"
-#include "qpaintdevice.h"
 #include "types/types.h"
 
 #include <qboxlayout.h>
 #include <qimage.h>
 #include <qpixmap.h>
 #include <qpoint.h>
+
 namespace detail {
 namespace screen {
 Screen::Screen(ScreenHeight h, ScreenWidth w) {

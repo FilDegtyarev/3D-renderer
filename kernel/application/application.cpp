@@ -3,16 +3,12 @@
 #include "QDebug"
 #include "camera/camera.h"
 #include "concurrency/concurrency.h"
-#include "geometry/geometry.h"
 #include "parser/parser.h"
 #include "renderer/renderer.h"
 #include "screen/screen.h"
 #include "types/types.h"
 #include "world/world.h"
 
-#include <algorithm>
-#include <functional>
-#include <iostream>
 #include <qboxlayout.h>
 #include <qcoreevent.h>
 #include <qlogging.h>
@@ -21,7 +17,7 @@
 namespace detail {
 
 ApplicationImpl::ApplicationImpl(
-    int32_t threads_count, world::World&& world_, camera::Camera&& camera_, screen::Screen&& screen_
+    int32_t threads_count, World&& world_, Camera&& camera_, Screen&& screen_
 )
     : QWidget(nullptr),
       threads_count(threads_count),
@@ -89,21 +85,17 @@ inline bool IsResetPressed(char c) {
   return c == ' ';
 }
 
+using Rotating = camera::Rotating;
+using Moving = camera::Moving;
+static std::unordered_map<char, Rotating> rotating_mapping = {
+    {'i', Rotating::Up}, {'k', Rotating::Down}, {'j', Rotating::Left}, {'l', Rotating::Right}
+};
+
+static std::unordered_map<char, Moving> moving_mapping = {
+    {'w', Moving::Toward}, {'s', Moving::Backward}, {'a', Moving::Left}, {'d', Moving::Right}
+};
+
 } // namespace
-
-static std::unordered_map<char, camera::Rotating> rotating_mapping = {
-    {'i', camera::Rotating::Up},
-    {'k', camera::Rotating::Down},
-    {'j', camera::Rotating::Left},
-    {'l', camera::Rotating::Right}
-};
-
-static std::unordered_map<char, camera::Moving> moving_mapping = {
-    {'w', camera::Moving::Toward},
-    {'s', camera::Moving::Backward},
-    {'a', camera::Moving::Left},
-    {'d', camera::Moving::Right}
-};
 
 void ApplicationImpl::ButtonPressed(int button) {
   char c = DefineKey(button);
@@ -143,7 +135,7 @@ void ApplicationImpl::ConnectScreen(QVBoxLayout* layout) {
   screen.Connect(layout);
 }
 
-concurrency::WorkerKeeper ApplicationImpl::MakeWorkerKeeper() const {
+ApplicationImpl::WorkerKeeper ApplicationImpl::MakeWorkerKeeper() const {
   return WorkerKeeper(
       threads_count, world.GetTrianglesCapacity(), world.GetSegmentCapacity(),
       screen.GetScanlineCapacity(), screen.GetWidth(), screen.GetHeight()
@@ -170,20 +162,17 @@ void ApplicationImpl::SceneTimer() {
 } // namespace detail
 
 namespace {
-detail::world::World CreateWorld(std::vector<std::string>&& models) {
+using World = detail::world::World;
+
+World CreateWorld(std::vector<std::string>&& models) {
   detail::world::WorldBuilder world_builder;
   detail::world::LocalObject local = detail::parser::Parse(models[0], models[1]);
   local.Normalize(1);
   detail::world::GlobalObject model_global(std::move(local), glm::vec3{0, 0, -10}, 1);
   world_builder.AddObject(std::move(model_global));
-  // for (auto& model : models) {
-  //   detail::world::LocalObject local = detail::parser::Parse(model, "");
-  //   local.Normalize(1);
-  //   detail::world::GlobalObject model_global(std::move(local), glm::vec3{0, 0, -10}, 1);
-  //   world_builder.AddObject(std::move(model_global));
-  // }
   return world_builder.Extract();
 }
+
 } // namespace
 
 Application::Application(
@@ -192,10 +181,10 @@ Application::Application(
 )
     : impl(
           threads_count(), CreateWorld(std::move(models)),
-          detail::camera::Camera(
+          Camera(
               hf, AspectRatio{static_cast<float>(height()) / static_cast<float>(width())}, npd, rd
           ),
-          detail::screen::Screen(height, width)
+          Screen(height, width)
       ) {}
 
 void Application::UpdateScreen() {

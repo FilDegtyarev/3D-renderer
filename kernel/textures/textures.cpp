@@ -2,8 +2,6 @@
 
 #include "types/types.h"
 
-#include <fstream>
-#include <iostream>
 namespace detail {
 namespace textures {
 

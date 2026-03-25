@@ -6,7 +6,6 @@
 #include <cassert>
 #include <cmath>
 #include <glm/ext/vector_float3.hpp>
-#include <vector>
 
 namespace detail {
 namespace geometry {

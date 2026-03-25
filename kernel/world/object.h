@@ -2,7 +2,6 @@
 #include "geometry/geometry.h"
 #include "textures/textures.h"
 #include "types/types.h"
-#include "world/object.h"
 
 #include <vector>
 
@@ -25,6 +24,11 @@ class LocalObjectBuilder;
 class LocalObject {
   friend class LocalObjectBuilder;
 
+  using Triangle = geometry::Triangle;
+  using Segment = geometry::Segment;
+  using Point = geometry::Point;
+  using Texture = textures::Texture;
+
 public:
   LocalObject(LocalObject&&) = default;
 
@@ -34,8 +38,8 @@ public:
 
   void Normalize(float scale = 1.0);
 
-  geometry::Triangle GetTriangle(const TriangleInfo& trianlge) const;
-  geometry::Segment GetSegment(const SegmentKeeper& segment) const;
+  Triangle GetTriangle(const TriangleInfo& trianlge) const;
+  Segment GetSegment(const SegmentKeeper& segment) const;
 
   const Vertexes& GetVertexes() const;
   const Triangles& GetTriangles() const;
@@ -46,11 +50,11 @@ public:
 private:
   LocalObject() = default;
   LocalObject(const LocalObject& local) = default;
-  std::vector<geometry::Point> vertexes;
+  std::vector<Point> vertexes;
   std::vector<TriangleInfo> triangles;
   std::vector<SegmentKeeper> segments;
 
-  textures::Texture texture;
+  Texture texture;
 };
 
 class LocalObjectBuilder {

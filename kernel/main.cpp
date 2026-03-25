@@ -1,14 +1,5 @@
 #include "application/application.h"
-#include "camera/camera.h"
-#include "concurrency/concurrency.h"
-#include "geometry/geometry.h"
-#include "parser/parser.h"
-#include "rasterization/rasterization.h"
-#include "renderer/renderer.h"
-#include "screen/screen.h"
 #include "types/types.h"
-#include "world/object.h"
-#include "world/world.h"
 
 #include <QApplication>
 #include <QLabel>

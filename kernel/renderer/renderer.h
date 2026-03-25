@@ -1,15 +1,10 @@
 #pragma once
 #include "camera/camera.h"
 #include "concurrency/concurrency.h"
-#include "geometry/geometry.h"
 #include "qlabel"
 #include "types/types.h"
 #include "world/world.h"
 
-#include <barrier>
-#include <functional>
-#include <memory>
-#include <vector>
 namespace detail {
 namespace renderer {
 

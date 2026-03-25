@@ -1,7 +1,6 @@
 #include "world.h"
 
 #include "geometry/geometry.h"
-#include "textures/textures.h"
 #include "world/object.h"
 
 namespace detail {
@@ -23,20 +22,20 @@ GlobalObject::GlobalObject(
   transform = glm::transpose(transform);
 }
 
-std::vector<geometry::Triangle> GlobalObject::GetTriangles() const {
+std::vector<GlobalObject::Triangle> GlobalObject::GetTriangles() const {
 
-  std::vector<geometry::Triangle> triangles;
+  std::vector<Triangle> triangles;
   for (const TriangleInfo& triangle_keeper : local_object.GetTriangles()) {
-    geometry::Triangle triangle = local_object.GetTriangle(triangle_keeper);
+    Triangle triangle = local_object.GetTriangle(triangle_keeper);
     triangles.push_back(triangle * transform);
   }
 
   return triangles;
 }
 
-std::vector<geometry::Triangle>
+std::vector<GlobalObject::Triangle>
 GlobalObject::GetTrianglesForWorker(int32_t begin, int32_t end) const {
-  std::vector<geometry::Triangle> triangles;
+  std::vector<Triangle> triangles;
   triangles.reserve(end - begin);
   for (int32_t i = begin; i < end; ++i) {
     triangles.push_back(local_object.GetTriangle(local_object.GetTriangles()[i]) * transform);
@@ -44,10 +43,10 @@ GlobalObject::GetTrianglesForWorker(int32_t begin, int32_t end) const {
   return triangles;
 }
 
-std::vector<geometry::Segment> GlobalObject::GetSegments() const {
-  std::vector<geometry::Segment> segments;
+std::vector<GlobalObject::Segment> GlobalObject::GetSegments() const {
+  std::vector<Segment> segments;
   for (const SegmentKeeper& segment_keeper : local_object.GetSegments()) {
-    geometry::Segment segment = local_object.GetSegment(segment_keeper);
+    Segment segment = local_object.GetSegment(segment_keeper);
     segments.push_back(segment * transform);
   }
 
@@ -58,7 +57,7 @@ int32_t GlobalObject::TrianglesCount() const {
   return local_object.GetTriangles().size();
 }
 
-const textures::Texture& GlobalObject::GetTexture() const {
+const GlobalObject::Texture& GlobalObject::GetTexture() const {
   return local_object.GetTexture();
 }
 

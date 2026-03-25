@@ -1,6 +1,5 @@
 #pragma once
 #include "geometry/geometry.h"
-#include "glm/mat4x4.hpp"
 #include "types/types.h"
 
 #include <glm/ext/matrix_float4x4.hpp>
@@ -82,6 +81,13 @@ inline bool operator==(const Rotating& left, bool right) {
   return bool(static_cast<uint8_t>(left)) == right;
 }
 class Camera {
+  using Point = geometry::Point;
+  using Segment = geometry::Segment;
+  using Triangle = geometry::Triangle;
+
+  using Plane = geometry::Plane;
+  using TriangleIntersected = geometry::TriangleIntersected;
+
 public:
   Camera(
       HorizontalFOV horizontal_fov, AspectRatio aspect_ratio, NearPlaneDistance near_plane_distance,
@@ -106,23 +112,24 @@ public:
 
   void ResetComplete();
 
-  geometry::TriangleIntersected* ClipTriangle(
-      const geometry::Triangle& triangle, geometry::TriangleIntersected* first,
-      geometry::TriangleIntersected* second
+  TriangleIntersected* ClipTriangle(
+      const Triangle& triangle, TriangleIntersected* first, TriangleIntersected* second
   ) const;
 
-  std::vector<geometry::Segment> ClipSegment(const geometry::Segment& segment) const;
+  std::vector<Segment> ClipSegment(const Segment& segment) const;
 
-  bool TestPoint(const geometry::Point& point) const;
+  bool TestPoint(const Point& point) const;
 
   inline V3 GetEyePosition() const { return eye_position; }
 
 private:
-  geometry::TriangleIntersectedSingle
-  ClipTriangleWithPlane(const geometry::Triangle& triangle, const geometry::Plane& plane) const;
+  using TriangleIntersectedSingle = geometry::TriangleIntersectedSingle;
 
-  std::vector<geometry::Segment>
-  ClipSegmentWithPlane(const geometry::Segment& segment, const geometry::Plane& plane) const;
+  TriangleIntersectedSingle
+  ClipTriangleWithPlane(const Triangle& triangle, const Plane& plane) const;
+
+  std::vector<Segment> ClipSegmentWithPlane(const Segment& segment, const Plane& plane) const;
+
   float horizontal_fov;
   float aspect_ratio;
   float far_plane_distance;
@@ -135,7 +142,7 @@ private:
   float near_plane_x_left;
 
   M4 frusum_matrix;
-  float speed_limit = 0.1;
+  float speed_limit = 0.1f;
 
   V3 eye_position;
   V3 gaze_direction;

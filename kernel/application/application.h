@@ -9,7 +9,6 @@
 
 #include <QKeyEvent>
 #include <QTimer>
-#include <memory>
 #include <qwidget.h>
 
 namespace detail {
@@ -18,12 +17,10 @@ class ApplicationImpl : public QWidget {
   using Camera = camera::Camera;
   using World = world::World;
   using WorkerKeeper = concurrency::WorkerKeeper;
+  using Screen = screen::Screen;
   Q_OBJECT
 public:
-  ApplicationImpl(
-      int32_t threads_count, world::World&& world_, camera::Camera&& camera_,
-      screen::Screen&& screen_
-  );
+  ApplicationImpl(int32_t threads_count, World&& world_, Camera&& camera_, Screen&& screen_);
 
   void ButtonPressed(int button);
   void ButtonReleased(int button);
@@ -60,6 +57,11 @@ private:
 } // namespace detail
 
 class Application {
+  using Camera = detail::camera::Camera;
+  using World = detail::world::World;
+  using WorkerKeeper = detail::concurrency::WorkerKeeper;
+  using Screen = detail::screen::Screen;
+
 public:
   Application(
       ThreadsCount threads_count, std::vector<std::string>&& models, ScreenHeight height,

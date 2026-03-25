@@ -1,7 +1,5 @@
 #pragma once
-#include "types/types.h"
 #include "world/object.h"
-#include "world/world.h"
 
 #include <string>
 

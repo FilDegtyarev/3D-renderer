@@ -1,15 +1,14 @@
-#include "algorithm.h"
+#include "rasterization/algorithm.h"
 
 #include "geometry/geometry.h"
 
-#include <iostream>
 #include <qnamespace.h>
+
 namespace detail {
 
 namespace rasterization {
 
-std::vector<geometry::ScreenPoint>
-Bresenham(const geometry::ScreenPoint& start, const geometry::ScreenPoint& finish) {
+std::vector<ScreenPoint> Bresenham(const ScreenPoint& start, const ScreenPoint& finish) {
   if (start.x > finish.x) {
     return Bresenham(finish, start);
   }
@@ -25,8 +24,8 @@ Bresenham(const geometry::ScreenPoint& start, const geometry::ScreenPoint& finis
   int32_t diagonal_shift = 2 * (dy - dx);
   int32_t d = 2 * dy - dx;
 
-  geometry::ScreenPoint current = start;
-  std::vector<geometry::ScreenPoint> rasterized_segment;
+  ScreenPoint current = start;
+  std::vector<ScreenPoint> rasterized_segment;
 
   if (dx >= dy) {
     for (size_t i = 0; i < dx; ++i) {
@@ -42,7 +41,6 @@ Bresenham(const geometry::ScreenPoint& start, const geometry::ScreenPoint& finis
     }
 
   } else {
-    // Прямая более горизонтальна
     d = 2 * dx - dy;
     right_shift = 2 * dx;
     diagonal_shift = 2 * (dx - dy);
@@ -65,10 +63,11 @@ Bresenham(const geometry::ScreenPoint& start, const geometry::ScreenPoint& finis
 }
 
 namespace {
-const float EPS = 1e-9;
-float GetXShift(const geometry::ScreenPoint& first, const geometry::ScreenPoint& second) {
+static float EPS = 1e-9;
+using LineStatus = geometry::LineStatus;
+float GetXShift(const ScreenPoint& first, const ScreenPoint& second) {
   float x_shift = 0;
-  if (geometry::GetLineStatus(first, second) == geometry::LineStatus::NonVertical) {
+  if (geometry::GetLineStatus(first, second) == LineStatus::NonVertical) {
     x_shift = geometry::GetTangentCoefficent(first, second);
   }
   return x_shift;
@@ -84,11 +83,10 @@ bool InTriangle(float x) {
 } // namespace
 
 void Scanline(
-    const geometry::ScreenTriangle& triangle, int32_t height,
-    std::vector<geometry::ScreenPoint>& scanline_buffer
+    const ScreenTriangle& triangle, int32_t height, std::vector<ScreenPoint>& scanline_buffer
 ) {
   // Shirley, 166
-  geometry::ScreenTriangle sorted_triangle = triangle.SortedVertex();
+  ScreenTriangle sorted_triangle = triangle.SortedVertex();
 
   assert(sorted_triangle.a.y >= height && sorted_triangle.c.y <= height);
 
@@ -138,26 +136,19 @@ void Scanline(
   start = std::ceil(x_left);
   finish = std::ceil(x_right) - 1;
 
-  // std::vector<geometry::ScreenPoint> segment;
-  // if (x_left > x_right) {
-  //   std::swap(x_left, x_right);
-  // }
-
-  // //
   // int32_t start = std::ceil(x_left - 0.5f);
   // int32_t finish = std::floor(x_right - 0.5f);
 
   for (int32_t x = start; x <= finish; ++x) {
-    geometry::ScreenPoint point;
+    ScreenPoint point;
     point.x = x;
     point.y = height;
     scanline_buffer.push_back(point);
   }
 
-  for (geometry::ScreenPoint& screen_point : scanline_buffer) {
-    screen_point.z = geometry::InterpolateZ(triangle, screen_point);
-    screen_point.texture_coordinates =
-        geometry::InterpolateTextureCoordinates(triangle, screen_point);
+  for (ScreenPoint& screen_point : scanline_buffer) {
+    screen_point.z = InterpolateZ(triangle, screen_point);
+    screen_point.texture_coordinates = InterpolateTextureCoordinates(triangle, screen_point);
   }
 }
 //

@@ -3,8 +3,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <iostream>
-#include <thread>
 
 namespace detail {
 namespace geometry {

@@ -1,9 +1,6 @@
 #pragma once
-#include "camera/camera.h"
 #include "geometry/geometry.h"
-#include "qrgb.h"
 #include "types/types.h"
-#include "world/world.h"
 
 #include <barrier>
 #include <cassert>
@@ -22,31 +19,32 @@ namespace concurrency {
 int32_t GetMaxThreads();
 
 struct WorkerStorage {
+  using Segment = geometry::Segment;
+  using Triangle = geometry::Triangle;
+  using ScreenPoint = geometry::ScreenPoint;
+
   void Clear();
   void ClearScanline();
 
-  std::vector<geometry::Triangle> rendering_triangles;
-  std::vector<geometry::Segment> rendering_segments;
+  std::vector<Triangle> rendering_triangles;
+  std::vector<Segment> rendering_segments;
 
-  std::vector<geometry::Triangle> clipped_triangles;
-  std::vector<geometry::Segment> clipped_segments;
+  std::vector<Triangle> clipped_triangles;
+  std::vector<Segment> clipped_segments;
 
-  std::vector<geometry::ScreenPoint> scnaline_container;
+  std::vector<ScreenPoint> scnaline_container;
   ZBuffer local_zbuffer;
 };
 
 class Worker {
-public:
-  // Worker(
-  //     int32_t id, int32_t total_workers_, int32_t sw, int32_t sh, WorkerStorage& self_storage_,
-  //     const std::vector<WorkerStorage>& workers_storgage_, const camera::Camera& camera_,
-  //     const world::World& world_, ZBuffer& zbuffer_, Frame& flat_screen, std::barrier<>& barrier_
-  // );
+  using Task = std::function<void(void)>;
+  using Triangle = geometry::Triangle;
+  using Segment = geometry::Segment;
 
+public:
   Worker(
-      int32_t id, std::barrier<>& barrier, std::function<void(void)> clear,
-      std::function<void(void)> clip_figures, std::function<void(void)> draw_figures,
-      std::function<void(void)> synchronize_zbuffers, std::function<void(void)> fill_screen_matrix
+      int32_t id, std::barrier<>& barrier, Task clear, Task clip_figures, Task draw_figures,
+      Task synchronize_zbuffers, Task fill_screen_matrix
   );
 
   void WaitForOther();
@@ -61,16 +59,16 @@ public:
 
   void FillScreenMatrix();
 
-  const std::vector<geometry::Triangle>& GetRenderingTriangles() const;
-  const std::vector<geometry::Segment>& GetRenderingSegments() const;
+  const std::vector<Triangle>& GetRenderingTriangles() const;
+  const std::vector<Segment>& GetRenderingSegments() const;
 
 private:
   int32_t id;
-  std::function<void(void)> clear;
-  std::function<void(void)> clip_figures;
-  std::function<void(void)> draw_figures;
-  std::function<void(void)> synchronize_zbuffers;
-  std::function<void(void)> fill_screen_matrix;
+  Task clear;
+  Task clip_figures;
+  Task draw_figures;
+  Task synchronize_zbuffers;
+  Task fill_screen_matrix;
 
   std::barrier<>& barrier;
 };

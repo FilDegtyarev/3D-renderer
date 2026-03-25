@@ -14,17 +14,23 @@ namespace detail {
 namespace world {
 
 class GlobalObject {
-public:
-  GlobalObject(LocalObject&& local_object_, const glm::vec3& shift, const glm::mat3x3& transform);
+  using Triangle = geometry::Triangle;
+  using Segment = geometry::Segment;
+  using Texture = textures::Texture;
 
-  std::vector<geometry::Triangle> GetTriangles() const;
-  std::vector<geometry::Triangle> GetTrianglesForWorker(int32_t begin, int32_t end) const;
-  inline geometry::Triangle operator[](int32_t index) const {
+public:
+  GlobalObject(LocalObject&& local_object_, const V3& shift, const M3& transform);
+
+  std::vector<Triangle> GetTriangles() const;
+  std::vector<Triangle> GetTrianglesForWorker(int32_t begin, int32_t end) const;
+
+  inline Triangle operator[](int32_t index) const {
     return local_object.GetTriangle(local_object.GetTriangles()[index]) * transform;
   }
-  const textures::Texture& GetTexture() const;
 
-  std::vector<geometry::Segment> GetSegments() const;
+  const Texture& GetTexture() const;
+
+  std::vector<Segment> GetSegments() const;
 
   int32_t TrianglesCount() const;
 

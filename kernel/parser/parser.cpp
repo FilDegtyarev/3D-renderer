@@ -14,6 +14,7 @@
 namespace detail {
 namespace parser {
 
+// Это просто ужасный код, ужасный файл но лучше я не сделаю
 namespace {
 std::vector<std::string> Split(const std::string& str) {
   std::vector<std::string> result;
