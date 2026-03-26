@@ -9,12 +9,12 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <string>
 #include <vector>
 
 namespace detail {
 namespace parser {
 
-// Это просто ужасный код, ужасный файл но лучше я не сделаю
 namespace {
 std::vector<std::string> Split(const std::string& str) {
   std::vector<std::string> result;
@@ -34,7 +34,6 @@ std::vector<VertexInfo> ParseFirstIndex(const std::string& face) {
   s >> vertex;
 
   while (s >> vertex) {
-    // t: v/t/n
     std::stringstream vertex_info(vertex);
     std::string number;
     std::vector<int32_t> tmp;
@@ -52,32 +51,6 @@ void Compress(geometry::Point& point, float compress) {
   point.coordinates *= 1.0f / compress;
   point.coordinates.w = w;
 }
-
-void Shift(geometry::Point& point, float shift) {
-  point.coordinates.z -= shift;
-}
-
-M3 RotateMatrix() {
-  M3 matrix;
-  for (int i = 0; i < 3; ++i) {
-    for (int j = 0; j < 3; ++j) {
-      matrix[i][j] = 0;
-    }
-  }
-  matrix[0][2] = 1;
-  matrix[1][1] = 1;
-  matrix[2][0] = -1;
-
-  return matrix;
-}
-
-void Rotate(geometry::Point& point) {
-  point = point * RotateMatrix();
-}
-
-#include <fstream>
-#include <string>
-#include <vector>
 
 std::vector<std::vector<Color>> LoadJpegWithQt(const std::string& filename) {
   QImage img(QString::fromStdString(filename));
@@ -136,8 +109,6 @@ world::LocalObject Parse(const std::string& filename, const std::string& texture
       coordinates.push_back({std::stof(c[1]), std::stof(c[2])});
     }
   }
-
-  fin.close();
 
   // Текстура
   std::vector<std::vector<Color>> colors = LoadJpegWithQt(texture_file);

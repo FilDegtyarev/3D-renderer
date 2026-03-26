@@ -107,7 +107,7 @@ public:
   bool IsMoving() const;
   bool IsRotating() const;
 
-  void UpdateView();
+  void UpdateCameraMatirx();
   void ResetPosition();
   bool IsReset() const;
 
@@ -121,7 +121,7 @@ public:
 
   bool TestPoint(const Point& point) const;
 
-  inline V3 GetEyePosition() const { return eye_position; }
+  inline V3 GetCameraPosition() const { return camera_position; }
 
 private:
   using TriangleIntersectedSingle = geometry::TriangleIntersectedSingle;
@@ -145,7 +145,7 @@ private:
   M4 frusum_matrix;
   float speed_limit = 0.1f;
 
-  V3 eye_position;
+  V3 camera_position;
   V3 gaze_direction;
   V3 view_up_direction;
 

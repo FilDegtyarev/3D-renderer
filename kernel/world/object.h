@@ -59,7 +59,8 @@ private:
 
 class LocalObjectBuilder {
 public:
-  LocalObjectBuilder();
+  LocalObjectBuilder() = default;
+
   void AddVertex(const geometry::Point& point);
   void AddTriangle(const TriangleInfo& vertex_info);
   void AddSegment(const SegmentKeeper& segment);

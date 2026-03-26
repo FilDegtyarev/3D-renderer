@@ -68,6 +68,7 @@ inline void TriangleIntersectedSingle::Append(const Triangle& triangle) {
 }
 
 namespace {
+
 struct PointContainer {
   void Append(const Point& point) { points[size++] = point; }
   bool IsEmpty() const { return size == 0; }
@@ -77,13 +78,14 @@ struct PointContainer {
   Point points[3];
   int32_t size = 0;
 };
+
 }; // namespace
 
+static const float eps = 1e-6;
 TriangleIntersectedSingle IntersectTriangleWithPlane(const Triangle& triangle, const Plane& plane) {
   PointContainer insiders;
   PointContainer outsiders;
 
-  float eps = 1e-6;
   if (plane(triangle.a) >= eps) {
     insiders.Append(triangle.a);
   } else {
@@ -107,7 +109,7 @@ TriangleIntersectedSingle IntersectTriangleWithPlane(const Triangle& triangle, c
   }
 
   if (insiders.size == 3) {
-    return {{triangle}, .size = 1};
+    return {{triangle}, 1};
   }
   // return {};
 
@@ -125,7 +127,7 @@ TriangleIntersectedSingle IntersectTriangleWithPlane(const Triangle& triangle, c
     Triangle first = {insiders[0], intersect1, intersect2};
     Triangle second = {insiders[0], insiders[1], intersect2};
 
-    return {first, second, .size = 2};
+    return {first, second, 2};
   }
   assert(false);
   return {};
@@ -134,7 +136,6 @@ TriangleIntersectedSingle IntersectTriangleWithPlane(const Triangle& triangle, c
 Segment IntersectSegmentWithPlane(const Segment& segment, const Plane& plane) {
   Point first = segment.a;
   Point second = segment.b;
-  float eps = 1e-6;
   if (plane(first) >= eps && plane(second) >= eps) {
     return segment;
   }
@@ -149,8 +150,7 @@ Segment IntersectSegmentWithPlane(const Segment& segment, const Plane& plane) {
   V3 intersection = p1 + (p2 - p1) * coef;
 
   return {
-      first,
-      Point{V4{intersection.x, intersection.y, intersection.z, second.W()}, .color = second.color}
+      first, Point{V4{intersection.x, intersection.y, intersection.z, second.W()}, second.color}
   };
 }
 

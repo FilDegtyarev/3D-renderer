@@ -52,8 +52,6 @@ const LocalObject::Texture& LocalObject::GetTexture() const {
   return texture;
 }
 
-LocalObjectBuilder::LocalObjectBuilder() : local_object() {};
-
 void LocalObjectBuilder::AddVertex(const geometry::Point& point) {
   local_object.vertexes.push_back(point);
 }

@@ -1,6 +1,5 @@
 #pragma once
 #include "geometry/geometry.h"
-#include "types/types.h"
 
 #include <barrier>
 #include <cassert>
@@ -55,7 +54,7 @@ public:
 
   void DrawFigures();
 
-  void SynchronizeZBuffers();
+  void FillGlobalZBuffer();
 
   void FillScreenMatrix();
 
@@ -78,11 +77,11 @@ public:
   );
 
   void SpawnWorker(Worker&& worker);
-  void ServeForever(Frame& flat_screen, ZBuffer& zbuffer);
 
-  void ExecuteThreads();
+  void Execute();
 
   inline WorkerStorage& GetStorage(int32_t worker_id) { return workers[worker_id]; }
+
   std::barrier<>& GetBarrier() { return *barrier.get(); }
 
   static void Serve(Worker worker) {
@@ -97,7 +96,7 @@ public:
 
       worker.WaitForOther();
 
-      worker.SynchronizeZBuffers();
+      worker.FillGlobalZBuffer();
 
       worker.WaitForOther();
     }
@@ -108,10 +107,6 @@ private:
   void WaitForClip();
   void WaitForDraw();
   void WaitForSynchronize();
-
-  int32_t threads_count;
-  int32_t screen_width;
-  int32_t screen_height;
 
   std::vector<WorkerStorage> workers;
 

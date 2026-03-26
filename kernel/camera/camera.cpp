@@ -1,9 +1,8 @@
 #include "camera.h"
 
-#include "geometry/geometry.h"
-
 #include <cmath>
 #include <numbers>
+
 namespace detail {
 namespace camera {
 
@@ -26,7 +25,7 @@ Camera::Camera(
   near_plane_x_left = -(near_plane_distance / focal_length);
   near_plane_x_right = (near_plane_distance / focal_length);
 
-  eye_position = V3{0.f, 0.f, 0.f};
+  camera_position = V3{0.f, 0.f, 0.f};
   gaze_direction = V3{0.f, 0.f, -1.f};
   view_up_direction = V3{0.f, 1.f, 0.f};
 
@@ -80,9 +79,9 @@ M4 Camera::GetCameraMatrix() const {
   first = glm::transpose(first);
 
   M4 second = 1;
-  second[0][3] = -eye_position.x;
-  second[1][3] = -eye_position.y;
-  second[2][3] = -eye_position.z;
+  second[0][3] = -camera_position.x;
+  second[1][3] = -camera_position.y;
+  second[2][3] = -camera_position.z;
   second = glm::transpose(second);
   return first * second;
 }
@@ -125,7 +124,7 @@ inline M2 RotationMatrix(float angle) {
 
 } // namespace
 
-void Camera::UpdateView() {
+void Camera::UpdateCameraMatirx() {
   if (IsMoving()) {
     V3 speed = {0, 0, 0};
     if ((moving & Moving::Toward) == true) {
@@ -151,7 +150,7 @@ void Camera::UpdateView() {
     }
 
     speed = speed / glm::length(speed) * float(speed_limit);
-    eye_position += speed;
+    camera_position += speed;
   }
 
   if (IsRotating()) {
@@ -187,7 +186,7 @@ void Camera::UpdateView() {
 }
 
 void Camera::ResetPosition() {
-  eye_position = V3{0, 0, 0};
+  camera_position = V3{0, 0, 0};
   gaze_direction = V3{0, 0, -1};
   view_up_direction = V3{0, 1, 0};
   reset_position = true;

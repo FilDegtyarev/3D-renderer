@@ -1,4 +1,5 @@
 #pragma once
+#include "QElapsedTimer.h"
 #include "QWidget"
 #include "camera/camera.h"
 #include "concurrency/concurrency.h"
@@ -20,7 +21,9 @@ class ApplicationImpl : public QWidget {
   using Screen = screen::Screen;
   Q_OBJECT
 public:
-  ApplicationImpl(int32_t threads_count, World&& world_, Camera&& camera_, Screen&& screen_);
+  ApplicationImpl(
+      int32_t threads_count, World&& world_, Camera&& camera_, Height height, Width width
+  );
 
   void ButtonPressed(int button);
   void ButtonReleased(int button);
@@ -42,16 +45,14 @@ private slots:
 private:
   using Task = std::function<void(void)>;
 
-  WorkerKeeper MakeWorkerKeeper() const;
-
-  int32_t threads_count;
   world::World world;
   camera::Camera camera;
   screen::Screen screen;
   renderer::Renderer renderer;
 
-  QVBoxLayout* layout;
-  QTimer* timer;
+  QVBoxLayout* layout_;
+  QTimer* timer_;
+  QElapsedTimer* frame_drawing_timer_;
 };
 
 } // namespace detail
@@ -61,15 +62,16 @@ class Application {
   using World = detail::world::World;
   using WorkerKeeper = detail::concurrency::WorkerKeeper;
   using Screen = detail::screen::Screen;
+  using ApplicationImpl = detail::ApplicationImpl;
 
 public:
   Application(
-      ThreadsCount threads_count, std::vector<std::string>&& models, ScreenHeight height,
-      ScreenWidth width, HorizontalFOV hf, NearPlaneDistance npd, RenderDistance rd
+      ThreadsCount threads_count, std::vector<std::string>&& models, Height height, Width width,
+      HorizontalFOV hf, NearPlaneDistance npd, RenderDistance rd
   );
 
   void Run();
 
 private:
-  detail::ApplicationImpl impl;
+  std::unique_ptr<ApplicationImpl> impl;
 };

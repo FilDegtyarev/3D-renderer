@@ -14,12 +14,10 @@ namespace detail {
 namespace rasterization {
 
 namespace {
-bool InBuffer(const ScreenPoint& point, const ZBuffer& zbuffer) {
-  if (point.x < 0 || point.x >= zbuffer.GetWidth() || point.y < 0 ||
-      point.y >= zbuffer.GetHeight()) {
-    return false;
-  }
-  return true;
+bool IsInBuffer(const ScreenPoint& point, const ZBuffer& zbuffer) {
+  return !(
+      point.x < 0 || point.x >= zbuffer.GetWidth() || point.y < 0 || point.y >= zbuffer.GetHeight()
+  );
 }
 
 } // namespace
@@ -32,15 +30,15 @@ void DrawSegment(const Segment& segment_, ZBuffer& zbuffer) {
   std::vector<ScreenPoint> line = rasterization::Bresenham(from, to);
 
   for (const auto& pixel : line) {
-    if (!InBuffer(pixel, zbuffer)) {
+    if (!IsInBuffer(pixel, zbuffer)) {
       continue;
     }
 
-    if (zbuffer.At(pixel.y, pixel.x).z > pixel.z) {
-      zbuffer.At(pixel.y, pixel.x).z = pixel.z;
+    if (zbuffer(pixel.y, pixel.x).z > pixel.z) {
+      zbuffer(pixel.y, pixel.x).z = pixel.z;
 
-      zbuffer.At(pixel.y, pixel.x).color = pixel.color;
-      zbuffer.At(pixel.y, pixel.x).color = Color{.red = 50, .blue = 100, .green = 150};
+      zbuffer(pixel.y, pixel.x).color = pixel.color;
+      zbuffer(pixel.y, pixel.x).color = Color{.red = 50, .blue = 100, .green = 150};
     }
   }
 }
@@ -58,7 +56,7 @@ void DrawTriangle(
     Scanline(screen_triangle, height, scanline_buffer);
 
     for (auto& pixel : scanline_buffer) {
-      if (!InBuffer(pixel, zbuffer)) {
+      if (!IsInBuffer(pixel, zbuffer)) {
         continue;
       }
 
@@ -66,9 +64,9 @@ void DrawTriangle(
         pixel.color = texture(pixel.texture_coordinates.u, pixel.texture_coordinates.v);
       }
 
-      if (pixel.z < zbuffer.At(pixel.y, pixel.x).z) {
-        zbuffer.At(pixel.y, pixel.x).z = pixel.z;
-        zbuffer.At(pixel.y, pixel.x).color = pixel.color;
+      if (pixel.z < zbuffer(pixel.y, pixel.x).z) {
+        zbuffer(pixel.y, pixel.x).z = pixel.z;
+        zbuffer(pixel.y, pixel.x).color = pixel.color;
       }
     }
   }

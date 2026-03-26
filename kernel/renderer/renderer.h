@@ -2,7 +2,6 @@
 #include "camera/camera.h"
 #include "concurrency/concurrency.h"
 #include "qlabel"
-#include "types/types.h"
 #include "world/world.h"
 
 namespace detail {
@@ -17,19 +16,21 @@ class Renderer {
 
 public:
   Renderer(
-      int32_t threads_total, int32_t screen_height, int32_t screen_width,
-      WorkerKeeper&& worker_keeper
+      int32_t threads_total, int32_t screen_height, int32_t screen_width, Camera* camera,
+      World* world
   );
 
   const Frame& MakeFrame();
 
-  void UnleashWorkers(Camera* camera, World* world);
-
 private:
+  WorkerKeeper MakeWorkerKeeper(Camera* camera, World* world) const;
+
+  void InitializeWorkers(Camera* camera, World* world);
+
   Task MakeClearTask(int32_t thread_id);
   Task MakeClipFiguresTask(int32_t thread_id, Camera* camera, World* world);
   Task MakeDrawFiguresTask(int32_t thread_id, Camera* camera, World* world);
-  Task MakeSynchronizeZBuffersTask(int32_t thread_id);
+  Task MakeFillGlobalZBufferTask(int32_t thread_id);
 
   int32_t threads_total;
   size_t screen_height;

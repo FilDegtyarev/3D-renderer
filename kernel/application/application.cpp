@@ -1,3 +1,4 @@
+
 #include "application/application.h"
 
 #include "QDebug"
@@ -9,6 +10,7 @@
 #include "types/types.h"
 #include "world/world.h"
 
+#include <memory>
 #include <qboxlayout.h>
 #include <qcoreevent.h>
 #include <qlogging.h>
@@ -17,21 +19,26 @@
 namespace detail {
 
 ApplicationImpl::ApplicationImpl(
-    int32_t threads_count, World&& world_, Camera&& camera_, Screen&& screen_
+    int32_t threads_count, World&& world_, Camera&& camera_, Height height, Width width
 )
     : QWidget(nullptr),
-      threads_count(threads_count),
       world(std::move(world_)),
       camera(std::move(camera_)),
-      screen(std::move(screen_)),
-      renderer(threads_count, screen.GetHeight(), screen.GetWidth(), MakeWorkerKeeper()) {
-
+      screen(height, width),
+      renderer(threads_count, screen.GetHeight(), screen.GetWidth(), &camera, &world),
+      layout_(new QVBoxLayout(this)),
+      timer_(new QTimer()),
+      frame_drawing_timer_(new QElapsedTimer()) {
   setFocusPolicy(Qt::StrongFocus);
-  layout = new QVBoxLayout(this);
 
-  ConnectScreen(layout);
-  timer = new QTimer();
-  connect(timer, SIGNAL(timeout()), this, SLOT(SceneTimer()));
+  layout_->addWidget(&screen);
+
+  connect(timer_, SIGNAL(timeout()), this, SLOT(SceneTimer()));
+  /*
+  void Screen::Connect(QVBoxLayout* layout) {
+  layout->addWidget(screen.get());
+}
+  */
 }
 
 namespace {
@@ -106,33 +113,33 @@ void ApplicationImpl::ButtonReleased(int button) {
   }
 }
 
+static const float one_second = 1000000000.0f;
 void ApplicationImpl::DrawFrame(ForceScreenUpdate flag) {
+  frame_drawing_timer_->start();
   if (camera.IsMoving() || camera.IsRotating() || camera.IsReset() || flag()) {
     if (camera.IsReset()) {
       camera.ResetComplete();
     }
 
-    camera.UpdateView();
+    camera.UpdateCameraMatirx();
 
     const Frame& new_frame = renderer.MakeFrame();
-
-    screen.DrawFrame(new_frame);
+    screen.DrawFrameWithFps(new_frame, one_second / float(frame_drawing_timer_->nsecsElapsed()));
   }
 }
 
-void ApplicationImpl::ConnectScreen(QVBoxLayout* layout) {
-  screen.Connect(layout);
-}
+// void ApplicationImpl::ConnectScreen(QVBoxLayout* layout) {
+//   screen.Connect(layout);
+// }
 
 void ApplicationImpl::StartRenderer() {
-  renderer.UnleashWorkers(&camera, &world);
   DrawFrame(ForceScreenUpdate{true});
-  timer->start(0);
+  timer_->start(0);
 }
 
 ApplicationImpl::~ApplicationImpl() {
-  delete layout;
-  delete timer;
+  delete layout_;
+  delete timer_;
 }
 
 void ApplicationImpl::keyPressEvent(QKeyEvent* event) {
@@ -149,14 +156,7 @@ void ApplicationImpl::keyReleaseEvent(QKeyEvent* event) {
 
 void ApplicationImpl::SceneTimer() {
   DrawFrame(ForceScreenUpdate{false});
-  timer->start(0);
-}
-
-ApplicationImpl::WorkerKeeper ApplicationImpl::MakeWorkerKeeper() const {
-  return WorkerKeeper(
-      threads_count, world.GetTrianglesCapacity(), world.GetSegmentCapacity(),
-      screen.GetScanlineCapacity(), screen.GetWidth(), screen.GetHeight()
-  );
+  timer_->start(0);
 }
 
 } // namespace detail
@@ -176,18 +176,21 @@ World CreateWorld(std::vector<std::string>&& models) {
 } // namespace
 
 Application::Application(
-    ThreadsCount threads_count, std::vector<std::string>&& models, ScreenHeight height,
-    ScreenWidth width, HorizontalFOV hf, NearPlaneDistance npd, RenderDistance rd
+    ThreadsCount threads_count, std::vector<std::string>&& models, Height height, Width width,
+    HorizontalFOV hf, NearPlaneDistance npd, RenderDistance rd
 )
     : impl(
-          threads_count(), CreateWorld(std::move(models)),
-          Camera(
-              hf, AspectRatio{static_cast<float>(height()) / static_cast<float>(width())}, npd, rd
-          ),
-          Screen(height, width)
+          std::make_unique<ApplicationImpl>(
+              threads_count(), CreateWorld(std::move(models)),
+              Camera(
+                  hf, AspectRatio{static_cast<float>(height()) / static_cast<float>(width())}, npd,
+                  rd
+              ),
+              height, width
+          )
       ) {}
 
 void Application::Run() {
-  impl.StartRenderer();
-  impl.show();
+  impl->StartRenderer();
+  impl->show();
 }

@@ -14,28 +14,35 @@ namespace detail {
 namespace renderer {
 
 Renderer::Renderer(
-    int32_t threads_total, int32_t screen_height, int32_t screen_width, WorkerKeeper&& worker_keeper
+    int32_t threads_total, int32_t screen_height, int32_t screen_width, Camera* camera, World* world
 )
     : threads_total(threads_total),
       screen_height(screen_height),
       screen_width(screen_width),
-      worker_keeper(std::move(worker_keeper)) {
-  zbuffer = ZBuffer(screen_height, screen_width);
-  current_frame = Frame(screen_height * screen_width);
+      zbuffer(Height{screen_height}, Width{screen_width}),
+      current_frame(Frame(screen_height * screen_width)),
+      worker_keeper(MakeWorkerKeeper(camera, world)) {
+  InitializeWorkers(camera, world);
 }
 
 const Frame& Renderer::MakeFrame() {
-  worker_keeper.ExecuteThreads();
+  worker_keeper.Execute();
   return current_frame;
 }
 
-void Renderer::UnleashWorkers(Camera* camera, World* world) {
+Renderer::WorkerKeeper Renderer::MakeWorkerKeeper(Camera* camera, World* world) const {
+  return WorkerKeeper(
+      threads_total, world->GetTrianglesCapacity(), world->GetSegmentCapacity(), screen_width,
+      screen_width, screen_height
+  );
+}
+
+void Renderer::InitializeWorkers(Camera* camera, World* world) {
   for (int32_t worker_id = 0; worker_id < threads_total; ++worker_id) {
     Worker worker = Worker(
         worker_id, worker_keeper.GetBarrier(), MakeClearTask(worker_id),
         MakeClipFiguresTask(worker_id, camera, world),
-        MakeDrawFiguresTask(worker_id, camera, world), MakeSynchronizeZBuffersTask(worker_id),
-        nullptr
+        MakeDrawFiguresTask(worker_id, camera, world), MakeFillGlobalZBufferTask(worker_id), nullptr
     );
 
     worker_keeper.SpawnWorker(std::move(worker));
@@ -134,7 +141,7 @@ Task Renderer::MakeDrawFiguresTask(int32_t thread_id, camera::Camera* camera, wo
   return draw_figures_task;
 }
 
-Task Renderer::MakeSynchronizeZBuffersTask(int32_t thread_id) {
+Task Renderer::MakeFillGlobalZBufferTask(int32_t thread_id) {
   Task synchronize_zbuffers_task = [thread_id = thread_id, threads_total = threads_total,
                                     worker_keeper = &worker_keeper, zbuffer = &zbuffer,
                                     current_frame = &current_frame, screen_width = screen_width]() {
@@ -148,10 +155,10 @@ Task Renderer::MakeSynchronizeZBuffersTask(int32_t thread_id) {
       for (int32_t row_index = begin; row_index < end; row_index++) {
         for (int32_t element_index = 0; element_index < self_storage.local_zbuffer.GetWidth();
              ++element_index) {
-          if (zbuffer->At(row_index, element_index).z >
-              worker_storage.local_zbuffer.At(row_index, element_index).z) {
-            zbuffer->At(row_index, element_index) =
-                worker_storage.local_zbuffer.At(row_index, element_index);
+          if ((*zbuffer)(row_index, element_index).z >
+              worker_storage.local_zbuffer(row_index, element_index).z) {
+            (*zbuffer)(row_index, element_index) =
+                worker_storage.local_zbuffer(row_index, element_index);
           }
         }
       }
@@ -159,9 +166,9 @@ Task Renderer::MakeSynchronizeZBuffersTask(int32_t thread_id) {
 
     for (int32_t row_index = begin; row_index < end; row_index++) {
       for (int32_t element_index = 0; element_index < screen_width; ++element_index) {
-        Color c = zbuffer->At(row_index, element_index).color;
+        Color c = (*zbuffer)(row_index, element_index).color;
         (*current_frame)[row_index * screen_width + element_index] = {c.red, c.green, c.blue};
-        zbuffer->At(row_index, element_index) = {{0, 0, 0}, FLT_MAX};
+        (*zbuffer)(row_index, element_index) = {{0, 0, 0}, FLT_MAX};
       }
     }
   };

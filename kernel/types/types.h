@@ -15,8 +15,8 @@ private:
   T value;
 };
 
-using ScreenHeight = Type<size_t, class screen_height_proxy>;
-using ScreenWidth = Type<size_t, class screen_width_proxy>;
+using Height = Type<int32_t, class screen_height_proxy>;
+using Width = Type<int32_t, class screen_width_proxy>;
 
 using ThreadsCount = Type<size_t, class threads_count_proxy>;
 
@@ -83,13 +83,13 @@ struct TextureCoordinates {
 class ZBuffer {
 public:
   ZBuffer() = default;
-  ZBuffer(int32_t height, int32_t width)
-      : height(height),
-        width(width),
-        zbuffer(width * height, ZColor({0, 0, 0}, FLT_MAX)) {}
+  ZBuffer(Height height, Width width)
+      : height(height()),
+        width(width()),
+        zbuffer(width() * height(), ZColor({0, 0, 0}, FLT_MAX)) {}
 
-  inline ZColor& At(int32_t y, int32_t x) { return zbuffer[y * width + x]; }
-  inline const ZColor& At(int32_t y, int32_t x) const { return zbuffer[y * width + x]; }
+  inline ZColor& operator()(int32_t y, int32_t x) { return zbuffer[y * width + x]; }
+  inline const ZColor& operator()(int32_t y, int32_t x) const { return zbuffer[y * width + x]; }
 
   inline int32_t Size() const { return height * width; }
   inline int32_t GetHeight() const { return height; }
