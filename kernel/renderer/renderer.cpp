@@ -84,6 +84,7 @@ Task Renderer::MakeClipFiguresTask(int32_t thread_id, Camera* camera, World* wor
     geometry::TriangleIntersected first;
     geometry::TriangleIntersected second;
 
+    uint8_t model_index = 0;
     for (const world::GlobalObject& object : world->GetObjects()) {
       int32_t block = object.TrianglesCount() / threads_count + 1;
       int32_t begin = thread_id * block;
@@ -91,12 +92,15 @@ Task Renderer::MakeClipFiguresTask(int32_t thread_id, Camera* camera, World* wor
 
       for (int32_t index = begin; index < end; ++index) {
         auto triangle = object[index];
+        triangle.model_index = model_index;
         geometry::TriangleIntersected* clipped_triangles =
             camera->ClipTriangle(triangle * camera_matrix, &first, &second);
         for (int32_t i = 0; i < clipped_triangles->size; ++i) {
           self_clipped_triangles.push_back((*clipped_triangles)[i]);
         }
       }
+
+      ++model_index;
     }
   };
   return clip_figures_task;
@@ -128,12 +132,12 @@ Task Renderer::MakeDrawFiguresTask(int32_t thread_id, camera::Camera* camera, wo
         c_proj.Normalize();
 
         geometry::Triangle projective_triangle =
-            geometry::Triangle{.a = a_proj, .b = b_proj, .c = c_proj};
+            geometry::Triangle{.a = a_proj, .b = b_proj, .c = c_proj, clipped_triangle.model_index};
         ViewTriangleTransform(projective_triangle, screen_width, screen_height);
 
         rasterization::DrawTriangle(
             projective_triangle, self_storage.local_zbuffer, self_storage.scnaline_container,
-            world->GetObjects()[0].GetTexture()
+            world->GetObjects()[projective_triangle.model_index].GetTexture()
         );
       }
     }

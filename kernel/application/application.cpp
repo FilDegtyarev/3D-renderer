@@ -10,6 +10,7 @@
 #include "types/types.h"
 #include "world/world.h"
 
+#include <cassert>
 #include <memory>
 #include <qboxlayout.h>
 #include <qcoreevent.h>
@@ -164,19 +165,23 @@ void ApplicationImpl::SceneTimer() {
 namespace {
 using World = detail::world::World;
 
-World CreateWorld(std::vector<std::string>&& models) {
+World CreateWorld(std::vector<Model>&& models) {
   detail::world::WorldBuilder world_builder;
-  detail::world::LocalObject local = detail::parser::Parse(models[0], models[1]);
-  local.Normalize(1);
-  detail::world::GlobalObject model_global(std::move(local), glm::vec3{0, 0, -10}, 1);
-  world_builder.AddObject(std::move(model_global));
+
+  for (int32_t i = 0; i < models.size(); ++i) {
+    detail::world::LocalObject local =
+        detail::parser::Parse(models[i].path_to_obj(), models[i].path_to_texture());
+    local.Normalize(1);
+    detail::world::GlobalObject model_global(std::move(local), glm::vec3{0, 0, -10 * i}, 1);
+    world_builder.AddObject(std::move(model_global));
+  }
   return world_builder.Extract();
 }
 
 } // namespace
 
 Application::Application(
-    ThreadsCount threads_count, std::vector<std::string>&& models, Height height, Width width,
+    ThreadsCount threads_count, std::vector<Model>&& models, Height height, Width width,
     HorizontalFOV hf, NearPlaneDistance npd, RenderDistance rd
 )
     : impl(

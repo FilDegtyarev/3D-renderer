@@ -15,6 +15,14 @@ private:
   T value;
 };
 
+using PathToObj = Type<std::string, class path_to_obj_proxy>;
+using PathToTexture = Type<std::string, class path_to_texture_proxy>;
+
+struct Model {
+  PathToObj path_to_obj;
+  PathToTexture path_to_texture;
+};
+
 using Height = Type<int32_t, class screen_height_proxy>;
 using Width = Type<int32_t, class screen_width_proxy>;
 

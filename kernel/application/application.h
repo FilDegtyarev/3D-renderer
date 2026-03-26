@@ -66,7 +66,7 @@ class Application {
 
 public:
   Application(
-      ThreadsCount threads_count, std::vector<std::string>&& models, Height height, Width width,
+      ThreadsCount threads_count, std::vector<Model>&& models, Height height, Width width,
       HorizontalFOV hf, NearPlaneDistance npd, RenderDistance rd
   );
 

@@ -3,6 +3,8 @@
 #include "geometry/geometry.h"
 #include "world/object.h"
 
+#include <cstdio>
+
 namespace detail {
 namespace world {
 

@@ -22,13 +22,15 @@ void LocalObject::Normalize(float scale) {
 
 LocalObject::Triangle LocalObject::GetTriangle(const TriangleInfo& triangle) const {
   geometry::Point a = vertexes[triangle.first.vertex_number];
-  a.texture_coordinates = texture.GetTextureCoordinates(triangle.first.texture_number);
-
   geometry::Point b = vertexes[triangle.second.vertex_number];
-  b.texture_coordinates = texture.GetTextureCoordinates(triangle.second.texture_number);
-
   geometry::Point c = vertexes[triangle.third.vertex_number];
-  c.texture_coordinates = texture.GetTextureCoordinates(triangle.third.texture_number);
+
+  if (texture.IsActive()) {
+    a.texture_coordinates = texture.GetTextureCoordinates(triangle.first.texture_number);
+    b.texture_coordinates = texture.GetTextureCoordinates(triangle.second.texture_number);
+    c.texture_coordinates = texture.GetTextureCoordinates(triangle.third.texture_number);
+  }
+
   return geometry::Triangle{a, b, c};
 }
 

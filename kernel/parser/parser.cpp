@@ -79,6 +79,7 @@ std::vector<std::vector<Color>> LoadJpegWithQt(const std::string& filename) {
 }
 
 } // namespace
+
 world::LocalObject Parse(const std::string& filename, const std::string& texture_file) {
   std::ifstream fin(filename);
   std::ofstream fout("swaga.txt");
@@ -97,7 +98,7 @@ world::LocalObject Parse(const std::string& filename, const std::string& texture
       point.coordinates.x = std::stof(result[0]);
       point.coordinates.y = -std::stof(result[2]);
       point.coordinates.z = -std::stof(result[1]);
-      point.color = {120, 120, 120};
+      // point.color = {120, 120, 120};
       builder.AddVertex(point);
     } else if (string[0] == 'f') {
       std::vector<VertexInfo> vertexes = ParseFirstIndex(string);
@@ -111,10 +112,12 @@ world::LocalObject Parse(const std::string& filename, const std::string& texture
   }
 
   // Текстура
-  std::vector<std::vector<Color>> colors = LoadJpegWithQt(texture_file);
+  if (texture_file != "") {
+    std::vector<std::vector<Color>> colors = LoadJpegWithQt(texture_file);
 
-  texture = textures::Texture(colors.size(), colors[0].size(), coordinates, colors);
-  builder.AddTexture(texture);
+    texture = textures::Texture(colors.size(), colors[0].size(), coordinates, colors);
+    builder.AddTexture(texture);
+  }
   return builder.Extract();
 }
 } // namespace parser

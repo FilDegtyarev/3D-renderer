@@ -23,6 +23,7 @@ bool IsInBuffer(const ScreenPoint& point, const ZBuffer& zbuffer) {
 } // namespace
 
 void DrawSegment(const Segment& segment_, ZBuffer& zbuffer) {
+  assert(false);
   ScreenSegment segment = geometry::DiscretizeSegment(segment_);
   ScreenPoint from = segment.a;
   ScreenPoint to = segment.b;
@@ -37,7 +38,7 @@ void DrawSegment(const Segment& segment_, ZBuffer& zbuffer) {
     if (zbuffer(pixel.y, pixel.x).z > pixel.z) {
       zbuffer(pixel.y, pixel.x).z = pixel.z;
 
-      zbuffer(pixel.y, pixel.x).color = pixel.color;
+      // zbuffer(pixel.y, pixel.x).color = pixel.color;
       zbuffer(pixel.y, pixel.x).color = Color{.red = 50, .blue = 100, .green = 150};
     }
   }
@@ -60,13 +61,16 @@ void DrawTriangle(
         continue;
       }
 
-      if (texture.IsActive()) {
-        pixel.color = texture(pixel.texture_coordinates.u, pixel.texture_coordinates.v);
-      }
-
       if (pixel.z < zbuffer(pixel.y, pixel.x).z) {
+        Color color = {uint8_t(rand() % 256), uint8_t(rand() % 256), uint8_t(rand() % 256)};
+
+        if (texture.IsActive()) {
+          color = texture(pixel.texture_coordinates.u, pixel.texture_coordinates.v);
+          // pixel.color = texture(pixel.texture_coordinates.u, pixel.texture_coordinates.v);
+        }
+        // printf("Hello\n");
         zbuffer(pixel.y, pixel.x).z = pixel.z;
-        zbuffer(pixel.y, pixel.x).color = pixel.color;
+        zbuffer(pixel.y, pixel.x).color = color;
       }
     }
   }

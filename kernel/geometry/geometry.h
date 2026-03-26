@@ -30,7 +30,6 @@ struct Point {
   inline V3 GetXYZ() const { return V3{coordinates.x, coordinates.y, coordinates.z}; };
 
   V4 coordinates = {0, 0, 0, 1};
-  Color color;
   TextureCoordinates texture_coordinates;
 };
 
@@ -39,6 +38,7 @@ struct Triangle {
   Point b;
   Point c;
 
+  uint8_t model_index = 255;
   Triangle operator*(const M4& matrix) const;
 };
 
@@ -85,11 +85,10 @@ struct ScreenPoint {
 
   inline V3 Float() const { return V3{float(x), float(y), z}; }
 
-  int32_t x;
-  int32_t y;
+  int16_t x;
+  int16_t y;
   float z;
 
-  Color color;
   TextureCoordinates texture_coordinates;
 };
 
@@ -105,13 +104,14 @@ LineStatus GetLineStatus(const ScreenPoint& first, const ScreenPoint& second);
 float GetTangentCoefficent(const ScreenPoint& first, const ScreenPoint& second);
 
 struct ScreenTriangle {
-  ScreenPoint a;
-  ScreenPoint b;
-  ScreenPoint c;
-
   ScreenTriangle SortedVertex() const;
   int32_t MinimumHeight() const;
   int32_t MaximumHeight() const;
+
+  ScreenPoint a;
+  ScreenPoint b;
+  ScreenPoint c;
+  uint8_t model_index = 255;
 };
 
 ScreenSegment DiscretizeSegment(const Segment& segment);

@@ -30,8 +30,7 @@ struct HeightComparator {
 
 Point Point::operator+(const V3& vector) const {
   return Point{
-      coordinates + V4{vector.x, vector.y, vector.z, 0}, color,
-      .texture_coordinates = texture_coordinates
+      coordinates + V4{vector.x, vector.y, vector.z, 0}, .texture_coordinates = texture_coordinates
   };
 }
 
@@ -48,11 +47,11 @@ void Point::Scale(const float& coef) {
 
 Point Point::operator*(const M4& matrix) const {
   V4 new_coordinates = matrix * coordinates;
-  return Point{new_coordinates, color, .texture_coordinates = texture_coordinates};
+  return Point{new_coordinates, .texture_coordinates = texture_coordinates};
 }
 
 Triangle Triangle::operator*(const M4& matrix) const {
-  return Triangle{a * matrix, b * matrix, c * matrix};
+  return Triangle{a * matrix, b * matrix, c * matrix, model_index};
 }
 
 Segment Segment::operator*(const M4& matrix) const {
@@ -85,6 +84,7 @@ static const float eps = 1e-6;
 TriangleIntersectedSingle IntersectTriangleWithPlane(const Triangle& triangle, const Plane& plane) {
   PointContainer insiders;
   PointContainer outsiders;
+  uint8_t model_index = triangle.model_index;
 
   if (plane(triangle.a) >= eps) {
     insiders.Append(triangle.a);
@@ -118,17 +118,19 @@ TriangleIntersectedSingle IntersectTriangleWithPlane(const Triangle& triangle, c
     Point intersect1 = IntersectSegmentWithPlane({insiders[0], outsiders[0]}, plane).b;
     Point intersect2 = IntersectSegmentWithPlane({insiders[0], outsiders[1]}, plane).b;
 
-    return {Triangle{insiders[0], intersect1, intersect2}, .size = 1};
+    return {Triangle{insiders[0], intersect1, intersect2, model_index}, .size = 1};
+    // return {Triangle{insiders[0], intersect1, intersect2}, .size = 1};
   } else if (insiders.size == 2) {
 
     Point intersect1 = IntersectSegmentWithPlane({insiders[0], outsiders[0]}, plane).b;
     Point intersect2 = IntersectSegmentWithPlane({insiders[1], outsiders[0]}, plane).b;
 
-    Triangle first = {insiders[0], intersect1, intersect2};
-    Triangle second = {insiders[0], insiders[1], intersect2};
+    Triangle first = {insiders[0], intersect1, intersect2, model_index};
+    Triangle second = {insiders[0], insiders[1], intersect2, model_index};
 
     return {first, second, 2};
   }
+
   assert(false);
   return {};
 }
@@ -149,9 +151,7 @@ Segment IntersectSegmentWithPlane(const Segment& segment, const Plane& plane) {
   float coef = (glm::dot(plane.N, p1) + plane.D) * -1.0f / glm::dot(plane.N, p2 - p1);
   V3 intersection = p1 + (p2 - p1) * coef;
 
-  return {
-      first, Point{V4{intersection.x, intersection.y, intersection.z, second.W()}, second.color}
-  };
+  return {first, Point{V4{intersection.x, intersection.y, intersection.z, second.W()}}};
 }
 
 LineStatus GetLineStatus(const ScreenPoint& first, const ScreenPoint& second) {
@@ -198,10 +198,9 @@ int32_t ScreenTriangle::MaximumHeight() const {
 namespace {
 ScreenPoint DiscretizePoint(const Point& point) {
   return ScreenPoint{
-      .x = int32_t(std::ceil(point.X())),
-      .y = int32_t(std::ceil(point.Y())),
+      .x = static_cast<int16_t>(std::ceil(point.X())),
+      .y = static_cast<int16_t>(std::ceil(point.Y())),
       .z = point.Z(),
-      .color = point.color,
       .texture_coordinates = point.texture_coordinates
   };
 }
@@ -216,7 +215,8 @@ ScreenTriangle DiscretizeTriangle(const Triangle& triangle) {
   return ScreenTriangle{
       .a = DiscretizePoint(triangle.a),
       .b = DiscretizePoint(triangle.b),
-      .c = DiscretizePoint(triangle.c)
+      .c = DiscretizePoint(triangle.c),
+      .model_index = triangle.model_index
   };
 }
 
