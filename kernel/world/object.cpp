@@ -70,6 +70,10 @@ void LocalObjectBuilder::AddTexture(const LocalObject::Texture& texture) {
   local_object.texture = texture;
 }
 
+void LocalObjectBuilder::SetBackFaceCullingMode(BackFaceCullingStatus status) {
+  local_object.back_face_culling_status = status;
+}
+
 LocalObject LocalObjectBuilder::Extract() {
   return std::move(local_object);
 }

@@ -6,6 +6,9 @@
 namespace detail {
 namespace parser {
 
-world::LocalObject Parse(const std::string& filename, const std::string& texture_file);
+using LocalObject = world::LocalObject;
+
+LocalObject
+Parse(const std::string& filename, const std::string& texture_file, BackFaceCullingStatus status);
 } // namespace parser
 } // namespace detail

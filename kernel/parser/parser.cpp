@@ -80,7 +80,8 @@ std::vector<std::vector<Color>> LoadJpegWithQt(const std::string& filename) {
 
 } // namespace
 
-world::LocalObject Parse(const std::string& filename, const std::string& texture_file) {
+LocalObject
+Parse(const std::string& filename, const std::string& texture_file, BackFaceCullingStatus status) {
   std::ifstream fin(filename);
   std::ofstream fout("swaga.txt");
   textures::Texture texture;
@@ -118,6 +119,7 @@ world::LocalObject Parse(const std::string& filename, const std::string& texture
     texture = textures::Texture(colors.size(), colors[0].size(), coordinates, colors);
     builder.AddTexture(texture);
   }
+  builder.SetBackFaceCullingMode(status);
   return builder.Extract();
 }
 } // namespace parser

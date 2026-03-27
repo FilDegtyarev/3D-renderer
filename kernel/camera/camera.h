@@ -123,6 +123,8 @@ public:
 
   inline V3 GetCameraPosition() const { return camera_position; }
 
+  inline const V3& GetGazeDirection() const { return gaze_direction; }
+
 private:
   using TriangleIntersectedSingle = geometry::TriangleIntersectedSingle;
 

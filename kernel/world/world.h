@@ -34,6 +34,8 @@ public:
 
   const Texture& GetTexture() const;
 
+  inline bool IsBackFaceCullingEnabled() const { return local_object.IsBackFaceCullingEnabled(); }
+
 private:
   LocalObject local_object;
   M4 transform;

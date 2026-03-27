@@ -11,20 +11,15 @@ namespace detail {
 namespace geometry {
 
 namespace {
-inline bool IsHigher(const ScreenPoint& left, const ScreenPoint& right) {
-  if (left.y > right.y) {
-    return true;
-  } else if (left.y == right.y && left.x >= right.x) {
-    return true;
-  }
-  return false;
+inline bool IsHigher(const ScreenPoint* left, const ScreenPoint* right) {
+  return (left->y > right->y) | (left->y == right->y && left->x >= right->x);
+  // if () {
+  //   return true;
+  // } else if () {
+  //   return true;
+  // }
+  // return false;
 }
-
-struct HeightComparator {
-  bool operator()(const ScreenPoint& left, const ScreenPoint& right) {
-    return IsHigher(left, right);
-  }
-};
 
 } // namespace
 
@@ -154,13 +149,6 @@ Segment IntersectSegmentWithPlane(const Segment& segment, const Plane& plane) {
   return {first, Point{V4{intersection.x, intersection.y, intersection.z, second.W()}}};
 }
 
-LineStatus GetLineStatus(const ScreenPoint& first, const ScreenPoint& second) {
-  if (first.x == second.x) {
-    return LineStatus::Vertical;
-  }
-  return LineStatus::NonVertical;
-}
-
 float GetTangentCoefficent(const ScreenPoint& first, const ScreenPoint& second) {
   assert(GetLineStatus(first, second) == LineStatus::NonVertical);
 
@@ -170,9 +158,9 @@ float GetTangentCoefficent(const ScreenPoint& first, const ScreenPoint& second) 
 }
 
 ScreenTriangle ScreenTriangle::SortedVertex() const {
-  ScreenPoint a0 = a;
-  ScreenPoint b0 = b;
-  ScreenPoint c0 = c;
+  const ScreenPoint* a0 = &a;
+  const ScreenPoint* b0 = &b;
+  const ScreenPoint* c0 = &c;
 
   if (!IsHigher(a0, b0)) {
     std::swap(a0, b0);
@@ -184,7 +172,7 @@ ScreenTriangle ScreenTriangle::SortedVertex() const {
   if (!IsHigher(b0, c0)) {
     std::swap(b0, c0);
   }
-  return {a0, b0, c0};
+  return {*a0, *b0, *c0};
 }
 
 int32_t ScreenTriangle::MinimumHeight() const {

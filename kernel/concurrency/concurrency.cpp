@@ -20,7 +20,7 @@ void WorkerStorage::Clear() {
 
   for (int i = 0; i < local_zbuffer.GetHeight(); ++i) {
     for (int j = 0; j < local_zbuffer.GetWidth(); ++j) {
-      local_zbuffer(i, j).color = {0, 0, 0};
+      local_zbuffer(i, j).color = {0};
       local_zbuffer(i, j).z = FLT_MAX;
     }
   }

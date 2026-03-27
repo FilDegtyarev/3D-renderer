@@ -47,14 +47,20 @@ public:
 
   const textures::Texture& GetTexture() const;
 
+  inline bool IsBackFaceCullingEnabled() const {
+    return back_face_culling_status == BackFaceCullingStatus::Enabled;
+  }
+
 private:
   LocalObject() = default;
   LocalObject(const LocalObject& local) = default;
   std::vector<Point> vertexes;
+
   std::vector<TriangleInfo> triangles;
   std::vector<SegmentKeeper> segments;
 
   Texture texture;
+  BackFaceCullingStatus back_face_culling_status;
 };
 
 class LocalObjectBuilder {
@@ -65,6 +71,7 @@ public:
   void AddTriangle(const TriangleInfo& vertex_info);
   void AddSegment(const SegmentKeeper& segment);
   void AddTexture(const textures::Texture& texture);
+  void SetBackFaceCullingMode(BackFaceCullingStatus status);
 
   LocalObject Extract();
 

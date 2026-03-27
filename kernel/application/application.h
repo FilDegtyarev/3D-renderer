@@ -3,6 +3,7 @@
 #include "QWidget"
 #include "camera/camera.h"
 #include "concurrency/concurrency.h"
+#include "light/light.h"
 #include "renderer/renderer.h"
 #include "screen/screen.h"
 #include "types/types.h"
@@ -19,10 +20,13 @@ class ApplicationImpl : public QWidget {
   using World = world::World;
   using WorkerKeeper = concurrency::WorkerKeeper;
   using Screen = screen::Screen;
+  using DirectionalLightSource = light::DirectionalLightSource;
+  using Renderer = renderer::Renderer;
   Q_OBJECT
 public:
   ApplicationImpl(
-      int32_t threads_count, World&& world_, Camera&& camera_, Height height, Width width
+      int32_t threads_count, World&& world_, DirectionalLightSource&& light, Camera&& camera_,
+      Height height, Width width
   );
 
   void ButtonPressed(int button);
@@ -45,10 +49,12 @@ private slots:
 private:
   using Task = std::function<void(void)>;
 
-  world::World world;
-  camera::Camera camera;
-  screen::Screen screen;
-  renderer::Renderer renderer;
+  World world;
+
+  DirectionalLightSource direction_light;
+  Camera camera;
+  Screen screen;
+  Renderer renderer;
 
   QVBoxLayout* layout_;
   QTimer* timer_;
@@ -63,11 +69,12 @@ class Application {
   using WorkerKeeper = detail::concurrency::WorkerKeeper;
   using Screen = detail::screen::Screen;
   using ApplicationImpl = detail::ApplicationImpl;
+  using DirectionalLightSource = detail::light::DirectionalLightSource;
 
 public:
   Application(
-      ThreadsCount threads_count, std::vector<Model>&& models, Height height, Width width,
-      HorizontalFOV hf, NearPlaneDistance npd, RenderDistance rd
+      ThreadsCount threads_count, std::vector<Model>&& models, DirectionalLightSource&& light,
+      Height height, Width width, HorizontalFOV hf, NearPlaneDistance npd, RenderDistance rd
   );
 
   void Run();

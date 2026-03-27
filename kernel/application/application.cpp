@@ -4,6 +4,7 @@
 #include "QDebug"
 #include "camera/camera.h"
 #include "concurrency/concurrency.h"
+#include "light/light.h"
 #include "parser/parser.h"
 #include "renderer/renderer.h"
 #include "screen/screen.h"
@@ -11,6 +12,7 @@
 #include "world/world.h"
 
 #include <cassert>
+#include <cstdio>
 #include <memory>
 #include <qboxlayout.h>
 #include <qcoreevent.h>
@@ -20,13 +22,17 @@
 namespace detail {
 
 ApplicationImpl::ApplicationImpl(
-    int32_t threads_count, World&& world_, Camera&& camera_, Height height, Width width
+    int32_t threads_count, World&& world_, DirectionalLightSource&& light, Camera&& camera_,
+    Height height, Width width
 )
     : QWidget(nullptr),
       world(std::move(world_)),
+      direction_light(std::move(light)),
       camera(std::move(camera_)),
       screen(height, width),
-      renderer(threads_count, screen.GetHeight(), screen.GetWidth(), &camera, &world),
+      renderer(
+          threads_count, screen.GetHeight(), screen.GetWidth(), &camera, &world, &direction_light
+      ),
       layout_(new QVBoxLayout(this)),
       timer_(new QTimer()),
       frame_drawing_timer_(new QElapsedTimer()) {
@@ -123,7 +129,8 @@ void ApplicationImpl::DrawFrame(ForceScreenUpdate flag) {
     }
 
     camera.UpdateCameraMatirx();
-
+    direction_light.UpdateDirection(camera);
+    // printf("Piska\n");
     const Frame& new_frame = renderer.MakeFrame();
     screen.DrawFrameWithFps(new_frame, one_second / float(frame_drawing_timer_->nsecsElapsed()));
   }
@@ -169,8 +176,9 @@ World CreateWorld(std::vector<Model>&& models) {
   detail::world::WorldBuilder world_builder;
 
   for (int32_t i = 0; i < models.size(); ++i) {
-    detail::world::LocalObject local =
-        detail::parser::Parse(models[i].path_to_obj(), models[i].path_to_texture());
+    detail::world::LocalObject local = detail::parser::Parse(
+        models[i].path_to_obj(), models[i].path_to_texture(), models[i].bfc_status
+    );
     local.Normalize(1);
     detail::world::GlobalObject model_global(std::move(local), glm::vec3{0, 0, -10 * i}, 1);
     world_builder.AddObject(std::move(model_global));
@@ -181,16 +189,17 @@ World CreateWorld(std::vector<Model>&& models) {
 } // namespace
 
 Application::Application(
-    ThreadsCount threads_count, std::vector<Model>&& models, Height height, Width width,
-    HorizontalFOV hf, NearPlaneDistance npd, RenderDistance rd
+    ThreadsCount threads_count, std::vector<Model>&& models, DirectionalLightSource&& light,
+    Height height, Width width, HorizontalFOV hf, NearPlaneDistance npd, RenderDistance rd
 )
     : impl(
           std::make_unique<ApplicationImpl>(
-              threads_count(), CreateWorld(std::move(models)),
+              threads_count(), CreateWorld(std::move(models)), std::move(light),
               Camera(
                   hf, AspectRatio{static_cast<float>(height()) / static_cast<float>(width())}, npd,
                   rd
               ),
+
               height, width
           )
       ) {}

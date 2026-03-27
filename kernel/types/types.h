@@ -18,9 +18,12 @@ private:
 using PathToObj = Type<std::string, class path_to_obj_proxy>;
 using PathToTexture = Type<std::string, class path_to_texture_proxy>;
 
+enum class BackFaceCullingStatus : uint8_t { Enabled, Disabled };
+
 struct Model {
   PathToObj path_to_obj;
   PathToTexture path_to_texture;
+  BackFaceCullingStatus bfc_status;
 };
 
 using Height = Type<int32_t, class screen_height_proxy>;
@@ -52,6 +55,13 @@ using Task = std::function<void(void)>;
 
 struct Color {
   inline bool operator==(const Color& other) const = default;
+
+  inline Color operator*(const float& value) const {
+    return {
+        static_cast<uint8_t>(red * value), static_cast<uint8_t>(green * value),
+        static_cast<uint8_t>(blue * value)
+    };
+  }
 
   uint8_t red;
   uint8_t green;

@@ -39,14 +39,14 @@ void DrawSegment(const Segment& segment_, ZBuffer& zbuffer) {
       zbuffer(pixel.y, pixel.x).z = pixel.z;
 
       // zbuffer(pixel.y, pixel.x).color = pixel.color;
-      zbuffer(pixel.y, pixel.x).color = Color{.red = 50, .blue = 100, .green = 150};
+      // zbuffer(pixel.y, pixel.x).color = Color{.red = 50, .blue = 100, .green = 150};
     }
   }
 }
 
 void DrawTriangle(
     const Triangle& triangle, ZBuffer& zbuffer, std::vector<ScreenPoint>& scanline_buffer,
-    const Texture& texture
+    const Texture& texture, const DirectionalLightSource* direction_light
 ) {
 
   ScreenTriangle screen_triangle = geometry::DiscretizeTriangle(triangle);
@@ -68,7 +68,8 @@ void DrawTriangle(
           color = texture(pixel.texture_coordinates.u, pixel.texture_coordinates.v);
           // pixel.color = texture(pixel.texture_coordinates.u, pixel.texture_coordinates.v);
         }
-        // printf("Hello\n");
+
+        // color = direction_light->CalculateColor(geometry::MakeNormal(triangle), color);
         zbuffer(pixel.y, pixel.x).z = pixel.z;
         zbuffer(pixel.y, pixel.x).color = color;
       }

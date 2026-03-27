@@ -65,7 +65,7 @@ std::vector<ScreenPoint> Bresenham(const ScreenPoint& start, const ScreenPoint& 
 namespace {
 static float EPS = 1e-9;
 using LineStatus = geometry::LineStatus;
-float GetXShift(const ScreenPoint& first, const ScreenPoint& second) {
+inline float GetXShift(const ScreenPoint& first, const ScreenPoint& second) {
   float x_shift = 0;
   if (geometry::GetLineStatus(first, second) == LineStatus::NonVertical) {
     x_shift = geometry::GetTangentCoefficent(first, second);

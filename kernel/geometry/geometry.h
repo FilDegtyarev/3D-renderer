@@ -12,6 +12,16 @@ struct Point {
   Point operator+(const V3& vector) const;
   Point operator+=(const V3& vector);
 
+  inline V3 operator-(const Point& vector) const {
+    V3 result = coordinates - vector.coordinates;
+    return result;
+  }
+
+  inline V3 operator-(const V3& vector) const {
+    V3 new_coordinates(coordinates.x, coordinates.y, coordinates.z);
+    return new_coordinates - vector;
+  }
+
   void Scale(const float& coef);
   Point operator*(const M4& matrix) const;
 
@@ -34,13 +44,24 @@ struct Point {
 };
 
 struct Triangle {
+  Triangle operator*(const M4& matrix) const;
+
   Point a;
   Point b;
   Point c;
-
   uint8_t model_index = 255;
-  Triangle operator*(const M4& matrix) const;
 };
+
+inline V3 MakeNormal(const Triangle& triangle) {
+  return glm::normalize(glm::cross(triangle.c - triangle.a, triangle.b - triangle.a));
+}
+
+inline bool IsBackFace(const Triangle& triangle, const V3& vector) {
+  return !(
+      glm::dot(triangle.a - vector, glm::cross(triangle.c - triangle.a, triangle.b - triangle.a)) >=
+      1e-8
+  );
+}
 
 struct Segment {
   Point a;
@@ -68,6 +89,7 @@ struct TriangleIntersected {
       triangles[size++] = single.triangles[i];
     }
   }
+
   inline void Clear() { size = 0; }
   inline const Triangle& operator[](size_t i) const { return triangles[i]; }
   inline Triangle& operator[](size_t i) { return triangles[i]; }
@@ -99,7 +121,12 @@ struct ScreenSegment {
 
 enum LineStatus { Vertical, NonVertical };
 
-LineStatus GetLineStatus(const ScreenPoint& first, const ScreenPoint& second);
+inline LineStatus GetLineStatus(const ScreenPoint& first, const ScreenPoint& second) {
+  if (first.x == second.x) {
+    return LineStatus::Vertical;
+  }
+  return LineStatus::NonVertical;
+}
 
 float GetTangentCoefficent(const ScreenPoint& first, const ScreenPoint& second);
 
