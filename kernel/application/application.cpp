@@ -130,7 +130,7 @@ void ApplicationImpl::DrawFrame(ForceScreenUpdate flag) {
 
     camera.UpdateCameraMatirx();
     direction_light.UpdateDirection(camera);
-    // printf("Piska\n");
+
     const Frame& new_frame = renderer.MakeFrame();
     screen.DrawFrameWithFps(new_frame, one_second / float(frame_drawing_timer_->nsecsElapsed()));
   }

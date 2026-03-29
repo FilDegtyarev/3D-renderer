@@ -86,6 +86,19 @@ M4 Camera::GetCameraMatrix() const {
   return first * second;
 }
 
+M3 Camera::GetNormalTransformMatrix() const {
+  M4 full_transformtaion = GetCameraMatrix();
+  full_transformtaion[0][3] = 0;
+  full_transformtaion[1][3] = 0;
+  full_transformtaion[2][3] = 0;
+
+  full_transformtaion[3][0] = 0;
+  full_transformtaion[3][1] = 0;
+  full_transformtaion[3][2] = 0;
+
+  return glm::transpose(glm::inverse(M3(full_transformtaion)));
+}
+
 void Camera::Move(Moving move) {
   moving |= move;
 }

@@ -4,18 +4,7 @@
 #include "types/types.h"
 
 #include <QApplication>
-/*
-int main() {
-  QApplication qt_runtime(argc, argv);
-  try {
-    Application app;
-    qt_runtime.exec();
-  } catch(...) {
-    except::react();
-  }
-  return 0;
-}
-*/
+
 int main(int argc, char* argv[]) {
   QApplication app(argc, argv);
 
@@ -23,16 +12,17 @@ int main(int argc, char* argv[]) {
     Model skull(
         PathToObj{"/Users/filipp/Documents/Models/Skull/12140_Skull_v3_L2.obj"},
         PathToTexture{"/Users/filipp/Documents/Models/Skull/Skull.jpg"},
-        BackFaceCullingStatus::Disabled
+        BackFaceCullingStatus::Enabled
     );
 
     Model cat(
         PathToObj{"/Users/filipp/Documents/Models/cat.obj"}, PathToTexture{""},
         BackFaceCullingStatus::Enabled
     );
-    detail::light::DirectionalLightSource light({0, 0, -1.0});
+
+    detail::light::DirectionalLightSource light({0, 0, -1.0f});
     Application r_app(
-        ThreadsCount{8}, {skull}, std::move(light), Height{600}, Width{800}, HorizontalFOV{120.0},
+        ThreadsCount{8}, {skull}, std::move(light), Height{600}, Width{800}, HorizontalFOV{90.0},
         NearPlaneDistance{0.1}, RenderDistance{100.0}
     );
 

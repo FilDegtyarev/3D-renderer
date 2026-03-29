@@ -78,7 +78,7 @@ struct ZColor {
 struct VertexInfo {
   int32_t vertex_number;
   int32_t texture_number;
-  int32_t normal_number;
+  int32_t normal_number = -1;
 };
 
 struct TextureCoordinates {

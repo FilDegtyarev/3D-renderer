@@ -97,6 +97,7 @@ public:
 
   M4 GetFrustumMatrix() const;
   M4 GetCameraMatrix() const;
+  M3 GetNormalTransformMatrix() const;
 
   void Move(Moving move);
   void StopMoving(Moving move);

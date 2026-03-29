@@ -12,18 +12,27 @@ struct Point {
   Point operator+(const V3& vector) const;
   Point operator+=(const V3& vector);
 
-  inline V3 operator-(const Point& vector) const {
-    V3 result = coordinates - vector.coordinates;
+  inline V3 operator-(const Point& point) const {
+    V3 result = coordinates - point.coordinates;
     return result;
   }
 
-  inline V3 operator-(const V3& vector) const {
-    V3 new_coordinates(coordinates.x, coordinates.y, coordinates.z);
-    return new_coordinates - vector;
+  inline Point operator*(const M4& transformation) const {
+    V4 new_coordinates = transformation * coordinates;
+    return Point{
+        .coordinates = new_coordinates, .normal = normal, .texture_coordinates = texture_coordinates
+    };
   }
 
   void Scale(const float& coef);
-  Point operator*(const M4& matrix) const;
+
+  inline Point Multiplication(const M4& transformation, const M4& invt_transformation) const {
+    V4 new_coordinates = transformation * coordinates;
+    V3 new_normal = invt_transformation * V4(normal, 0);
+    return Point{
+        .coordinates = new_coordinates, .normal = normal, .texture_coordinates = texture_coordinates
+    };
+  }
 
   bool operator==(const Point& other) const = default;
 
@@ -40,11 +49,22 @@ struct Point {
   inline V3 GetXYZ() const { return V3{coordinates.x, coordinates.y, coordinates.z}; };
 
   V4 coordinates = {0, 0, 0, 1};
+  V3 normal;
   TextureCoordinates texture_coordinates;
 };
 
 struct Triangle {
-  Triangle operator*(const M4& matrix) const;
+  inline Triangle operator*(const M4& transformation) const {
+    return Triangle{a * transformation, b * transformation, c * transformation, model_index};
+  }
+
+  Triangle Multiplication(const M4& transformation, const M4& invt_transformation) const {
+    return Triangle{
+        a.Multiplication(transformation, invt_transformation),
+        b.Multiplication(transformation, invt_transformation),
+        c.Multiplication(transformation, invt_transformation), .model_index = model_index
+    };
+  }
 
   Point a;
   Point b;
@@ -56,10 +76,19 @@ inline V3 MakeNormal(const Triangle& triangle) {
   return glm::normalize(glm::cross(triangle.c - triangle.a, triangle.b - triangle.a));
 }
 
-inline bool IsBackFace(const Triangle& triangle, const V3& vector) {
+namespace {
+V3 diff(const Point& point, const V3& camera_position) {
+  V3 new_coordinates(point.coordinates);
+  return camera_position - new_coordinates;
+}
+} // namespace
+
+inline bool IsBackFace(const Triangle& triangle, const V3& camera_position) {
   return !(
-      glm::dot(triangle.a - vector, glm::cross(triangle.c - triangle.a, triangle.b - triangle.a)) >=
-      1e-8
+      glm::dot(
+          diff(triangle.a, camera_position),
+          glm::cross(triangle.c - triangle.a, triangle.b - triangle.a)
+      ) >= 1e-8
   );
 }
 

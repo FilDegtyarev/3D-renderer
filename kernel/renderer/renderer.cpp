@@ -82,6 +82,8 @@ Task Renderer::MakeClipFiguresTask(int32_t thread_id, Camera* camera, World* wor
   Task clip_figures_task = [thread_id = thread_id, camera = camera, world = world,
                             threads_count = threads_total, worker_keeper = &worker_keeper]() {
     M4 camera_matrix = camera->GetCameraMatrix();
+    M3 invt_camera_matrix = camera->GetNormalTransformMatrix();
+
     std::vector<geometry::Triangle>& self_clipped_triangles =
         worker_keeper->GetStorage(thread_id).clipped_triangles;
 
@@ -97,15 +99,23 @@ Task Renderer::MakeClipFiguresTask(int32_t thread_id, Camera* camera, World* wor
       bool bfc_enabled = world->GetObjects()[model_index].IsBackFaceCullingEnabled();
 
       for (int32_t index = begin; index < end; ++index) {
-        auto triangle = object[index];
+        geometry::Triangle triangle = object[index];
         triangle.model_index = model_index;
 
-        if (bfc_enabled && geometry::IsBackFace(triangle, camera->GetGazeDirection())) {
+        if (bfc_enabled && geometry::IsBackFace(triangle, camera->GetCameraPosition())) {
           continue;
         }
+
+        V3 normal_transformed(triangle.a.normal);
+        normal_transformed = glm::normalize(invt_camera_matrix * normal_transformed);
+
         geometry::TriangleIntersected* clipped_triangles =
             camera->ClipTriangle(triangle * camera_matrix, &first, &second);
+        // triangle.normal -> camera_matrix^{-t} * triangle.normal
         for (int32_t i = 0; i < clipped_triangles->size; ++i) {
+          (*clipped_triangles)[i].a.normal = normal_transformed;
+          (*clipped_triangles)[i].b.normal = normal_transformed;
+          (*clipped_triangles)[i].c.normal = normal_transformed;
           self_clipped_triangles.push_back((*clipped_triangles)[i]);
         }
       }
@@ -145,9 +155,16 @@ Task Renderer::MakeDrawFiguresTask(
         c_proj.Normalize();
 
         geometry::Triangle projective_triangle = geometry::Triangle{
-            .a = a_proj, .b = b_proj, .c = c_proj, .model_index = clipped_triangle.model_index
+            .a = a_proj,
+            .b = b_proj,
+            .c = c_proj,
+            //.normal = clipped_triangle.normal,
+            .model_index = clipped_triangle.model_index
         };
-
+        // Вот тут я забыл
+        projective_triangle.a.normal = clipped_triangle.a.normal;
+        projective_triangle.b.normal = clipped_triangle.b.normal;
+        projective_triangle.c.normal = clipped_triangle.c.normal;
         ViewTriangleTransform(projective_triangle, screen_width, screen_height);
 
         rasterization::DrawTriangle(

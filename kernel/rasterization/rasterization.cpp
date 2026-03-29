@@ -6,6 +6,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <cstdio>
 #include <qpoint.h>
 #include <qrgb.h>
 
@@ -62,16 +63,16 @@ void DrawTriangle(
       }
 
       if (pixel.z < zbuffer(pixel.y, pixel.x).z) {
-        Color color = {uint8_t(rand() % 256), uint8_t(rand() % 256), uint8_t(rand() % 256)};
+        Color color = {255, 255, 255};
+        //{uint8_t(rand() % 256), uint8_t(rand() % 256), uint8_t(rand() % 256)};
 
         if (texture.IsActive()) {
           color = texture(pixel.texture_coordinates.u, pixel.texture_coordinates.v);
           // pixel.color = texture(pixel.texture_coordinates.u, pixel.texture_coordinates.v);
         }
-
-        // color = direction_light->CalculateColor(geometry::MakeNormal(triangle), color);
+        // printf("hello\n");
         zbuffer(pixel.y, pixel.x).z = pixel.z;
-        zbuffer(pixel.y, pixel.x).color = color;
+        zbuffer(pixel.y, pixel.x).color = direction_light->CalculateColor(triangle.a.normal, color);
       }
     }
   }

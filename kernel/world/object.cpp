@@ -20,6 +20,12 @@ void LocalObject::Normalize(float scale) {
   }
 }
 
+namespace {
+inline bool IsNormalDifferent(const TriangleInfo& info) {
+  return info.first.normal_number != -1;
+}
+}; // namespace
+
 LocalObject::Triangle LocalObject::GetTriangle(const TriangleInfo& triangle) const {
   geometry::Point a = vertexes[triangle.first.vertex_number];
   geometry::Point b = vertexes[triangle.second.vertex_number];
@@ -31,6 +37,15 @@ LocalObject::Triangle LocalObject::GetTriangle(const TriangleInfo& triangle) con
     c.texture_coordinates = texture.GetTextureCoordinates(triangle.third.texture_number);
   }
 
+  // if (IsNormalDifferent(triangle)) {
+  //   exit(777);
+  // } else {
+
+  // }
+  V3 normal = glm::normalize(geometry::MakeNormal({a, b, c}));
+  a.normal = normal;
+  b.normal = normal;
+  c.normal = normal;
   return geometry::Triangle{a, b, c};
 }
 

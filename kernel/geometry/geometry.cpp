@@ -40,15 +40,6 @@ void Point::Scale(const float& coef) {
   coordinates.w = w;
 }
 
-Point Point::operator*(const M4& matrix) const {
-  V4 new_coordinates = matrix * coordinates;
-  return Point{new_coordinates, .texture_coordinates = texture_coordinates};
-}
-
-Triangle Triangle::operator*(const M4& matrix) const {
-  return Triangle{a * matrix, b * matrix, c * matrix, model_index};
-}
-
 Segment Segment::operator*(const M4& matrix) const {
   return Segment{a * matrix, b * matrix};
 }
@@ -73,60 +64,124 @@ struct PointContainer {
   int32_t size = 0;
 };
 
+struct FastPointContainer {
+  inline int16_t operator[](int16_t count) {
+    int16_t accumulate = -1;
+    for (int16_t i = 0; i < 3; ++i) {
+      accumulate += ((mask & (1 << i)) >> i);
+      if (accumulate == count) {
+        return i;
+      }
+    }
+    exit(777);
+  }
+
+  int16_t mask = 0;
+  int16_t size = 0;
+};
+
 }; // namespace
 
 static const float eps = 1e-6;
+
+/// Нет интерполяции нормалей!!!!
+namespace {
+inline bool IsClippingNotRequired(const Plane& plane, const Triangle& triangle) {
+  return plane(triangle.a) >= eps && plane(triangle.b) >= eps && plane(triangle.c) >= eps;
+}
+
+inline const Point& Get(const Triangle& triangle, int i) {
+  // return *((Point*)(&triangle) + i);
+  if (i == 0) {
+    return triangle.a;
+  } else if (i == 1) {
+    return triangle.b;
+  } else {
+    return triangle.c;
+  }
+}
+
+} // namespace
+
 TriangleIntersectedSingle IntersectTriangleWithPlane(const Triangle& triangle, const Plane& plane) {
-  PointContainer insiders;
-  PointContainer outsiders;
+  if (IsClippingNotRequired(plane, triangle)) {
+    return {{triangle}, 1};
+  }
+
+  // PointContainer insiders;
+  // PointContainer outsiders;
+  V3 normal = triangle.a.normal;
   uint8_t model_index = triangle.model_index;
 
+  FastPointContainer insiders = {0, 0};
+  FastPointContainer outsiders = {0, 0};
+
   if (plane(triangle.a) >= eps) {
-    insiders.Append(triangle.a);
+    // insiders.Append(triangle.a);
+    insiders.mask |= (1 << 0);
+    insiders.size++;
   } else {
-    outsiders.Append(triangle.a);
+    // outsiders.Append(triangle.a);
+    outsiders.mask |= (1 << 0);
+    outsiders.size++;
   }
 
   if (plane(triangle.b) >= eps) {
-    insiders.Append(triangle.b);
+    // insiders.Append(triangle.a);
+    insiders.mask |= (1 << 1);
+    insiders.size++;
   } else {
-    outsiders.Append(triangle.b);
+    // outsiders.Append(triangle.a);
+    outsiders.mask |= (1 << 1);
+    outsiders.size++;
   }
 
   if (plane(triangle.c) >= eps) {
-    insiders.Append(triangle.c);
+    // insiders.Append(triangle.a);
+    insiders.mask |= (1 << 2);
+    insiders.size++;
   } else {
-    outsiders.Append(triangle.c);
+    // outsiders.Append(triangle.a);
+    outsiders.mask |= (1 << 2);
+    outsiders.size++;
   }
 
-  if (insiders.IsEmpty()) {
+  if (!insiders.size) {
     return {};
   }
 
-  if (insiders.size == 3) {
-    return {{triangle}, 1};
-  }
-  // return {};
-
   if (insiders.size == 1) {
+    const Point& insiders_0 = Get(triangle, insiders[0]);
+    const Point& outsiders_0 = Get(triangle, outsiders[0]);
+    const Point& outsiders_1 = Get(triangle, outsiders[1]);
+    // Point intersect1 = IntersectSegmentWithPlane({insiders[0], outsiders[0]}, plane).b;
+    // Point intersect2 = IntersectSegmentWithPlane({insiders[0], outsiders[1]}, plane).b;
+    Point intersect1 = IntersectSegmentWithPlane({insiders_0, outsiders_0}, plane).b;
+    Point intersect2 = IntersectSegmentWithPlane({insiders_0, outsiders_1}, plane).b;
+    intersect1.normal = normal;
+    intersect2.normal = normal;
 
-    Point intersect1 = IntersectSegmentWithPlane({insiders[0], outsiders[0]}, plane).b;
-    Point intersect2 = IntersectSegmentWithPlane({insiders[0], outsiders[1]}, plane).b;
-
-    return {Triangle{insiders[0], intersect1, intersect2, model_index}, .size = 1};
+    return {Triangle{insiders_0, intersect1, intersect2, .model_index = model_index}, .size = 1};
     // return {Triangle{insiders[0], intersect1, intersect2}, .size = 1};
-  } else if (insiders.size == 2) {
+  } else {
+    const Point& insiders_0 = Get(triangle, insiders[0]);
+    const Point& insiders_1 = Get(triangle, insiders[1]);
+    const Point& outsiders_0 = Get(triangle, outsiders[0]);
 
-    Point intersect1 = IntersectSegmentWithPlane({insiders[0], outsiders[0]}, plane).b;
-    Point intersect2 = IntersectSegmentWithPlane({insiders[1], outsiders[0]}, plane).b;
+    // Point intersect1 = IntersectSegmentWithPlane({insiders[0], outsiders[0]}, plane).b;
+    // Point intersect2 = IntersectSegmentWithPlane({insiders[1], outsiders[0]}, plane).b;
+    Point intersect1 = IntersectSegmentWithPlane({insiders_0, outsiders_0}, plane).b;
+    Point intersect2 = IntersectSegmentWithPlane({insiders_1, outsiders_0}, plane).b;
+    intersect1.normal = normal;
+    intersect2.normal = normal;
 
-    Triangle first = {insiders[0], intersect1, intersect2, model_index};
-    Triangle second = {insiders[0], insiders[1], intersect2, model_index};
+    Triangle first = {insiders_0, intersect1, intersect2, .model_index = model_index};
+    Triangle second = {insiders_0, insiders_1, intersect2, .model_index = model_index};
 
     return {first, second, 2};
   }
 
-  assert(false);
+  exit(666);
   return {};
 }
 
