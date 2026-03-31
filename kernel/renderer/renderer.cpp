@@ -10,6 +10,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 
 namespace detail {
 
@@ -98,8 +99,11 @@ Task Renderer::MakeShadowMapClearTask(
     int32_t worker_id, World* world, DirectionalLightSource* direction_light
 ) {
   Task shadow_map_clear_task = [thread_id = worker_id, world = world, threads_count = threads_total,
-                                worker_keeper = &worker_keeper,
-                                direction_light = direction_light]() {
+                                worker_keeper = &worker_keeper, direction_light = direction_light,
+                                sm_status = &sm_status]() {
+    if (*sm_status == ShadowMapUpdateRequired::Not_Required) {
+      return;
+    }
     worker_keeper->GetStorage(thread_id).ClearShadowMap();
     worker_keeper->GetStorage(thread_id).Clear();
   };
@@ -111,8 +115,12 @@ Task Renderer::MakeShadowMapClipTask(
     int32_t worker_id, World* world, DirectionalLightSource* direction_light
 ) {
   Task shadow_map_clip_task = [thread_id = worker_id, world = world, threads_count = threads_total,
-                               worker_keeper = &worker_keeper,
-                               direction_light = direction_light]() {
+                               worker_keeper = &worker_keeper, direction_light = direction_light,
+                               sm_status = &sm_status]() {
+    if (*sm_status == ShadowMapUpdateRequired::Not_Required) {
+      return;
+    }
+
     M4 world_to_light = shadow_mapping::MakeWorldToLightMatrix(direction_light->GetBaseDirection());
 
     std::vector<geometry::Triangle>& self_clipped_triangles =
@@ -148,8 +156,13 @@ Task Renderer::MakeShadowMapDrawTask(
 ) {
   Task shadow_map_draw_task = [thread_id = worker_id, threads_total = threads_total,
                                worker_keeper = &worker_keeper, world = world,
-                               direction_light = direction_light]() {
+                               direction_light = direction_light, sm_status = &sm_status]() {
+    if (*sm_status == ShadowMapUpdateRequired::Not_Required) {
+      return;
+    }
+
     int32_t height = worker_keeper->GetStorage(thread_id).local_shadow_map.GetHeight();
+
     int32_t width = worker_keeper->GetStorage(thread_id).local_shadow_map.GetWidth();
 
     M4 shadow_view_transform = MakeViewTransformMatrix(width, height);
@@ -180,7 +193,12 @@ Task Renderer::MakeShadowMapDrawTask(
 Task Renderer::MakeShadowMapFillGlobal(int32_t worker_id) {
   Task shadow_map_fill_task = [thread_id = worker_id, threads_total = threads_total,
                                worker_keeper = &worker_keeper, shadow_map = &shadow_map,
-                               current_frame = &current_frame, screen_width = screen_width]() {
+                               current_frame = &current_frame, screen_width = screen_width,
+                               sm_status = &sm_status]() {
+    if (*sm_status == ShadowMapUpdateRequired::Not_Required) {
+      return;
+    }
+
     concurrency::WorkerStorage& self_storage = worker_keeper->GetStorage(thread_id);
     int32_t block = self_storage.local_shadow_map.GetHeight() / threads_total + 1;
     int32_t begin = thread_id * block;

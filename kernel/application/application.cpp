@@ -131,17 +131,14 @@ void ApplicationImpl::DrawFrame(ForceScreenUpdate flag) {
 
     camera.UpdateCameraMatirx();
     direction_light.UpdateDirection(camera);
-
     const Frame& new_frame = renderer.MakeFrame();
     screen.DrawFrameWithFps(new_frame, one_second / float(frame_drawing_timer_->nsecsElapsed()));
+    renderer.ChangeShadowMapUpdateStatus(renderer::ShadowMapUpdateRequired::Not_Required);
   }
 }
 
-// void ApplicationImpl::ConnectScreen(QVBoxLayout* layout) {
-//   screen.Connect(layout);
-// }
-
 void ApplicationImpl::StartRenderer() {
+  renderer.ChangeShadowMapUpdateStatus(renderer::ShadowMapUpdateRequired::Required);
   DrawFrame(ForceScreenUpdate{true});
   timer_->start(0);
 }
@@ -164,6 +161,7 @@ void ApplicationImpl::keyReleaseEvent(QKeyEvent* event) {
 }
 
 void ApplicationImpl::SceneTimer() {
+  renderer.ChangeShadowMapUpdateStatus(renderer::ShadowMapUpdateRequired::Not_Required);
   DrawFrame(ForceScreenUpdate{false});
   timer_->start(0);
 }

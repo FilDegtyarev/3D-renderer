@@ -8,6 +8,7 @@
 
 namespace detail {
 namespace renderer {
+enum class ShadowMapUpdateRequired : uint8_t { Required, Not_Required };
 
 class Renderer {
   using WorkerKeeper = concurrency::WorkerKeeper;
@@ -25,6 +26,10 @@ public:
   );
 
   const Frame& MakeFrame();
+
+  inline void ChangeShadowMapUpdateStatus(ShadowMapUpdateRequired sm_status_) {
+    sm_status = sm_status_;
+  }
 
 private:
   WorkerKeeper MakeWorkerKeeper(
@@ -61,6 +66,8 @@ private:
   ShadowMap shadow_map;
   Frame current_frame;
   WorkerKeeper worker_keeper;
+
+  ShadowMapUpdateRequired sm_status;
 };
 
 } // namespace renderer
