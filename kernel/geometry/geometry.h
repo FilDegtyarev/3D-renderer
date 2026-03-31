@@ -39,7 +39,7 @@ struct Point {
   inline void Normalize() {
     float w = coordinates.w;
     coordinates /= w;
-    coordinates.w = w;
+    // coordinates.w = w
   }
 
   inline float X() const { return coordinates.x; }
@@ -212,13 +212,20 @@ GetBarycentricCoordinates(const ScreenTriangle& triangle, const ScreenPoint& poi
   return {a_coef, b_coef, 1.0f - a_coef - b_coef};
 }
 
-inline float InterpolateZ(const ScreenTriangle& screen_triangle, const ScreenPoint& screen_point) {
+inline float
+PerspectiveInterpolateZ(const ScreenTriangle& screen_triangle, const ScreenPoint& screen_point) {
   BarycentricCoordinates bar_coords = GetBarycentricCoordinates(screen_triangle, screen_point);
 
   float z_inv = (1.0f / screen_triangle.a.z) * bar_coords.a_coef +
                 (1.0f / screen_triangle.b.z) * bar_coords.b_coef +
                 (1.0f / screen_triangle.c.z) * bar_coords.c_coef;
   return 1.0f / z_inv;
+}
+
+inline float InterpolateZ(const ScreenTriangle& screen_triangle, const ScreenPoint& screen_point) {
+  BarycentricCoordinates bar_coords = GetBarycentricCoordinates(screen_triangle, screen_point);
+  return screen_triangle.a.z * bar_coords.a_coef + screen_triangle.b.z * bar_coords.b_coef +
+         screen_triangle.c.z * bar_coords.c_coef;
 }
 
 inline TextureCoordinates InterpolateTextureCoordinates(
@@ -240,6 +247,9 @@ inline TextureCoordinates InterpolateTextureCoordinates(
   return texture_coordinates;
 }
 
+M4 MakeLookAtMatrix(const V3& right, const V3& up, const V3& view_direction, const V3& position);
+
+M4 MakeProjMatrix(float x_min, float x_max, float y_min, float y_max, float z_max);
 } // namespace geometry
 
 } // namespace detail

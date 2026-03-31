@@ -1,7 +1,9 @@
 #include "rasterization/algorithm.h"
 
 #include "geometry/geometry.h"
+#include "types/types.h"
 
+#include <cstddef>
 #include <qnamespace.h>
 
 namespace detail {
@@ -147,8 +149,77 @@ void Scanline(
   }
 
   for (ScreenPoint& screen_point : scanline_buffer) {
-    screen_point.z = InterpolateZ(triangle, screen_point);
+    screen_point.z = PerspectiveInterpolateZ(triangle, screen_point);
     screen_point.texture_coordinates = InterpolateTextureCoordinates(triangle, screen_point);
+  }
+}
+
+// Я отмечу, что возможно стоит передавать интерполятор в виде std::function<>. тогда можно
+// избавиться от дублирования кода И в целом можно передавать более тонкие настройки: (нужно ли
+// интерполировать текстуры вообще?)
+// но это я думаю можно добавить позже
+void ShadowMapScanline(
+    const ScreenTriangle& triangle, int32_t height, std::vector<ScreenPoint>& scanline_buffer
+) {
+  ScreenTriangle sorted_triangle = triangle.SortedVertex();
+
+  assert(sorted_triangle.a.y >= height && sorted_triangle.c.y <= height);
+
+  if (sorted_triangle.a.y == sorted_triangle.c.y) {
+    return;
+  }
+
+  float long_edge_x_shift = GetXShift(sorted_triangle.a, sorted_triangle.c);
+  float x_left = 0;
+  float x_right = 0;
+
+  if (height >= sorted_triangle.b.y) {
+    if (height == sorted_triangle.b.y && sorted_triangle.b.y == sorted_triangle.a.y) {
+      x_left = sorted_triangle.b.x;
+      x_right = sorted_triangle.a.x;
+    } else {
+      float short_edge_x_shift = GetXShift(sorted_triangle.a, sorted_triangle.b);
+      float dy = sorted_triangle.a.y - height;
+
+      x_left = float(sorted_triangle.a.x) - dy * long_edge_x_shift;
+      x_right = float(sorted_triangle.a.x) - dy * short_edge_x_shift;
+    }
+    if (x_left > x_right) {
+      std::swap(x_left, x_right);
+    }
+  } else if (height == sorted_triangle.c.y) {
+    x_left = float(sorted_triangle.c.x);
+    x_right = float(sorted_triangle.c.x);
+  } else {
+    if (height == sorted_triangle.b.y && sorted_triangle.b.y == sorted_triangle.c.y) {
+      x_left = sorted_triangle.b.x;
+      x_right = sorted_triangle.c.x;
+    } else {
+      float short_edge_x_shift = GetXShift(sorted_triangle.b, sorted_triangle.c);
+      float dy = sorted_triangle.b.y - height;
+      x_left = float(sorted_triangle.a.x) - (sorted_triangle.a.y - height) * long_edge_x_shift;
+      x_right = float(sorted_triangle.b.x) - dy * short_edge_x_shift;
+    }
+
+    if (x_left > x_right) {
+      std::swap(x_left, x_right);
+    }
+  }
+
+  int32_t start = int32_t(x_left);
+  int32_t finish = int32_t(x_right);
+  start = std::ceil(x_left);
+  finish = std::ceil(x_right) - 1;
+
+  for (int32_t x = start; x <= finish; ++x) {
+    ScreenPoint point;
+    point.x = x;
+    point.y = height;
+    scanline_buffer.push_back(point);
+  }
+
+  for (ScreenPoint& screen_point : scanline_buffer) {
+    screen_point.z = InterpolateZ(triangle, screen_point);
   }
 }
 

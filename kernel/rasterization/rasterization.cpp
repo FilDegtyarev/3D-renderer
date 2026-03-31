@@ -2,6 +2,7 @@
 
 #include "geometry/geometry.h"
 #include "rasterization/algorithm.h"
+#include "shadows/shadow_map.h"
 #include "types/types.h"
 
 #include <cassert>
@@ -21,6 +22,12 @@ bool IsInBuffer(const ScreenPoint& point, const ZBuffer& zbuffer) {
   );
 }
 
+bool IsInShadowMap(const ScreenPoint& point, const ShadowMap& shadow_map) {
+  return !(
+      point.x < 0 || point.x >= shadow_map.GetWidth() || point.y < 0 ||
+      point.y >= shadow_map.GetHeight()
+  );
+}
 } // namespace
 
 void DrawSegment(const Segment& segment_, ZBuffer& zbuffer) {
@@ -45,11 +52,32 @@ void DrawSegment(const Segment& segment_, ZBuffer& zbuffer) {
   }
 }
 
+namespace {
+inline float InterpolateW(
+    const ScreenTriangle& triangle, const ShadowMapHelper* helper, const ScreenPoint& point
+) {
+  geometry::BarycentricCoordinates bc = geometry::GetBarycentricCoordinates(triangle, point);
+  return helper->a_w * bc.a_coef + helper->b_w * bc.b_coef + helper->c_w * bc.c_coef;
+}
+
+inline float PerspectiveInterpolateW(
+    const ScreenTriangle& triangle, const ShadowMapHelper* helper, const ScreenPoint& screen_point
+) {
+  geometry::BarycentricCoordinates bar_coords = GetBarycentricCoordinates(triangle, screen_point);
+
+  float w_inv =
+      ((1.0f / helper->a_w) * bar_coords.a_coef + (1.0f / helper->b_w) * bar_coords.b_coef +
+       (1.0f / helper->c_w) * bar_coords.c_coef);
+  return 1.0f / w_inv;
+}
+
+} // namespace
+
 void DrawTriangle(
     const Triangle& triangle, ZBuffer& zbuffer, std::vector<ScreenPoint>& scanline_buffer,
-    const Texture& texture, const DirectionalLightSource* direction_light
+    const Texture& texture, const DirectionalLightSource* direction_light,
+    const ShadowMapHelper* helper, const Triangle& world_triangle
 ) {
-
   ScreenTriangle screen_triangle = geometry::DiscretizeTriangle(triangle);
 
   for (size_t height = screen_triangle.MinimumHeight(); height <= screen_triangle.MaximumHeight();
@@ -68,12 +96,57 @@ void DrawTriangle(
 
         if (texture.IsActive()) {
           color = texture(pixel.texture_coordinates.u, pixel.texture_coordinates.v);
-          // pixel.color = texture(pixel.texture_coordinates.u, pixel.texture_coordinates.v);
         }
-        // printf("hello\n");
+        color = direction_light->CalculateColor(triangle.a.normal, color);
+        if (helper != nullptr) {
+          V4 origin = {float(pixel.x), float(pixel.y), pixel.z, 1};
+          float correct_w = InterpolateW(screen_triangle, helper, pixel);
+          origin = *helper->view_transform_inv * origin;
+          origin.w = 1;
+          origin *= correct_w;
+          origin = *helper->frustum_to_world * origin;
+          origin = *helper->world_to_light * origin;
+
+          // geometry::BarycentricCoordinates bc =
+          //     geometry::GetBarycentricCoordinates(screen_triangle, pixel);
+          // V4 origin;
+          // origin =
+          //     pixel.z * (bc.a_coef * (1.0f / screen_triangle.a.z) * world_triangle.a.coordinates
+          //     +
+          //                bc.b_coef * (1.0f / screen_triangle.b.z) * world_triangle.b.coordinates
+          //                + bc.c_coef * (1.0f / screen_triangle.c.z) *
+          //                world_triangle.c.coordinates);
+
+          // origin = *helper->world_to_light * origin;
+
+          color = shadow_mapping::ShadowTest(Point{origin}, color, helper->shadow_map);
+        }
+
         zbuffer(pixel.y, pixel.x).z = pixel.z;
-        zbuffer(pixel.y, pixel.x).color = direction_light->CalculateColor(triangle.a.normal, color);
+        zbuffer(pixel.y, pixel.x).color = color;
       }
+    }
+  }
+}
+
+void DrawTriangleInShadowMap(
+    const Triangle& triangle, ShadowMap& shadow_map, std::vector<ScreenPoint>& scanline_buffer
+) {
+
+  ScreenTriangle screen_triangle = geometry::DiscretizeTriangle(triangle);
+  for (size_t height = screen_triangle.MinimumHeight(); height <= screen_triangle.MaximumHeight();
+       ++height) {
+    scanline_buffer.clear();
+
+    // По хоршему стоит наверное добавить флаги, типа надо ли интерполировать. Но это потом))
+    ShadowMapScanline(screen_triangle, height, scanline_buffer);
+
+    for (auto& pixel : scanline_buffer) {
+
+      if (!IsInShadowMap(pixel, shadow_map)) {
+        continue;
+      }
+      shadow_map(pixel.y, pixel.x) = std::min(shadow_map(pixel.y, pixel.x), 1 + pixel.z);
     }
   }
 }

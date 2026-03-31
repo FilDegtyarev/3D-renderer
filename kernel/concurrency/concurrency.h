@@ -1,5 +1,6 @@
 #pragma once
 #include "geometry/geometry.h"
+#include "types/types.h"
 
 #include <barrier>
 #include <cassert>
@@ -22,6 +23,7 @@ struct WorkerStorage {
   using Triangle = geometry::Triangle;
   using ScreenPoint = geometry::ScreenPoint;
 
+  void ClearShadowMap();
   void Clear();
   void ClearScanline();
 
@@ -33,6 +35,7 @@ struct WorkerStorage {
 
   std::vector<ScreenPoint> scnaline_container;
   ZBuffer local_zbuffer;
+  ShadowMap local_shadow_map;
 };
 
 class Worker {
@@ -42,11 +45,20 @@ class Worker {
 
 public:
   Worker(
-      int32_t id, std::barrier<>& barrier, Task clear, Task clip_figures, Task draw_figures,
+      int32_t id, std::barrier<>& barrier, Task shadow_map_clear, Task shadow_map_clip,
+      Task shadow_map_draw, Task shadow_map_fill, Task clear, Task clip_figures, Task draw_figures,
       Task synchronize_zbuffers, Task fill_screen_matrix
   );
 
   void WaitForOther();
+
+  void ClearShadowMap();
+
+  void ClipShadowMap();
+
+  void DrawShadowMap();
+
+  void FillShadowMap();
 
   void Clear();
 
@@ -60,6 +72,11 @@ public:
 
 private:
   int32_t id;
+  Task shadow_map_clear;
+  Task shadow_map_clip;
+  Task shadow_map_draw;
+  Task shadow_map_fill;
+
   Task clear;
   Task clip_figures;
   Task draw_figures;
@@ -73,7 +90,8 @@ class WorkerKeeper {
 public:
   WorkerKeeper(
       int32_t threads, int32_t triangles_capacity, int32_t segments_capacity,
-      int32_t scanline_capacity, int32_t screen_width, int32_t screen_height
+      int32_t scanline_capacity, int32_t screen_width, int32_t screen_height,
+      int32_t shadow_buffer_height, int32_t shadow_buffer_width
   );
 
   void SpawnWorker(Worker&& worker);
@@ -86,6 +104,18 @@ public:
 
   static void Serve(Worker worker) {
     while (true) {
+      worker.ClearShadowMap();
+      worker.WaitForOther();
+
+      worker.ClipShadowMap();
+      worker.WaitForOther();
+
+      worker.DrawShadowMap();
+      worker.WaitForOther();
+
+      worker.FillShadowMap();
+      worker.WaitForOther();
+
       worker.Clear();
       worker.WaitForOther();
 
@@ -103,6 +133,11 @@ public:
   }
 
 private:
+  void WaitForShadowMapClear();
+  void WaitForShadowMapClip();
+  void WaitForShadowMapDraw();
+  void WaitForShadowMapFill();
+
   void WaitForClear();
   void WaitForClip();
   void WaitForDraw();

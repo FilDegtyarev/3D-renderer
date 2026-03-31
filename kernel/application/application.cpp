@@ -23,7 +23,7 @@ namespace detail {
 
 ApplicationImpl::ApplicationImpl(
     int32_t threads_count, World&& world_, DirectionalLightSource&& light, Camera&& camera_,
-    Height height, Width width
+    Height height, Width width, Height shadow_buffer_height, Width shadow_buffer_width
 )
     : QWidget(nullptr),
       world(std::move(world_)),
@@ -31,7 +31,8 @@ ApplicationImpl::ApplicationImpl(
       camera(std::move(camera_)),
       screen(height, width),
       renderer(
-          threads_count, screen.GetHeight(), screen.GetWidth(), &camera, &world, &direction_light
+          threads_count, screen.GetHeight(), screen.GetWidth(), &camera, &world, &direction_light,
+          shadow_buffer_height, shadow_buffer_width
       ),
       layout_(new QVBoxLayout(this)),
       timer_(new QTimer()),
@@ -180,7 +181,7 @@ World CreateWorld(std::vector<Model>&& models) {
         models[i].path_to_obj(), models[i].path_to_texture(), models[i].bfc_status
     );
     local.Normalize(1);
-    detail::world::GlobalObject model_global(std::move(local), glm::vec3{0, 0, -10 * i}, 1);
+    detail::world::GlobalObject model_global(std::move(local), glm::vec3{0, 0, -1 - i - 1}, 1);
     world_builder.AddObject(std::move(model_global));
   }
   return world_builder.Extract();
@@ -190,7 +191,8 @@ World CreateWorld(std::vector<Model>&& models) {
 
 Application::Application(
     ThreadsCount threads_count, std::vector<Model>&& models, DirectionalLightSource&& light,
-    Height height, Width width, HorizontalFOV hf, NearPlaneDistance npd, RenderDistance rd
+    Height height, Width width, HorizontalFOV hf, NearPlaneDistance npd, RenderDistance rd,
+    Height shadow_buffer_height, Width shadow_buffer_width
 )
     : impl(
           std::make_unique<ApplicationImpl>(
@@ -200,7 +202,7 @@ Application::Application(
                   rd
               ),
 
-              height, width
+              height, width, shadow_buffer_height, shadow_buffer_width
           )
       ) {}
 

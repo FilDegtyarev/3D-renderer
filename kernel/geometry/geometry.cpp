@@ -293,5 +293,53 @@ M4 GetFrustumMatrix(
 
   return glm::transpose(matrix);
 }
+
+namespace {
+inline M4 SetRow(int cid, const V3& vector, M4 matrix) {
+  for (int i = 0; i < 3; ++i) {
+    matrix[cid][i] = vector[i];
+  }
+  return matrix;
+}
+} // namespace
+
+M4 MakeLookAtMatrix(const V3& right, const V3& up, const V3& view_direction, const V3& position) {
+  // Shirley, 147
+  V3 right_norm = glm::normalize(right);
+  V3 up_norm = glm::normalize(up);
+  V3 view_direction_norm = glm::normalize(view_direction);
+
+  M4 first = 0;
+  first = SetRow(0, right_norm, std::move(first));
+  first = SetRow(1, up_norm, std::move(first));
+  first = SetRow(2, view_direction_norm, std::move(first));
+  first[3][3] = 1;
+
+  first = glm::transpose(first);
+
+  M4 second = 1;
+  //
+  second[0][3] = -position.x;
+  second[1][3] = -position.y;
+  second[2][3] = -position.z;
+  second = glm::transpose(second);
+  return first * second;
+}
+
+M4 MakeProjMatrix(float x_min, float x_max, float y_min, float y_max, float z_max) {
+  M4 proj_matrix = 0;
+  proj_matrix[0][0] = 2.0f / (x_max - x_min);
+  proj_matrix[0][3] = -(x_max + x_min) / (x_max - x_min);
+
+  proj_matrix[1][1] = 2.0f / (y_max - y_min);
+  proj_matrix[1][3] = -(y_max + y_min) / (y_max - y_min);
+
+  proj_matrix[2][2] = -2.0f / z_max;
+  proj_matrix[2][3] = -1.0f;
+
+  proj_matrix[3][3] = 1.0f;
+  return glm::transpose(proj_matrix);
+}
+
 } // namespace geometry
 } // namespace detail

@@ -4,7 +4,8 @@
 #include "types/types.h"
 
 #include <QApplication>
-
+#include <cmath>
+#include <cstdio>
 int main(int argc, char* argv[]) {
   QApplication app(argc, argv);
 
@@ -20,10 +21,12 @@ int main(int argc, char* argv[]) {
         BackFaceCullingStatus::Enabled
     );
 
+    printf("hello\n\n");
     detail::light::DirectionalLightSource light({0, 0, -1.0f});
     Application r_app(
-        ThreadsCount{8}, {skull}, std::move(light), Height{600}, Width{800}, HorizontalFOV{90.0},
-        NearPlaneDistance{0.1}, RenderDistance{100.0}
+        ThreadsCount{8}, {skull, cat}, std::move(light), Height{600}, Width{800},
+        HorizontalFOV{90.0}, NearPlaneDistance{0.1}, RenderDistance{100.0}, Height{4096},
+        Width{4096}
     );
 
     r_app.Run();

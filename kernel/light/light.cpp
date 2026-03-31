@@ -11,5 +11,9 @@ void DirectionalLightSource::UpdateDirection(const Camera& camera) {
   current_light_direction = glm::normalize(camera.GetCameraMatrix() * direcion);
 }
 
+const V3& DirectionalLightSource::GetBaseDirection() const {
+  return base_light_direction;
+}
+
 } // namespace light
 } // namespace detail

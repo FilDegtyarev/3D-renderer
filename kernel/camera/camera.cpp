@@ -64,26 +64,12 @@ inline M4 SetRow(int cid, const V3& vector, M4 matrix) {
 } // namespace
 
 M4 Camera::GetCameraMatrix() const {
-  // Shirley, 147
-  V3 w = -gaze_direction / glm::length(gaze_direction);
+  // // Shirley, 147
+  V3 w = -gaze_direction;
   V3 tmp = glm::cross(view_up_direction, w);
-  V3 u = tmp / glm::length(tmp);
-  V3 v = glm::cross(w, u);
+  V3 v = glm::cross(w, tmp);
 
-  M4 first = 0;
-  first = SetRow(0, u, std::move(first));
-  first = SetRow(1, v, std::move(first));
-  first = SetRow(2, w, std::move(first));
-  first[3][3] = 1;
-
-  first = glm::transpose(first);
-
-  M4 second = 1;
-  second[0][3] = -camera_position.x;
-  second[1][3] = -camera_position.y;
-  second[2][3] = -camera_position.z;
-  second = glm::transpose(second);
-  return first * second;
+  return geometry::MakeLookAtMatrix(tmp, v, w, camera_position);
 }
 
 M3 Camera::GetNormalTransformMatrix() const {

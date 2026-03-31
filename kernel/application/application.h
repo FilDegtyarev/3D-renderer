@@ -26,7 +26,7 @@ class ApplicationImpl : public QWidget {
 public:
   ApplicationImpl(
       int32_t threads_count, World&& world_, DirectionalLightSource&& light, Camera&& camera_,
-      Height height, Width width
+      Height height, Width width, Height shadow_buffer_height, Width shadow_buffer_width
   );
 
   void ButtonPressed(int button);
@@ -74,7 +74,8 @@ class Application {
 public:
   Application(
       ThreadsCount threads_count, std::vector<Model>&& models, DirectionalLightSource&& light,
-      Height height, Width width, HorizontalFOV hf, NearPlaneDistance npd, RenderDistance rd
+      Height height, Width width, HorizontalFOV hf, NearPlaneDistance npd, RenderDistance rd,
+      Height shadow_buffer_height, Width shadow_buffer_width
   );
 
   void Run();

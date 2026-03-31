@@ -3,6 +3,7 @@
 #include "glm/mat4x4.hpp"
 
 #include <cfloat>
+#include <cstdio>
 #include <functional>
 #include <vector>
 
@@ -117,4 +118,50 @@ private:
   int32_t height;
   int32_t width;
   std::vector<ZColor> zbuffer;
+};
+
+class ShadowMap {
+public:
+  ShadowMap() = default;
+  ShadowMap(Height height, Width width)
+      : height(height()),
+        width(width()),
+        depth_buffer(height() * width(), 100) {};
+
+  inline void Clear() { std::fill(depth_buffer.begin(), depth_buffer.end(), 100); }
+
+  inline const float operator()(int32_t y, int32_t x) const {
+    if (y >= height || y < 0 || x < 0 || x >= width) {
+      return 100;
+    }
+
+    return depth_buffer[y * width + x];
+  }
+
+  inline float& operator()(int32_t y, int32_t x) {
+    if (y >= height || y < 0 || x < 0 || x >= width) {
+      exit(666);
+    }
+    return depth_buffer[y * width + x];
+  }
+
+  inline int32_t Size() const { return width * height; }
+
+  inline int32_t GetHeight() const { return height; }
+
+  inline int32_t GetWidth() const { return width; }
+
+private:
+  int32_t width;
+  int32_t height;
+
+  std::vector<float> depth_buffer;
+};
+
+struct ShadowMapHelper {
+  ShadowMap* shadow_map;
+  const M4* frustum_to_world;
+  const M4* view_transform_inv;
+  const M4* world_to_light;
+  float a_w, b_w, c_w;
 };

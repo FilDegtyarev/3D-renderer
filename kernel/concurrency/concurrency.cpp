@@ -11,6 +11,10 @@ int32_t GetMaxThreads() {
   return int32_t(std::thread::hardware_concurrency());
 }
 
+void WorkerStorage::ClearShadowMap() {
+  local_shadow_map.Clear();
+}
+
 void WorkerStorage::Clear() {
   rendering_triangles.clear();
   clipped_triangles.clear();
@@ -31,11 +35,16 @@ void WorkerStorage::ClearScanline() {
 }
 
 Worker::Worker(
-    int32_t id, std::barrier<>& barrier, Task clear, Task clip_figures, Task draw_figures,
+    int32_t id, std::barrier<>& barrier, Task shadow_map_clear, Task shadow_map_clip,
+    Task shadow_map_draw, Task shadow_map_fill, Task clear, Task clip_figures, Task draw_figures,
     Task synchronize_zbuffers, Task fill_screen_matrix
 )
     : id(id),
       barrier(barrier),
+      shadow_map_clear(shadow_map_clear),
+      shadow_map_clip(shadow_map_clip),
+      shadow_map_draw(shadow_map_draw),
+      shadow_map_fill(shadow_map_fill),
       clear(clear),
       clip_figures(clip_figures),
       draw_figures(draw_figures),
@@ -44,6 +53,22 @@ Worker::Worker(
 
 inline void Worker::WaitForOther() {
   barrier.arrive_and_wait();
+}
+
+void Worker::ClearShadowMap() {
+  shadow_map_clear();
+}
+
+void Worker::ClipShadowMap() {
+  shadow_map_clip();
+}
+
+void Worker::DrawShadowMap() {
+  shadow_map_draw();
+}
+
+void Worker::FillShadowMap() {
+  shadow_map_fill();
 }
 
 void Worker::Clear() {
@@ -66,7 +91,8 @@ void Worker::FillScreenMatrix() {}
 
 WorkerKeeper::WorkerKeeper(
     int32_t threads_count, int32_t triangles_capacity, int32_t segments_capacity,
-    int32_t scanline_capacity, int32_t screen_width, int32_t screen_height
+    int32_t scanline_capacity, int32_t screen_width, int32_t screen_height,
+    int32_t shadow_buffer_height, int32_t shadow_buffer_width
 )
     : barrier(std::make_unique<std::barrier<>>(threads_count + 1)) {
   workers = std::vector<WorkerStorage>(0);
@@ -81,6 +107,8 @@ WorkerKeeper::WorkerKeeper(
 
     storage.scnaline_container.reserve(scanline_capacity);
     storage.local_zbuffer = ZBuffer(Height{screen_height}, Width{screen_width});
+
+    storage.local_shadow_map = ShadowMap(Height{shadow_buffer_height}, Width{shadow_buffer_width});
     workers.push_back(std::move(storage));
   }
 
@@ -92,10 +120,31 @@ void WorkerKeeper::SpawnWorker(Worker&& worker) {
 }
 
 void WorkerKeeper::Execute() {
+  WaitForShadowMapClear();
+  WaitForShadowMapClip();
+  WaitForShadowMapDraw();
+  WaitForShadowMapDraw();
+
   WaitForClear();
   WaitForClip();
   WaitForDraw();
   WaitForSynchronize();
+}
+
+void WorkerKeeper::WaitForShadowMapClear() {
+  barrier->arrive_and_wait();
+}
+
+void WorkerKeeper::WaitForShadowMapClip() {
+  barrier->arrive_and_wait();
+}
+
+void WorkerKeeper::WaitForShadowMapDraw() {
+  barrier->arrive_and_wait();
+}
+
+void WorkerKeeper::WaitForShadowMapFill() {
+  barrier->arrive_and_wait();
 }
 
 void WorkerKeeper::WaitForClear() {

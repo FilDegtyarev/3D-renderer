@@ -20,7 +20,12 @@ void DrawSegment(const Segment& segment, ZBuffer& zbuffer);
 
 void DrawTriangle(
     const Triangle& triangle, ZBuffer& zbuffer, std::vector<ScreenPoint>& scanline_buffer,
-    const Texture& texture, const DirectionalLightSource* direction_light
+    const Texture& texture, const DirectionalLightSource* direction_light,
+    const ShadowMapHelper* helper, const Triangle& world_triangle
+);
+
+void DrawTriangleInShadowMap(
+    const Triangle& triangle, ShadowMap& shadow_map, std::vector<ScreenPoint>& scanline_buffer
 );
 
 } // namespace rasterization

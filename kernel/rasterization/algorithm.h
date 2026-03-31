@@ -1,5 +1,6 @@
 #pragma once
 #include "geometry/geometry.h"
+#include "types/types.h"
 
 #include <vector>
 
@@ -15,6 +16,10 @@ using ScreenSegment = geometry::ScreenSegment;
 std::vector<ScreenPoint> Bresenham(const ScreenPoint& first, const ScreenPoint& second);
 
 void Scanline(
+    const ScreenTriangle& triangle, int32_t height, std::vector<ScreenPoint>& scanline_buffer
+);
+
+void ShadowMapScanline(
     const ScreenTriangle& triangle, int32_t height, std::vector<ScreenPoint>& scanline_buffer
 );
 } // namespace rasterization
