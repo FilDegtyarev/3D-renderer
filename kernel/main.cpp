@@ -10,21 +10,21 @@ int main(int argc, char* argv[]) {
 
   try {
     Model skull(
-        PathToObj{"/Users/filipp/Documents/Models/Skull/12140_Skull_v3_L2.obj"},
-        PathToTexture{"/Users/filipp/Documents/Models/Skull/Skull.jpg"},
+        PathToObj{"models/skull/12140_Skull_v3_L2.obj"}, PathToTexture{"models/skull/Skull.jpg"},
         BackFaceCullingStatus::Enabled
     );
 
-    Model cat(
-        PathToObj{"/Users/filipp/Documents/Models/cat.obj"}, PathToTexture{""},
+    Model cat(PathToObj{"models/cat.obj"}, PathToTexture{""}, BackFaceCullingStatus::Enabled);
+
+    Model helmet(
+        PathToObj{"models/helmet/Helmet.obj"}, PathToTexture{"models/helmet/Helmet_1.png"},
         BackFaceCullingStatus::Enabled
     );
 
     detail::light::DirectionalLightSource light({0, 0, -1.0f});
     Application r_app(
-        ThreadsCount{8}, {cat, skull}, std::move(light), Height{600}, Width{800},
-        HorizontalFOV{90.0}, NearPlaneDistance{0.1}, RenderDistance{100.0}, Height{4096},
-        Width{4096}
+        ThreadsCount{6}, {skull}, std::move(light), Height{600}, Width{800}, HorizontalFOV{90.0},
+        NearPlaneDistance{0.1}, RenderDistance{100.0}, Height{4096}, Width{4096}
     );
 
     r_app.Run();
@@ -32,5 +32,6 @@ int main(int argc, char* argv[]) {
   } catch (...) {
     detail::exceptions::react();
   }
+
   return 0;
 }

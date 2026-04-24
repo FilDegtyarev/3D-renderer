@@ -112,7 +112,7 @@ public:
   void ResetPosition();
   bool IsReset() const;
 
-  void ResetComplete();
+  void Reset();
 
   TriangleIntersected* ClipTriangle(
       const Triangle& triangle, TriangleIntersected* first, TriangleIntersected* second

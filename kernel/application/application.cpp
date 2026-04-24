@@ -42,6 +42,7 @@ ApplicationImpl::ApplicationImpl(
   layout_->addWidget(&screen);
 
   connect(timer_, SIGNAL(timeout()), this, SLOT(SceneTimer()));
+  printf("Total triangles: %d\n", world.GetTrianglesCapacity());
   /*
   void Screen::Connect(QVBoxLayout* layout) {
   layout->addWidget(screen.get());
@@ -126,11 +127,12 @@ void ApplicationImpl::DrawFrame(ForceScreenUpdate flag) {
   frame_drawing_timer_->start();
   if (camera.IsMoving() || camera.IsRotating() || camera.IsReset() || flag()) {
     if (camera.IsReset()) {
-      camera.ResetComplete();
+      camera.Reset();
     }
 
     camera.UpdateCameraMatirx();
     direction_light.UpdateDirection(camera);
+
     const Frame& new_frame = renderer.MakeFrame();
     screen.DrawFrameWithFps(new_frame, one_second / float(frame_drawing_timer_->nsecsElapsed()));
     renderer.ChangeShadowMapUpdateStatus(renderer::ShadowMapUpdateRequired::Not_Required);

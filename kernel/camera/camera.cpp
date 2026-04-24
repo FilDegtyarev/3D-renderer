@@ -195,7 +195,7 @@ bool Camera::IsReset() const {
   return reset_position;
 }
 
-void Camera::ResetComplete() {
+void Camera::Reset() {
   reset_position = false;
 }
 
