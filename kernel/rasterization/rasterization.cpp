@@ -1,6 +1,7 @@
 #include "rasterization/rasterization.h"
 
 #include "geometry/geometry.h"
+#include "glm/geometric.hpp"
 #include "rasterization/algorithm.h"
 #include "shadows/shadow_map.h"
 #include "types/types.h"
@@ -97,7 +98,21 @@ void DrawTriangle(
         if (texture.IsActive()) {
           color = texture(pixel.texture_coordinates.u, pixel.texture_coordinates.v);
         }
-        color = direction_light->CalculateColor(triangle.a.normal, color);
+
+        geometry::BarycentricCoordinates bc = GetBarycentricCoordinates(screen_triangle, pixel);
+
+        V3 interpolated_normal = glm::normalize(
+            (triangle.a.normal * (1.0f / screen_triangle.a.z) * bc.a_coef +
+             triangle.b.normal * (1.0f / screen_triangle.b.z) * bc.b_coef +
+             triangle.c.normal * (1.0f / screen_triangle.c.z) * bc.c_coef) *
+            pixel.z
+        );
+        color = direction_light->CalculateColor(interpolated_normal, color);
+
+        // color.red = uint8_t((interpolated_normal.x * 0.5f + 0.5f) * 255);
+        // color.green = uint8_t((interpolated_normal.y * 0.5f + 0.5f) * 255);
+        // color.blue = uint8_t((interpolated_normal.z * 0.5f + 0.5f) * 255);
+
         if (helper != nullptr) {
           V4 origin = {float(pixel.x), float(pixel.y), pixel.z, 1};
           float correct_w = InterpolateW(screen_triangle, helper, pixel);
@@ -106,18 +121,6 @@ void DrawTriangle(
           origin *= correct_w;
           origin = *helper->frustum_to_world * origin;
           origin = *helper->world_to_light * origin;
-
-          // geometry::BarycentricCoordinates bc =
-          //     geometry::GetBarycentricCoordinates(screen_triangle, pixel);
-          // V4 origin;
-          // origin =
-          //     pixel.z * (bc.a_coef * (1.0f / screen_triangle.a.z) * world_triangle.a.coordinates
-          //     +
-          //                bc.b_coef * (1.0f / screen_triangle.b.z) * world_triangle.b.coordinates
-          //                + bc.c_coef * (1.0f / screen_triangle.c.z) *
-          //                world_triangle.c.coordinates);
-
-          // origin = *helper->world_to_light * origin;
 
           color = shadow_mapping::ShadowTest(Point{origin}, color, helper->shadow_map);
         }

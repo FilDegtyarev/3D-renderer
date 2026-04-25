@@ -135,8 +135,9 @@ void Scanline(
 
   int32_t start = int32_t(x_left);
   int32_t finish = int32_t(x_right);
-  start = std::ceil(x_left);
-  finish = std::ceil(x_right) - 1;
+
+  start = std::ceil(x_left - 0.5f);
+  finish = std::floor(x_right - 0.5f);
 
   // int32_t start = std::ceil(x_left - 0.5f);
   // int32_t finish = std::floor(x_right - 0.5f);

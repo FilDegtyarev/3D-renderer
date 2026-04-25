@@ -55,6 +55,7 @@ private:
   LocalObject() = default;
   LocalObject(const LocalObject& local) = default;
   std::vector<Point> vertexes;
+  std::vector<V3> normals;
 
   std::vector<TriangleInfo> triangles;
   std::vector<SegmentKeeper> segments;
@@ -71,6 +72,7 @@ public:
   void AddTriangle(const TriangleInfo& vertex_info);
   void AddSegment(const SegmentKeeper& segment);
   void AddTexture(const textures::Texture& texture);
+  void AddNormal(const V3& normal);
   void SetBackFaceCullingMode(BackFaceCullingStatus status);
 
   LocalObject Extract();

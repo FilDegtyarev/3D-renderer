@@ -40,7 +40,11 @@ std::vector<VertexInfo> ParseFirstIndex(const std::string& face) {
     while (std::getline(vertex_info, number, '/')) {
       tmp.push_back(std::stoi(number));
     }
-    result.push_back({tmp[0] - 1, tmp[1] - 1, tmp[2]});
+    if (tmp.size() == 2) {
+      result.push_back({tmp[0] - 1, tmp[1] - 1, -1});
+    } else {
+      result.push_back({tmp[0] - 1, tmp[1] - 1, tmp[2] - 1});
+    }
   }
 
   return result;
@@ -109,6 +113,9 @@ Parse(const std::string& filename, const std::string& texture_file, BackFaceCull
     } else if (string[0] == 'v' && string[1] == 't') {
       std::vector<std::string> c = Split(string);
       coordinates.push_back({std::stof(c[1]), std::stof(c[2])});
+    } else if (string[0] == 'v' && string[1] == 'n') {
+      std::vector<std::string> c = Split(string);
+      builder.AddNormal({std::stof(c[1]), -std::stof(c[3]), -std::stof(c[2])});
     }
   }
 

@@ -37,16 +37,19 @@ LocalObject::Triangle LocalObject::GetTriangle(const TriangleInfo& triangle) con
     c.texture_coordinates = texture.GetTextureCoordinates(triangle.third.texture_number);
   }
 
-  // if (IsNormalDifferent(triangle)) {
-  //   exit(777);
-  // } else {
-
-  // }
-  V3 normal = glm::normalize(geometry::MakeNormal({a, b, c}));
-  a.normal = normal;
-  b.normal = normal;
-  c.normal = normal;
-  return geometry::Triangle{a, b, c};
+  if (triangle.first.normal_number == -1 || triangle.second.normal_number == -1 ||
+      triangle.third.normal_number == -1) {
+    V3 normal = glm::normalize(geometry::MakeNormal({a, b, c}));
+    a.normal = normal;
+    b.normal = normal;
+    c.normal = normal;
+    return geometry::Triangle{a, b, c};
+  } else {
+    a.normal = normals[triangle.first.normal_number];
+    b.normal = normals[triangle.second.normal_number];
+    c.normal = normals[triangle.third.normal_number];
+    return geometry::Triangle{a, b, c};
+  }
 }
 
 LocalObject::Segment LocalObject::GetSegment(const SegmentKeeper& keeper) const {
@@ -83,6 +86,10 @@ void LocalObjectBuilder::AddSegment(const SegmentKeeper& segment) {
 
 void LocalObjectBuilder::AddTexture(const LocalObject::Texture& texture) {
   local_object.texture = texture;
+}
+
+void LocalObjectBuilder::AddNormal(const V3& normal) {
+  local_object.normals.push_back(normal);
 }
 
 void LocalObjectBuilder::SetBackFaceCullingMode(BackFaceCullingStatus status) {

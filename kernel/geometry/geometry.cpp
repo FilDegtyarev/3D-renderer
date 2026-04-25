@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cmath>
 #include <glm/ext/vector_float3.hpp>
+#include <utility>
 
 namespace detail {
 namespace geometry {
@@ -110,7 +111,7 @@ TriangleIntersectedSingle IntersectTriangleWithPlane(const Triangle& triangle, c
 
   // PointContainer insiders;
   // PointContainer outsiders;
-  V3 normal = triangle.a.normal;
+  // V3 normal = triangle.a.normal;
   uint8_t model_index = triangle.model_index;
 
   FastPointContainer insiders = {0, 0};
@@ -158,8 +159,8 @@ TriangleIntersectedSingle IntersectTriangleWithPlane(const Triangle& triangle, c
     // Point intersect2 = IntersectSegmentWithPlane({insiders[0], outsiders[1]}, plane).b;
     Point intersect1 = IntersectSegmentWithPlane({insiders_0, outsiders_0}, plane).b;
     Point intersect2 = IntersectSegmentWithPlane({insiders_0, outsiders_1}, plane).b;
-    intersect1.normal = normal;
-    intersect2.normal = normal;
+    // intersect1.normal = normal;
+    // intersect2.normal = normal;
 
     return {Triangle{insiders_0, intersect1, intersect2, .model_index = model_index}, .size = 1};
     // return {Triangle{insiders[0], intersect1, intersect2}, .size = 1};
@@ -172,8 +173,8 @@ TriangleIntersectedSingle IntersectTriangleWithPlane(const Triangle& triangle, c
     // Point intersect2 = IntersectSegmentWithPlane({insiders[1], outsiders[0]}, plane).b;
     Point intersect1 = IntersectSegmentWithPlane({insiders_0, outsiders_0}, plane).b;
     Point intersect2 = IntersectSegmentWithPlane({insiders_1, outsiders_0}, plane).b;
-    intersect1.normal = normal;
-    intersect2.normal = normal;
+    // intersect1.normal = normal;
+    // intersect2.normal = normal;
 
     Triangle first = {insiders_0, intersect1, intersect2, .model_index = model_index};
     Triangle second = {insiders_0, insiders_1, intersect2, .model_index = model_index};
@@ -188,6 +189,7 @@ TriangleIntersectedSingle IntersectTriangleWithPlane(const Triangle& triangle, c
 Segment IntersectSegmentWithPlane(const Segment& segment, const Plane& plane) {
   Point first = segment.a;
   Point second = segment.b;
+
   if (plane(first) >= eps && plane(second) >= eps) {
     return segment;
   }
@@ -201,7 +203,13 @@ Segment IntersectSegmentWithPlane(const Segment& segment, const Plane& plane) {
   float coef = (glm::dot(plane.N, p1) + plane.D) * -1.0f / glm::dot(plane.N, p2 - p1);
   V3 intersection = p1 + (p2 - p1) * coef;
 
-  return {first, Point{V4{intersection.x, intersection.y, intersection.z, second.W()}}};
+  return {
+      first, Point{
+                 V4{intersection.x, intersection.y, intersection.z, second.W()},
+                 first.normal * (1 - coef) + second.normal * coef,
+                 first.texture_coordinates * (1 - coef) + second.texture_coordinates * coef
+             }
+  };
 }
 
 float GetTangentCoefficent(const ScreenPoint& first, const ScreenPoint& second) {
@@ -241,8 +249,8 @@ int32_t ScreenTriangle::MaximumHeight() const {
 namespace {
 ScreenPoint DiscretizePoint(const Point& point) {
   return ScreenPoint{
-      .x = static_cast<int16_t>(std::ceil(point.X())),
-      .y = static_cast<int16_t>(std::ceil(point.Y())),
+      .x = static_cast<int16_t>(std::round(point.X())),
+      .y = static_cast<int16_t>(std::round(point.Y())),
       .z = point.Z(),
       .texture_coordinates = point.texture_coordinates
   };

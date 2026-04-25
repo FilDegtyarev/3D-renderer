@@ -10,7 +10,8 @@ void react() {
     throw;
   } catch (std::exception& e) {
     // обрабатываешь известные исключения
-    std::cerr << "Known exception" << std::endl;
+    std::cerr << "Known exception:" << std::endl;
+    std::cerr << e.what() << std::endl;
   } catch (...) {
     // обрабатываешь незивестные исключения
     std::cerr << "Unknown exception" << std::endl;

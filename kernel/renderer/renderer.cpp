@@ -259,16 +259,12 @@ Task Renderer::MakeClipFiguresTask(int32_t thread_id, Camera* camera, World* wor
           continue;
         }
 
-        V3 normal_transformed(triangle.a.normal);
-        normal_transformed = glm::normalize(invt_camera_matrix * normal_transformed);
+        // V3 normal_transformed(triangle.a.normal);
+        //  normal_transformed = glm::normalize(invt_camera_matrix * normal_transformed);
 
         geometry::TriangleIntersected* clipped_triangles =
             camera->ClipTriangle(triangle * camera_matrix, &first, &second);
-        // triangle.normal -> camera_matrix^{-t} * triangle.normal
         for (int32_t i = 0; i < clipped_triangles->size; ++i) {
-          (*clipped_triangles)[i].a.normal = normal_transformed;
-          (*clipped_triangles)[i].b.normal = normal_transformed;
-          (*clipped_triangles)[i].c.normal = normal_transformed;
           self_clipped_triangles.push_back((*clipped_triangles)[i]);
         }
       }
@@ -356,7 +352,7 @@ Task Renderer::MakeDrawFiguresTask(
             .b_w = b_w,
             .c_w = c_w,
         };
-        // djn nen
+
         rasterization::DrawTriangle(
             projective_triangle, self_storage.local_zbuffer, self_storage.scnaline_container,
             world->GetObjects()[projective_triangle.model_index].GetTexture(), direction_light,

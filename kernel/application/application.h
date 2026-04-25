@@ -66,6 +66,7 @@ private:
 class Application {
   using Camera = detail::camera::Camera;
   using World = detail::world::World;
+
   using WorkerKeeper = detail::concurrency::WorkerKeeper;
   using Screen = detail::screen::Screen;
   using ApplicationImpl = detail::ApplicationImpl;

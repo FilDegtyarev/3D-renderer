@@ -151,6 +151,7 @@ ApplicationImpl::~ApplicationImpl() {
 }
 
 void ApplicationImpl::keyPressEvent(QKeyEvent* event) {
+  // printf("Happend\n");
   if (event->type() == QEvent::KeyPress) {
     ButtonPressed(event->key());
   }
@@ -184,6 +185,7 @@ World CreateWorld(std::vector<Model>&& models) {
     detail::world::GlobalObject model_global(std::move(local), glm::vec3{0, 0, -1 - i - 1}, 1);
     world_builder.AddObject(std::move(model_global));
   }
+  printf("World done\n");
   return world_builder.Extract();
 }
 
