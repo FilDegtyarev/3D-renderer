@@ -244,6 +244,8 @@ Task Renderer::MakeClipFiguresTask(int32_t thread_id, Camera* camera, World* wor
     geometry::TriangleIntersected second;
 
     uint8_t model_index = 0;
+    geometry::TriangleIntersectedSingle buffer;
+
     for (const world::GlobalObject& object : world->GetObjects()) {
       int32_t block = object.TrianglesCount() / threads_count + 1;
       int32_t begin = thread_id * block;
@@ -263,7 +265,7 @@ Task Renderer::MakeClipFiguresTask(int32_t thread_id, Camera* camera, World* wor
         //  normal_transformed = glm::normalize(invt_camera_matrix * normal_transformed);
 
         geometry::TriangleIntersected* clipped_triangles =
-            camera->ClipTriangle(triangle * camera_matrix, &first, &second);
+            camera->ClipTriangle(triangle * camera_matrix, &first, &second, &buffer);
         for (int32_t i = 0; i < clipped_triangles->size; ++i) {
           self_clipped_triangles.push_back((*clipped_triangles)[i]);
         }

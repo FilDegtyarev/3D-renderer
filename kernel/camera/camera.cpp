@@ -1,5 +1,7 @@
 #include "camera.h"
 
+#include "geometry/geometry.h"
+
 #include <cmath>
 #include <numbers>
 
@@ -200,7 +202,8 @@ void Camera::Reset() {
 }
 
 Camera::TriangleIntersected* Camera::ClipTriangle(
-    const Triangle& triangle, TriangleIntersected* cur, TriangleIntersected* prev
+    const Triangle& triangle, TriangleIntersected* cur, TriangleIntersected* prev,
+    TriangleIntersectedSingle* buffer
 ) const {
   cur->Clear();
   prev->Clear();
@@ -210,7 +213,20 @@ Camera::TriangleIntersected* Camera::ClipTriangle(
 
   for (const Plane& plane : planes) {
     for (int32_t triangle_index = 0; triangle_index < (*prev).size; ++triangle_index) {
-      cur->Merge(ClipTriangleWithPlane((*prev)[triangle_index], plane));
+      if (ClipTriangleWithPlane((*prev)[triangle_index], plane, buffer) ==
+          geometry::IntersectionStatus::NotRequired) {
+        cur->triangles[cur->size] = (*prev)[triangle_index];
+        cur->size++;
+      } else {
+        cur->Merge(*buffer);
+      }
+      // if (buffer->size == 1) {
+      //   cur->triangles[cur->size] = (*prev)[triangle_index];
+      //   cur->size++;
+      // } else {
+      //   cur->Merge(*buffer);
+      // }
+      // cur->Merge(ClipTriangleWithPlane((*prev)[triangle_index], plane));
     }
 
     std::swap(prev, cur);
@@ -241,9 +257,10 @@ bool Camera::TestPoint(const geometry::Point& point) const {
   return true;
 }
 
-geometry::TriangleIntersectedSingle
-Camera::ClipTriangleWithPlane(const Triangle& triangle, const Plane& plane) const {
-  return geometry::IntersectTriangleWithPlane(triangle, plane);
+geometry::IntersectionStatus Camera::ClipTriangleWithPlane(
+    const Triangle& triangle, const Plane& plane, TriangleIntersectedSingle* buffer
+) const {
+  return geometry::IntersectTriangleWithPlane(triangle, plane, buffer);
 }
 
 std::vector<Camera::Segment>

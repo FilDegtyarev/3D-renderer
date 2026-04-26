@@ -127,7 +127,11 @@ struct TriangleIntersected {
   int32_t size;
 };
 
-TriangleIntersectedSingle IntersectTriangleWithPlane(const Triangle& triangle, const Plane& plane);
+enum class IntersectionStatus : uint8_t { Required, NotRequired };
+
+IntersectionStatus IntersectTriangleWithPlane(
+    const Triangle& triangle, const Plane& plane, TriangleIntersectedSingle* buffer
+);
 
 Segment IntersectSegmentWithPlane(const Segment& segment, const Plane& plane);
 

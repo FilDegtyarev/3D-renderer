@@ -22,10 +22,15 @@ int main(int argc, char* argv[]) {
         BackFaceCullingStatus::Enabled
     );
 
+    Model helmet_no_texture(
+        PathToObj{"models/helmet/Helmet.obj"}, PathToTexture{""}, BackFaceCullingStatus::Disabled
+    );
+
     detail::light::DirectionalLightSource light({0, 0, -1.0f});
+    printf("Building the object\n");
     Application r_app(
-        ThreadsCount{8}, {helmet}, std::move(light), Height{600}, Width{800}, HorizontalFOV{90.0},
-        NearPlaneDistance{0.1}, RenderDistance{100.0}, Height{4096}, Width{4096}
+        ThreadsCount{1}, {skull}, std::move(light), Height{720}, Width{1280}, HorizontalFOV{90.0},
+        NearPlaneDistance{0.1}, RenderDistance{10.0}, Height{4096}, Width{4096}
     );
 
     r_app.Run();

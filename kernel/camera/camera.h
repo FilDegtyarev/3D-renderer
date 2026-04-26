@@ -115,7 +115,8 @@ public:
   void Reset();
 
   TriangleIntersected* ClipTriangle(
-      const Triangle& triangle, TriangleIntersected* first, TriangleIntersected* second
+      const Triangle& triangle, TriangleIntersected* first, TriangleIntersected* second,
+      geometry::TriangleIntersectedSingle* buffer
   ) const;
 
   std::vector<Segment> ClipSegment(const Segment& segment) const;
@@ -129,8 +130,9 @@ public:
 private:
   using TriangleIntersectedSingle = geometry::TriangleIntersectedSingle;
 
-  TriangleIntersectedSingle
-  ClipTriangleWithPlane(const Triangle& triangle, const Plane& plane) const;
+  geometry::IntersectionStatus ClipTriangleWithPlane(
+      const Triangle& triangle, const Plane& plane, TriangleIntersectedSingle* buffer
+  ) const;
 
   std::vector<Segment> ClipSegmentWithPlane(const Segment& segment, const Plane& plane) const;
 

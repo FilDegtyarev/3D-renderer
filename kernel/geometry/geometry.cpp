@@ -1,10 +1,12 @@
 #include "geometry/geometry.h"
 
+#include "glm/geometric.hpp"
 #include "types/types.h"
 
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstdio>
 #include <glm/ext/vector_float3.hpp>
 #include <utility>
 
@@ -104,86 +106,80 @@ inline const Point& Get(const Triangle& triangle, int i) {
 
 } // namespace
 
-TriangleIntersectedSingle IntersectTriangleWithPlane(const Triangle& triangle, const Plane& plane) {
+IntersectionStatus IntersectTriangleWithPlane(
+    const Triangle& triangle, const Plane& plane, TriangleIntersectedSingle* buffer
+) {
+
   if (IsClippingNotRequired(plane, triangle)) {
-    return {{triangle}, 1};
+    buffer->size = 1;
+    // buffer->triangles[0] = triangle;
+    return IntersectionStatus::NotRequired;
+    // return {{triangle}, 1};
   }
 
-  // PointContainer insiders;
-  // PointContainer outsiders;
-  // V3 normal = triangle.a.normal;
   uint8_t model_index = triangle.model_index;
 
   FastPointContainer insiders = {0, 0};
   FastPointContainer outsiders = {0, 0};
 
   if (plane(triangle.a) >= eps) {
-    // insiders.Append(triangle.a);
     insiders.mask |= (1 << 0);
     insiders.size++;
   } else {
-    // outsiders.Append(triangle.a);
     outsiders.mask |= (1 << 0);
     outsiders.size++;
   }
 
   if (plane(triangle.b) >= eps) {
-    // insiders.Append(triangle.a);
     insiders.mask |= (1 << 1);
     insiders.size++;
   } else {
-    // outsiders.Append(triangle.a);
     outsiders.mask |= (1 << 1);
     outsiders.size++;
   }
 
   if (plane(triangle.c) >= eps) {
-    // insiders.Append(triangle.a);
     insiders.mask |= (1 << 2);
     insiders.size++;
   } else {
-    // outsiders.Append(triangle.a);
     outsiders.mask |= (1 << 2);
     outsiders.size++;
   }
 
   if (!insiders.size) {
-    return {};
+    buffer->size = 0;
+    return IntersectionStatus::Required;
   }
 
   if (insiders.size == 1) {
     const Point& insiders_0 = Get(triangle, insiders[0]);
     const Point& outsiders_0 = Get(triangle, outsiders[0]);
     const Point& outsiders_1 = Get(triangle, outsiders[1]);
-    // Point intersect1 = IntersectSegmentWithPlane({insiders[0], outsiders[0]}, plane).b;
-    // Point intersect2 = IntersectSegmentWithPlane({insiders[0], outsiders[1]}, plane).b;
     Point intersect1 = IntersectSegmentWithPlane({insiders_0, outsiders_0}, plane).b;
     Point intersect2 = IntersectSegmentWithPlane({insiders_0, outsiders_1}, plane).b;
-    // intersect1.normal = normal;
-    // intersect2.normal = normal;
-
-    return {Triangle{insiders_0, intersect1, intersect2, .model_index = model_index}, .size = 1};
-    // return {Triangle{insiders[0], intersect1, intersect2}, .size = 1};
+    buffer->size = 1;
+    buffer->triangles[0] = Triangle{insiders_0, intersect1, intersect2, .model_index = model_index};
+    return IntersectionStatus::Required;
+    // return {Triangle{insiders_0, intersect1, intersect2, .model_index = model_index}, .size = 1};
   } else {
     const Point& insiders_0 = Get(triangle, insiders[0]);
     const Point& insiders_1 = Get(triangle, insiders[1]);
     const Point& outsiders_0 = Get(triangle, outsiders[0]);
 
-    // Point intersect1 = IntersectSegmentWithPlane({insiders[0], outsiders[0]}, plane).b;
-    // Point intersect2 = IntersectSegmentWithPlane({insiders[1], outsiders[0]}, plane).b;
     Point intersect1 = IntersectSegmentWithPlane({insiders_0, outsiders_0}, plane).b;
     Point intersect2 = IntersectSegmentWithPlane({insiders_1, outsiders_0}, plane).b;
-    // intersect1.normal = normal;
-    // intersect2.normal = normal;
 
-    Triangle first = {insiders_0, intersect1, intersect2, .model_index = model_index};
-    Triangle second = {insiders_0, insiders_1, intersect2, .model_index = model_index};
-
-    return {first, second, 2};
+    // Triangle first = {insiders_0, intersect1, intersect2, .model_index = model_index};
+    // Triangle second = {insiders_0, insiders_1, intersect2, .model_index = model_index};
+    buffer->size = 2;
+    buffer->triangles[0] = {insiders_0, intersect1, intersect2, .model_index = model_index};
+    buffer->triangles[1] = {insiders_0, insiders_1, intersect2, .model_index = model_index};
+    return IntersectionStatus::Required;
+    // return {first, second, 2};
   }
 
   exit(666);
-  return {};
+  // return {};
 }
 
 Segment IntersectSegmentWithPlane(const Segment& segment, const Plane& plane) {
@@ -206,7 +202,7 @@ Segment IntersectSegmentWithPlane(const Segment& segment, const Plane& plane) {
   return {
       first, Point{
                  V4{intersection.x, intersection.y, intersection.z, second.W()},
-                 first.normal * (1 - coef) + second.normal * coef,
+                 glm::normalize(first.normal * (1 - coef) + second.normal * coef),
                  first.texture_coordinates * (1 - coef) + second.texture_coordinates * coef
              }
   };

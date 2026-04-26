@@ -42,8 +42,12 @@ std::vector<VertexInfo> ParseFirstIndex(const std::string& face) {
     }
     if (tmp.size() == 2) {
       result.push_back({tmp[0] - 1, tmp[1] - 1, -1});
-    } else {
+    } else if (tmp.size() == 3) {
       result.push_back({tmp[0] - 1, tmp[1] - 1, tmp[2] - 1});
+    } else if (tmp.size() == 1) {
+      result.push_back({tmp[0] - 1, -1, -1});
+    } else {
+      exit(666);
     }
   }
 

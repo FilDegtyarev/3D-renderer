@@ -40,11 +40,19 @@ ClipTriangle(const Triangle& triangle, TriangleIntersected* cur, TriangleInterse
 
   (*prev)[0] = triangle;
   prev->size = 1;
+  geometry::TriangleIntersectedSingle buffer;
 
   for (const Plane& plane : planes) {
 
     for (int32_t triangle_index = 0; triangle_index < (*prev).size; ++triangle_index) {
-      cur->Merge(geometry::IntersectTriangleWithPlane((*prev)[triangle_index], plane));
+      if (geometry::IntersectTriangleWithPlane((*prev)[triangle_index], plane, &buffer) ==
+          geometry::IntersectionStatus::NotRequired) {
+        cur->triangles[cur->size] = (*prev)[triangle_index];
+        cur->size++;
+      } else {
+        cur->Merge(buffer);
+      }
+      // cur->Merge(geometry::IntersectTriangleWithPlane((*prev)[triangle_index], plane));
     }
     std::swap(prev, cur);
     cur->Clear();

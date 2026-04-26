@@ -107,6 +107,7 @@ void DrawTriangle(
              triangle.c.normal * (1.0f / screen_triangle.c.z) * bc.c_coef) *
             pixel.z
         );
+
         color = direction_light->CalculateColor(interpolated_normal, color);
 
         // color.red = uint8_t((interpolated_normal.x * 0.5f + 0.5f) * 255);

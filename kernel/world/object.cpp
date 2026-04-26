@@ -3,6 +3,8 @@
 #include "geometry/geometry.h"
 #include "types/types.h"
 
+#include <cstdio>
+
 namespace detail {
 namespace world {
 
@@ -27,28 +29,32 @@ inline bool IsNormalDifferent(const TriangleInfo& info) {
 }; // namespace
 
 LocalObject::Triangle LocalObject::GetTriangle(const TriangleInfo& triangle) const {
-  geometry::Point a = vertexes[triangle.first.vertex_number];
-  geometry::Point b = vertexes[triangle.second.vertex_number];
-  geometry::Point c = vertexes[triangle.third.vertex_number];
+  geometry::Triangle result = {
+      vertexes[triangle.first.vertex_number], vertexes[triangle.second.vertex_number],
+      vertexes[triangle.third.vertex_number]
+  };
+  // geometry::Point a = ;
+  // geometry::Point b = ;
+  // geometry::Point c = ;
 
   if (texture.IsActive()) {
-    a.texture_coordinates = texture.GetTextureCoordinates(triangle.first.texture_number);
-    b.texture_coordinates = texture.GetTextureCoordinates(triangle.second.texture_number);
-    c.texture_coordinates = texture.GetTextureCoordinates(triangle.third.texture_number);
+    result.a.texture_coordinates = texture.GetTextureCoordinates(triangle.first.texture_number);
+    result.b.texture_coordinates = texture.GetTextureCoordinates(triangle.second.texture_number);
+    result.c.texture_coordinates = texture.GetTextureCoordinates(triangle.third.texture_number);
   }
 
   if (triangle.first.normal_number == -1 || triangle.second.normal_number == -1 ||
       triangle.third.normal_number == -1) {
-    V3 normal = glm::normalize(geometry::MakeNormal({a, b, c}));
-    a.normal = normal;
-    b.normal = normal;
-    c.normal = normal;
-    return geometry::Triangle{a, b, c};
+    V3 normal = glm::normalize(geometry::MakeNormal(result));
+    result.a.normal = normal;
+    result.b.normal = normal;
+    result.c.normal = normal;
+    return result;
   } else {
-    a.normal = normals[triangle.first.normal_number];
-    b.normal = normals[triangle.second.normal_number];
-    c.normal = normals[triangle.third.normal_number];
-    return geometry::Triangle{a, b, c};
+    result.a.normal = normals[triangle.first.normal_number];
+    result.b.normal = normals[triangle.second.normal_number];
+    result.c.normal = normals[triangle.third.normal_number];
+    return result;
   }
 }
 

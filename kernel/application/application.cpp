@@ -181,7 +181,7 @@ World CreateWorld(std::vector<Model>&& models) {
     detail::world::LocalObject local = detail::parser::Parse(
         models[i].path_to_obj(), models[i].path_to_texture(), models[i].bfc_status
     );
-    local.Normalize(1);
+    local.Normalize(2);
     detail::world::GlobalObject model_global(std::move(local), glm::vec3{0, 0, -1 - i - 1}, 1);
     world_builder.AddObject(std::move(model_global));
   }
