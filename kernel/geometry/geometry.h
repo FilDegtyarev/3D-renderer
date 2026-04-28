@@ -254,6 +254,10 @@ inline TextureCoordinates InterpolateTextureCoordinates(
 M4 MakeLookAtMatrix(const V3& right, const V3& up, const V3& view_direction, const V3& position);
 
 M4 MakeProjMatrix(float x_min, float x_max, float y_min, float y_max, float z_max);
+
+inline V3 HouseholderReflection(const V3& light_direction, const V3& normal) {
+  return light_direction - 2 * glm::dot(normal, light_direction) * normal;
+}
 } // namespace geometry
 
 } // namespace detail

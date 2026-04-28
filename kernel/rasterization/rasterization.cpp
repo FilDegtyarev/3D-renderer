@@ -1,7 +1,9 @@
 #include "rasterization/rasterization.h"
 
 #include "geometry/geometry.h"
+#include "glm/common.hpp"
 #include "glm/geometric.hpp"
+#include "light/light.h"
 #include "rasterization/algorithm.h"
 #include "shadows/shadow_map.h"
 #include "types/types.h"
@@ -71,13 +73,42 @@ inline float PerspectiveInterpolateW(
        (1.0f / helper->c_w) * bar_coords.c_coef);
   return 1.0f / w_inv;
 }
+/*
+V3 tmp =
+            color = Color::Denormalize(tmp);
+*/
+inline Color CalculateColor(
+    Color color, const Material& material, const DirectionalLightSource& direction_light,
+    const V3& interpolated_normal, const V3& view_direction, float shadow_coefficient
+) {
+  float diffuse = direction_light.CalculateDiffuseCoefficient(interpolated_normal);
+  V3 tmp = color.Normailze() * (material.K_diffuse * diffuse);
+
+  if (shadow_coefficient == 1 && diffuse > 0) {
+    return Color::Denormalize(
+        glm::clamp(
+            tmp + material.K_specular *
+                      light::CalculateReflectionCoefficent(
+                          glm::normalize(-view_direction),
+                          geometry::HouseholderReflection(
+                              -direction_light.GetBaseDirection(), interpolated_normal
+                          ),
+                          material.NS
+                      ),
+            V3{0, 0, 0}, V3{1, 1, 1}
+        )
+    );
+  }
+  return Color::Denormalize(tmp * shadow_coefficient);
+}
 
 } // namespace
 
 void DrawTriangle(
     const Triangle& triangle, ZBuffer& zbuffer, std::vector<ScreenPoint>& scanline_buffer,
     const Texture& texture, const DirectionalLightSource* direction_light,
-    const ShadowMapHelper* helper, const Triangle& world_triangle
+    const ShadowMapHelper* helper, const Triangle& world_triangle, const V3& camera_position,
+    Material* material
 ) {
   ScreenTriangle screen_triangle = geometry::DiscretizeTriangle(triangle);
 
@@ -90,7 +121,6 @@ void DrawTriangle(
       if (!IsInBuffer(pixel, zbuffer)) {
         continue;
       }
-
       if (pixel.z < zbuffer(pixel.y, pixel.x).z) {
         Color color = {255, 255, 255};
         //{uint8_t(rand() % 256), uint8_t(rand() % 256), uint8_t(rand() % 256)};
@@ -107,23 +137,31 @@ void DrawTriangle(
              triangle.c.normal * (1.0f / screen_triangle.c.z) * bc.c_coef) *
             pixel.z
         );
-
-        color = direction_light->CalculateColor(interpolated_normal, color);
-
-        // color.red = uint8_t((interpolated_normal.x * 0.5f + 0.5f) * 255);
-        // color.green = uint8_t((interpolated_normal.y * 0.5f + 0.5f) * 255);
-        // color.blue = uint8_t((interpolated_normal.z * 0.5f + 0.5f) * 255);
-
+        // color = direction_light->CalculateColor(interpolated_normal, color);
         if (helper != nullptr) {
           V4 origin = {float(pixel.x), float(pixel.y), pixel.z, 1};
-          float correct_w = InterpolateW(screen_triangle, helper, pixel);
+          float correct_w = PerspectiveInterpolateW(screen_triangle, helper, pixel);
           origin = *helper->view_transform_inv * origin;
           origin.w = 1;
           origin *= correct_w;
           origin = *helper->frustum_to_world * origin;
-          origin = *helper->world_to_light * origin;
 
-          color = shadow_mapping::ShadowTest(Point{origin}, color, helper->shadow_map);
+          if (material != nullptr) {
+            V3 world_position(origin);
+            origin = *helper->world_to_light * origin;
+
+            float shadow_coefficient =
+                shadow_mapping::ShadowCoefficient(Point{origin}, color, helper->shadow_map);
+
+            color = CalculateColor(
+                color, *material, *direction_light, interpolated_normal,
+                camera_position - world_position, shadow_coefficient
+            );
+          } else {
+            color = direction_light->CalculateColor(interpolated_normal, color);
+            origin = *helper->world_to_light * origin;
+            color = shadow_mapping::ShadowTest(Point{origin}, color, helper->shadow_map);
+          }
         }
 
         zbuffer(pixel.y, pixel.x).z = pixel.z;

@@ -12,29 +12,33 @@ int main(int argc, char* argv[]) {
   try {
     Model skull(
         PathToObj{"models/skull/12140_Skull_v3_L2.obj"}, PathToTexture{"models/skull/Skull.jpg"},
-        BackFaceCullingStatus::Enabled
+        PathToMaterial{"models/skull/12140_Skull_v3_L2.mtl"}, BackFaceCullingStatus::Enabled,
+        ModelShift{V3{0, 0, -1}}, ModelTransformation{M3{1.0f}}
     );
 
-    Model cat(PathToObj{"models/cat.obj"}, PathToTexture{""}, BackFaceCullingStatus::Enabled);
+    Model cat(
+        PathToObj{"models/cat.obj"}, PathToTexture{""}, PathToMaterial{""},
+        BackFaceCullingStatus::Disabled, ModelShift{V3{0, 0, -1}}, ModelTransformation{M3{1.0f}}
+    );
 
     Model helmet(
         PathToObj{"models/helmet/Helmet.obj"}, PathToTexture{"models/helmet/Helmet_1.png"},
-        BackFaceCullingStatus::Enabled
+        PathToMaterial{"models/helmet/Helmet.mtl"}, BackFaceCullingStatus::Enabled,
+        ModelShift{V3{0, 0, -1}}, ModelTransformation{M3{1.0f}}
     );
 
-    Model helmet_no_texture(
-        PathToObj{"models/helmet/Helmet.obj"}, PathToTexture{""}, BackFaceCullingStatus::Disabled
-    );
+    // Model helmet_no_texture(
+    //     PathToObj{"models/helmet/Helmet.obj"}, PathToTexture{""}, BackFaceCullingStatus::Disabled
+    // );
 
     detail::light::DirectionalLightSource light({0, 0, -1.0f});
-    printf("Building the object\n");
     Application r_app(
-        ThreadsCount{1}, {skull}, std::move(light), Height{720}, Width{1280}, HorizontalFOV{90.0},
-        NearPlaneDistance{0.1}, RenderDistance{10.0}, Height{4096}, Width{4096}
+        ThreadsCount{7}, {skull}, std::move(light), Height{720}, Width{1280}, HorizontalFOV{90.0},
+        NearPlaneDistance{0.1}, RenderDistance{100.0}, Height{8192}, Width{8192}
     );
 
     r_app.Run();
-    printf("[Executing]...\n");
+    printf("[Executing].......\n");
     return app.exec();
   } catch (...) {
     detail::exceptions::react();

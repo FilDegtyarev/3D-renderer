@@ -18,14 +18,9 @@ private:
 
 using PathToObj = Type<std::string, class path_to_obj_proxy>;
 using PathToTexture = Type<std::string, class path_to_texture_proxy>;
+using PathToMaterial = Type<std::string, class path_to_material_proxy>;
 
 enum class BackFaceCullingStatus : uint8_t { Enabled, Disabled };
-
-struct Model {
-  PathToObj path_to_obj;
-  PathToTexture path_to_texture;
-  BackFaceCullingStatus bfc_status;
-};
 
 using Height = Type<int32_t, class screen_height_proxy>;
 using Width = Type<int32_t, class screen_width_proxy>;
@@ -52,7 +47,27 @@ using V4 = glm::vec4;
 using V3 = glm::vec3;
 using V2 = glm::vec2;
 
+using ModelShift = Type<V3, class model_shift_proxy>;
+using ModelTransformation = Type<M3, class model_transformation_proxy>;
+
+struct Model {
+  PathToObj path_to_obj;
+  PathToTexture path_to_texture;
+  PathToMaterial path_to_material;
+
+  BackFaceCullingStatus bfc_status;
+  ModelShift shift;
+  ModelTransformation transformation;
+};
+
 using Task = std::function<void(void)>;
+
+struct Material {
+  V3 K_ambient = {0, 0, 0};
+  V3 K_diffuse = {0, 0, 0};
+  V3 K_specular = {0, 0, 0};
+  float NS = 0;
+};
 
 struct Color {
   inline bool operator==(const Color& other) const = default;
@@ -63,6 +78,17 @@ struct Color {
         static_cast<uint8_t>(blue * value)
     };
   }
+
+  inline Color operator*(const V3& vector) const {
+    return {
+        static_cast<uint8_t>(red * vector.x), static_cast<uint8_t>(green * vector.y),
+        static_cast<uint8_t>(blue * vector.z)
+    };
+  }
+
+  inline V3 Normailze() const { return V3{red / 255.0f, green / 255.0f, blue / 255.0f}; }
+
+  static Color Denormalize(const V3& vector) { return Color{255, 255, 255} * vector; }
 
   uint8_t red;
   uint8_t green;
@@ -118,6 +144,15 @@ private:
   int32_t height;
   int32_t width;
   std::vector<ZColor> zbuffer;
+};
+
+struct SceneBoundingBox {
+  float x_min;
+  float x_max;
+  float y_min;
+  float y_max;
+  float z_min;
+  float z_max;
 };
 
 class ShadowMap {

@@ -37,6 +37,8 @@ ApplicationImpl::ApplicationImpl(
       layout_(new QVBoxLayout(this)),
       timer_(new QTimer()),
       frame_drawing_timer_(new QElapsedTimer()) {
+  // world.GenerateBoundingBox(direction_light);
+
   setFocusPolicy(Qt::StrongFocus);
 
   layout_->addWidget(&screen);
@@ -72,6 +74,8 @@ char DefineKey(int button) {
     c = 'i';
   } else if (button == Qt::Key_Space) {
     c = ' ';
+  } else if (button == Qt::Key_Q) {
+    c = 'q';
   } else {
     c = 0;
   }
@@ -88,6 +92,10 @@ inline bool IsRotationPressed(char c) {
 
 inline bool IsResetPressed(char c) {
   return c == ' ';
+}
+
+inline bool IsMaterialChangePressed(char c) {
+  return c == 'q';
 }
 
 using Rotating = camera::Rotating;
@@ -110,6 +118,10 @@ void ApplicationImpl::ButtonPressed(int button) {
     camera.Rotate(rotating_mapping[c]);
   } else if (IsResetPressed(c)) {
     camera.ResetPosition();
+  } else if (IsMaterialChangePressed(c)) {
+    renderer.ChangeMaterialStatus();
+    // printf("Pressed\n");
+    require_screen_update = true;
   }
 }
 
@@ -125,11 +137,15 @@ void ApplicationImpl::ButtonReleased(int button) {
 static const float one_second = 1000000000.0f;
 void ApplicationImpl::DrawFrame(ForceScreenUpdate flag) {
   frame_drawing_timer_->start();
-  if (camera.IsMoving() || camera.IsRotating() || camera.IsReset() || flag()) {
+  if (camera.IsMoving() || camera.IsRotating() || camera.IsReset() || require_screen_update ||
+      flag()) {
     if (camera.IsReset()) {
       camera.Reset();
     }
 
+    if (require_screen_update) {
+      require_screen_update = false;
+    }
     camera.UpdateCameraMatirx();
     direction_light.UpdateDirection(camera);
 
@@ -143,6 +159,14 @@ void ApplicationImpl::StartRenderer() {
   renderer.ChangeShadowMapUpdateStatus(renderer::ShadowMapUpdateRequired::Required);
   DrawFrame(ForceScreenUpdate{true});
   timer_->start(0);
+}
+
+void ApplicationImpl::SetRequireUpdate() {
+  require_screen_update = true;
+}
+
+void ApplicationImpl::DropRequireUpdate() {
+  require_screen_update = false;
 }
 
 ApplicationImpl::~ApplicationImpl() {
@@ -164,7 +188,7 @@ void ApplicationImpl::keyReleaseEvent(QKeyEvent* event) {
 }
 
 void ApplicationImpl::SceneTimer() {
-  renderer.ChangeShadowMapUpdateStatus(renderer::ShadowMapUpdateRequired::Not_Required);
+  // renderer.ChangeShadowMapUpdateStatus(renderer::ShadowMapUpdateRequired::Not_Required);
   DrawFrame(ForceScreenUpdate{false});
   timer_->start(0);
 }
@@ -179,13 +203,17 @@ World CreateWorld(std::vector<Model>&& models) {
 
   for (int32_t i = 0; i < models.size(); ++i) {
     detail::world::LocalObject local = detail::parser::Parse(
-        models[i].path_to_obj(), models[i].path_to_texture(), models[i].bfc_status
+        models[i].path_to_obj(), models[i].path_to_texture(), models[i].path_to_material(),
+        models[i].bfc_status
     );
-    local.Normalize(2);
-    detail::world::GlobalObject model_global(std::move(local), glm::vec3{0, 0, -1 - i - 1}, 1);
+
+    local.Normalize(1);
+    float z_shift = local.FindMaxZ();
+    detail::world::GlobalObject model_global(
+        std::move(local), models[i].shift() - V3{0, 0, z_shift}, models[i].transformation()
+    );
     world_builder.AddObject(std::move(model_global));
   }
-  printf("World done\n");
   return world_builder.Extract();
 }
 

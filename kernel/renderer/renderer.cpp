@@ -121,7 +121,9 @@ Task Renderer::MakeShadowMapClipTask(
       return;
     }
 
-    M4 world_to_light = shadow_mapping::MakeWorldToLightMatrix(direction_light->GetBaseDirection());
+    M4 world_to_light = shadow_mapping::MakeWorldToLightMatrix(
+        direction_light->GetBaseDirection(), world->GetBoundingBox()
+    );
 
     std::vector<geometry::Triangle>& self_clipped_triangles =
         worker_keeper->GetStorage(thread_id).clipped_triangles;
@@ -261,15 +263,24 @@ Task Renderer::MakeClipFiguresTask(int32_t thread_id, Camera* camera, World* wor
           continue;
         }
 
-        // V3 normal_transformed(triangle.a.normal);
-        //  normal_transformed = glm::normalize(invt_camera_matrix * normal_transformed);
-
         geometry::TriangleIntersected* clipped_triangles =
             camera->ClipTriangle(triangle * camera_matrix, &first, &second, &buffer);
         for (int32_t i = 0; i < clipped_triangles->size; ++i) {
           self_clipped_triangles.push_back((*clipped_triangles)[i]);
         }
+
+        // geometry::Triangle current_triangle = triangle * camera_matrix;
+        // if (camera->IsClippingRequired(current_triangle)) {
+        //   geometry::TriangleIntersected* clipped_triangles =
+        //       camera->ClipTriangle(current_triangle, &first, &second, &buffer);
+        //   for (int32_t i = 0; i < clipped_triangles->size; ++i) {
+        //     self_clipped_triangles.push_back((*clipped_triangles)[i]);
+        //   }
+        // } else {
+        //   self_clipped_triangles.push_back(current_triangle);
+        // }
       }
+
       ++model_index;
     }
   };
@@ -283,7 +294,8 @@ Task Renderer::MakeDrawFiguresTask(
   Task draw_figures_task = [thread_id = thread_id, camera = camera, threads_total = threads_total,
                             worker_keeper = &worker_keeper, screen_width = screen_width,
                             screen_height = screen_height, world = world,
-                            direction_light = direction_light, shadow_map = &shadow_map]() {
+                            direction_light = direction_light, shadow_map = &shadow_map,
+                            enable_material = &enable_material]() {
     int32_t shadow_height = worker_keeper->GetStorage(thread_id).local_shadow_map.GetHeight();
     int32_t shadow_width = worker_keeper->GetStorage(thread_id).local_shadow_map.GetWidth();
     M4 frustum_matrix = camera->GetFrustumMatrix();
@@ -294,7 +306,9 @@ Task Renderer::MakeDrawFiguresTask(
     M4 frustum_to_world = glm::inverse(frustum_matrix * camera->GetCameraMatrix());
 
     M4 world_to_light = MakeViewTransformMatrix(shadow_width, shadow_height) *
-                        shadow_mapping::MakeWorldToLightMatrix(direction_light->GetBaseDirection());
+                        shadow_mapping::MakeWorldToLightMatrix(
+                            direction_light->GetBaseDirection(), world->GetBoundingBox()
+                        );
     M4 camera_inv = glm::inverse(camera->GetCameraMatrix());
 
     ShadowMapHelper helper;
@@ -355,11 +369,21 @@ Task Renderer::MakeDrawFiguresTask(
             .c_w = c_w,
         };
 
-        rasterization::DrawTriangle(
-            projective_triangle, self_storage.local_zbuffer, self_storage.scnaline_container,
-            world->GetObjects()[projective_triangle.model_index].GetTexture(), direction_light,
-            &helper, triangle_world
-        );
+        Material material = world->GetObjects()[projective_triangle.model_index].GetMaterial();
+
+        if (*enable_material) {
+          rasterization::DrawTriangle(
+              projective_triangle, self_storage.local_zbuffer, self_storage.scnaline_container,
+              world->GetObjects()[projective_triangle.model_index].GetTexture(), direction_light,
+              &helper, triangle_world, camera->GetCameraPosition(), &material
+          );
+        } else {
+          rasterization::DrawTriangle(
+              projective_triangle, self_storage.local_zbuffer, self_storage.scnaline_container,
+              world->GetObjects()[projective_triangle.model_index].GetTexture(), direction_light,
+              &helper, triangle_world, camera->GetCameraPosition(), nullptr
+          );
+        }
       }
     }
   };

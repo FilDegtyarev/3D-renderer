@@ -51,6 +51,10 @@ public:
     return back_face_culling_status == BackFaceCullingStatus::Enabled;
   }
 
+  float FindMaxZ() const;
+
+  Material GetMaterial() const;
+
 private:
   LocalObject() = default;
   LocalObject(const LocalObject& local) = default;
@@ -61,6 +65,7 @@ private:
   std::vector<SegmentKeeper> segments;
 
   Texture texture;
+  Material material;
   BackFaceCullingStatus back_face_culling_status;
 };
 
@@ -74,7 +79,7 @@ public:
   void AddTexture(const textures::Texture& texture);
   void AddNormal(const V3& normal);
   void SetBackFaceCullingMode(BackFaceCullingStatus status);
-
+  void AddMaterial(Material material);
   LocalObject Extract();
 
 private:

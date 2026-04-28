@@ -37,6 +37,10 @@ public:
 
   void StartRenderer();
 
+  void SetRequireUpdate();
+
+  void DropRequireUpdate();
+
   ~ApplicationImpl();
 
 protected:
@@ -59,6 +63,8 @@ private:
   QVBoxLayout* layout_;
   QTimer* timer_;
   QElapsedTimer* frame_drawing_timer_;
+
+  bool require_screen_update = false;
 };
 
 } // namespace detail

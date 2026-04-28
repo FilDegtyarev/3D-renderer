@@ -136,13 +136,13 @@ void Scanline(
   int32_t start = int32_t(x_left);
   int32_t finish = int32_t(x_right);
 
-  start = std::ceil(x_left - 0.5f);
-  finish = std::floor(x_right - 0.5f);
+  start = std::ceil(x_left);
+  finish = std::ceil(x_right);
 
   // int32_t start = std::ceil(x_left - 0.5f);
   // int32_t finish = std::floor(x_right - 0.5f);
 
-  for (int32_t x = start; x <= finish; ++x) {
+  for (int32_t x = start; x < finish; ++x) {
     ScreenPoint point;
     point.x = x;
     point.y = height;
@@ -155,10 +155,6 @@ void Scanline(
   }
 }
 
-// Я отмечу, что возможно стоит передавать интерполятор в виде std::function<>. тогда можно
-// избавиться от дублирования кода И в целом можно передавать более тонкие настройки: (нужно ли
-// интерполировать текстуры вообще?)
-// но это я думаю можно добавить позже
 void ShadowMapScanline(
     const ScreenTriangle& triangle, int32_t height, std::vector<ScreenPoint>& scanline_buffer
 ) {

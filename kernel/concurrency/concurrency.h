@@ -120,13 +120,13 @@ public:
       worker.WaitForOther();
 
       worker.ClipFigures();
-
       worker.WaitForOther();
-      worker.DrawFigures();
 
+      worker.DrawFigures();
       worker.WaitForOther();
 
       worker.FillGlobalZBuffer();
+      worker.WaitForOther();
 
       worker.WaitForOther();
     }

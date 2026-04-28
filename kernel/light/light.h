@@ -1,7 +1,9 @@
 #pragma once
 #include "camera/camera.h"
+#include "glm/geometric.hpp"
 #include "types/types.h"
 
+#include <cassert>
 #include <cstdio>
 
 namespace detail {
@@ -24,10 +26,23 @@ public:
     return color * value;
   }
 
+  inline float CalculateDiffuseCoefficient(const V3& triangle_normal) const {
+    return std::max(0.f, -glm::dot(triangle_normal, base_light_direction));
+  }
+
 private:
   V3 base_light_direction;
   V3 current_light_direction;
 };
+
+inline float
+CalculateReflectionCoefficent(const V3& view_direction, const V3& light_reflected, float NS) {
+  float angle = glm::dot(view_direction, light_reflected);
+  if (angle > 0) {
+    return std::pow(angle, NS);
+  }
+  return 0;
+}
 
 } // namespace light
 

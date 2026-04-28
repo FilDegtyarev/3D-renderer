@@ -1,5 +1,7 @@
 #pragma once
 #include "types/types.h"
+
+#include <vector>
 namespace detail {
 namespace textures {
 
@@ -12,9 +14,10 @@ public:
   );
 
   inline bool IsActive() const { return colors.size() != 0; }
+
   inline const Color& operator()(float u, float v) const {
-    int32_t h = std::min(int32_t((1.0f - v) * height), height - 1);
-    int32_t w = std::min(int32_t(u * width), width - 1);
+    int32_t h = std::min(int32_t(std::round((1.0f - v) * height)), height - 1);
+    int32_t w = std::min(int32_t(std::round(u * width)), width - 1);
 
     h = std::max(0, h);
     w = std::max(0, w);
@@ -32,6 +35,8 @@ private:
 
   std::vector<TextureCoordinates> coordinates;
   std::vector<std::vector<Color>> colors;
+
+  std::vector<Material> materials;
 };
 
 } // namespace textures

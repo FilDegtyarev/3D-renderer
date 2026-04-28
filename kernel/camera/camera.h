@@ -127,6 +127,17 @@ public:
 
   inline const V3& GetGazeDirection() const { return gaze_direction; }
 
+  inline bool IsClippingRequired(const Triangle& triangle) const {
+    float eps = 1e-6;
+    for (const auto& plane : planes) {
+      if (plane(triangle.a) < eps || plane(triangle.b) < eps || plane(triangle.c) < eps) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
 private:
   using TriangleIntersectedSingle = geometry::TriangleIntersectedSingle;
 

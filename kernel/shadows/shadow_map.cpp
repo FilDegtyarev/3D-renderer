@@ -1,20 +1,31 @@
 #include "shadow_map.h"
 
 #include "geometry/geometry.h"
+#include "types/types.h"
 
 #include <cstdio>
 #include <vector>
+/*
+{
+  x_min = -2;
+  x_max = 2;
+  y_min = -2;
+  y_max = 2;
+  z_max = 10;
+}
+*/
 namespace detail {
 namespace shadow_mapping {
-M4 MakeWorldToLightMatrix(const V3& direction_light) {
+M4 MakeWorldToLightMatrix(const V3& direction_light, SceneBoundingBox bounding_box) {
   float x_min, x_max, y_min, y_max, z_max;
   {
-    x_min = -2;
-    x_max = 2;
-    y_min = -2;
-    y_max = 2;
-    z_max = 10;
+    x_min = bounding_box.x_min;
+    x_max = bounding_box.x_max;
+    y_min = bounding_box.y_min;
+    y_max = bounding_box.y_max;
   }
+
+  z_max = std::abs(bounding_box.z_min);
 
   M4 light_proj = geometry::MakeProjMatrix(x_min, x_max, y_min, y_max, z_max);
 

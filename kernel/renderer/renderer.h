@@ -6,6 +6,8 @@
 #include "types/types.h"
 #include "world/world.h"
 
+#include <cstdio>
+
 namespace detail {
 namespace renderer {
 enum class ShadowMapUpdateRequired : uint8_t { Required, Not_Required };
@@ -29,6 +31,14 @@ public:
 
   inline void ChangeShadowMapUpdateStatus(ShadowMapUpdateRequired sm_status_) {
     sm_status = sm_status_;
+    //  printf("oioiooi");
+    worker_keeper.GetBarrier().arrive_and_wait();
+    //
+  }
+
+  inline void ChangeMaterialStatus() {
+    // printf("Changed: %d -> %d\n", enable_material, !enable_material);
+    enable_material = !enable_material;
   }
 
 private:
@@ -68,6 +78,7 @@ private:
   WorkerKeeper worker_keeper;
 
   ShadowMapUpdateRequired sm_status;
+  bool enable_material = true;
 };
 
 } // namespace renderer

@@ -1,9 +1,11 @@
 #include "object.h"
 
 #include "geometry/geometry.h"
+#include "glm/geometric.hpp"
 #include "types/types.h"
 
 #include <cstdio>
+#include <cstdlib>
 
 namespace detail {
 namespace world {
@@ -78,6 +80,19 @@ const LocalObject::Texture& LocalObject::GetTexture() const {
   return texture;
 }
 
+float LocalObject::FindMaxZ() const {
+  float z = -FLT_MAX;
+  for (const geometry::Point& point : vertexes) {
+    z = std::max(z, point.Z());
+  }
+
+  return z;
+}
+
+Material LocalObject::GetMaterial() const {
+  return material;
+}
+
 void LocalObjectBuilder::AddVertex(const geometry::Point& point) {
   local_object.vertexes.push_back(point);
 }
@@ -100,6 +115,10 @@ void LocalObjectBuilder::AddNormal(const V3& normal) {
 
 void LocalObjectBuilder::SetBackFaceCullingMode(BackFaceCullingStatus status) {
   local_object.back_face_culling_status = status;
+}
+
+void LocalObjectBuilder::AddMaterial(Material material) {
+  local_object.material = material;
 }
 
 LocalObject LocalObjectBuilder::Extract() {

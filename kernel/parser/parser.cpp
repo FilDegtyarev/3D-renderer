@@ -6,6 +6,7 @@
 #include "world/object.h"
 
 #include <QImage>
+#include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -88,8 +89,10 @@ std::vector<std::vector<Color>> LoadJpegWithQt(const std::string& filename) {
 
 } // namespace
 
-LocalObject
-Parse(const std::string& filename, const std::string& texture_file, BackFaceCullingStatus status) {
+LocalObject Parse(
+    const std::string& filename, const std::string& texture_file,
+    const std::string& path_to_material, BackFaceCullingStatus status
+) {
   std::ifstream fin(filename);
   std::ofstream fout("swaga.txt");
   textures::Texture texture;
@@ -130,6 +133,37 @@ Parse(const std::string& filename, const std::string& texture_file, BackFaceCull
     texture = textures::Texture(colors.size(), colors[0].size(), coordinates, colors);
     builder.AddTexture(texture);
   }
+
+  if (path_to_material != "") {
+    fin = std::ifstream(path_to_material);
+    Material material;
+    while (!fin.eof()) {
+      std::string string;
+      std::getline(fin, string);
+      fout << string << std::endl;
+
+      if (string[0] == 'K' && string[1] == 'a') {
+        std::vector<std::string> result = Split(string);
+        result.erase(result.begin());
+        material.K_ambient = V3{std::stof(result[0]), std::stof(result[1]), std::stof(result[2])};
+      } else if (string[0] == 'K' && string[1] == 'd') {
+        std::vector<std::string> result = Split(string);
+        result.erase(result.begin());
+        material.K_diffuse = V3{std::stof(result[0]), std::stof(result[1]), std::stof(result[2])};
+      } else if (string[0] == 'K' && string[1] == 's') {
+        std::vector<std::string> result = Split(string);
+        result.erase(result.begin());
+        material.K_specular = V3{std::stof(result[0]), std::stof(result[1]), std::stof(result[2])};
+      } else if (string[0] == 'N' && string[1] == 's') {
+        std::vector<std::string> result = Split(string);
+        result.erase(result.begin());
+        material.NS = std::stof(result[0]);
+      }
+    }
+    builder.AddMaterial(material);
+    // printf("%.3f %.3f %.3f\n", material.K_ambient.x, material.K_ambient.y, material.K_ambient.z);
+  }
+
   builder.SetBackFaceCullingMode(status);
   return builder.Extract();
 }

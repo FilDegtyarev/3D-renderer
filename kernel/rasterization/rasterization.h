@@ -21,7 +21,8 @@ void DrawSegment(const Segment& segment, ZBuffer& zbuffer);
 void DrawTriangle(
     const Triangle& triangle, ZBuffer& zbuffer, std::vector<ScreenPoint>& scanline_buffer,
     const Texture& texture, const DirectionalLightSource* direction_light,
-    const ShadowMapHelper* helper, const Triangle& world_triangle
+    const ShadowMapHelper* helper, const Triangle& world_triangle, const V3& view_direction,
+    Material* material
 );
 
 void DrawTriangleInShadowMap(

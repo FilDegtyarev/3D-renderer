@@ -1,5 +1,6 @@
 #pragma once
 #include "geometry/geometry.h"
+#include "light/light.h"
 #include "object.h"
 #include "textures/textures.h"
 #include "types/types.h"
@@ -36,6 +37,8 @@ public:
 
   inline bool IsBackFaceCullingEnabled() const { return local_object.IsBackFaceCullingEnabled(); }
 
+  Material GetMaterial() const;
+
 private:
   LocalObject local_object;
   M4 transform;
@@ -52,10 +55,16 @@ public:
   int32_t GetTrianglesCapacity() const;
   int32_t GetSegmentCapacity() const;
 
+  SceneBoundingBox GetBoundingBox() const;
+
+  // void GenerateBoundingBox(const light::DirectionalLightSource& light);
+
 private:
   World() = default;
+  SceneBoundingBox MakeBoundingBox() const;
   std::vector<GlobalObject> objects;
   M4 current_transformation;
+  SceneBoundingBox bounding_box;
 };
 
 class WorldBuilder {
