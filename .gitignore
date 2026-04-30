@@ -1,0 +1,4 @@
+.vscode/*
+build/
+conanfile.txt
+.DS_Store
